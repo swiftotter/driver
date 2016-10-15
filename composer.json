@@ -7,7 +7,8 @@
         "aws/aws-sdk-php": "^3.19",
         "symfony/yaml": "^3.1",
         "symfony/console": "^3.1",
-        "symfony/event-dispatcher": "^3.1"
+        "symfony/event-dispatcher": "^3.1",
+        "ericpoe/haystack": "^0.2.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^2.7",

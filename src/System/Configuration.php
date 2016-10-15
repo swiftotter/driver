@@ -18,20 +18,60 @@
  **/
 
 namespace Driver\System;
-
+use Driver\System\Configuration\YamlLoader;
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
 class Configuration
 {
-    protected $yaml;
+    /** @var YamlLoader $loader */
+    protected $loader;
 
-    public function __construct(Yaml $yaml)
+    protected $nodes = [];
+
+    protected $files = [];
+
+    public function __construct(YamlLoader $loader)
     {
-        $this->yaml = $yaml;
+        $this->loader = $loader;
     }
 
-    public function getYaml()
+    public function getNodes()
     {
-        return $this->yaml;
+        return $this->nodes;
+    }
+
+    public function getNode($node)
+    {
+        $path = explode('/', $node);
+        $nodes = $this->nodes;
+
+        return array_reduce($path, function($nodes, $item) {
+            if (isset($nodes[$item])) {
+                return $nodes[$item];
+            } else {
+                return [];
+            }
+        }, $nodes);
+    }
+
+    protected function loadConfigurationFor($file)
+    {
+        if (!isset($this->files[$file])) {
+            try {
+                $contents = Yaml::parse($this->loader->load($file));
+                $this->files[$file] = $contents;
+                $this->nodes = array_merge_recursive($this->nodes, $contents);
+            } catch (ParseException $e) {
+                $this->files[$file] = [];
+            }
+        }
+
+        return $this->files[$file];
+    }
+
+    protected function loadAllConfiguration()
+    {
+
     }
 }
