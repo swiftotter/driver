@@ -58,6 +58,13 @@ class YamlLoader
         }
     }
 
+    /**
+     * Returns the contents of a yaml file.
+     *
+     * @param $file
+     * @return string
+     * @throws \Exception
+     */
     public function load($file)
     {
         if (!$file || !file_exists($file)) {

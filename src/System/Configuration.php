@@ -38,13 +38,17 @@ class Configuration
 
     public function getNodes()
     {
+        if (!count($this->files)) {
+            $this->loadAllConfiguration();
+        }
+
         return $this->nodes;
     }
 
     public function getNode($node)
     {
         $path = explode('/', $node);
-        $nodes = $this->nodes;
+        $nodes = $this->getNodes();
 
         return array_reduce($path, function($nodes, $item) {
             if (isset($nodes[$item])) {
@@ -61,7 +65,9 @@ class Configuration
             try {
                 $contents = Yaml::parse($this->loader->load($file));
                 $this->files[$file] = $contents;
-                $this->nodes = array_merge_recursive($this->nodes, $contents);
+                if (is_array($contents)) {
+                    $this->nodes = array_merge_recursive($this->nodes, $contents);
+                }
             } catch (ParseException $e) {
                 $this->files[$file] = [];
             }
@@ -70,8 +76,15 @@ class Configuration
         return $this->files[$file];
     }
 
+    protected function stripFileExtension($file)
+    {
+        return pathinfo($file, PATHINFO_FILENAME);
+    }
+
     protected function loadAllConfiguration()
     {
-
+        foreach ($this->loader->get() as $file) {
+            $this->loadConfigurationFor((string)$file);
+        };
     }
 }

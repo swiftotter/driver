@@ -1,4 +1,4 @@
-standard:
+default:
   - 100: connect
   - 200: check-filesystem
   - 300: start-sandbox

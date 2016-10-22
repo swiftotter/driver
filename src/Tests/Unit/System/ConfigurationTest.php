@@ -26,6 +26,25 @@ use Symfony\Component\Yaml\Yaml;
 
 class ConfigurationTest extends \PHPUnit_Framework_TestCase
 {
+    protected $testFile;
+
+    public function setUp()
+    {
+        $this->testFile = realpath(__DIR__ . '../../../config/') . 'test.yaml';
+        if (!file_exists($this->testFile)) {
+            file_put_contents($this->testFile, "test:\n  value: unknown");
+        }
+
+        parent::setUp();
+    }
+
+    public function tearDown()
+    {
+        unlink($this->testFile);
+
+        parent::tearDown();
+    }
+
     protected function getConfiguration()
     {
         $configuration = new Configuration(new Configuration\YamlLoader());
@@ -65,11 +84,29 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('unknown', $configuration->getNode('test/value'));
     }
 
-//    public function testInstanceContainsDataAboutPredefinedChains()
-//    {
-//        $configuration = $this->getConfiguration();
-//        $configuration->getChains();
-//    }
+    public function testGetAllConfigurationLoadsEverything()
+    {
+        $configuration = $this->getConfiguration();
+
+        $filesProperty = new \ReflectionProperty($configuration, 'files');
+        $filesProperty->setAccessible(true);
+
+        $loaderMethod = new \ReflectionMethod($configuration, 'loadAllConfiguration');
+        $loaderMethod->setAccessible(true);
+        $loaderMethod->invoke($configuration);
+
+        $this->assertTrue(count($filesProperty->getValue($configuration)) > 0);
+    }
+
+    public function testRemovesFileSuffix()
+    {
+        $configuration = $this->getConfiguration();
+
+        $stripMethod = new \ReflectionMethod($configuration, 'stripFileExtension');
+        $stripMethod->setAccessible(true);
+
+        $this->assertEquals('test', $stripMethod->invoke($configuration, 'test.yaml'));
+    }
 
     public function testGetConfigurationFileTestLoadsArrayValues()
     {
