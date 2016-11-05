@@ -30,7 +30,7 @@ class YamlLoaderTest extends \PHPUnit_Framework_TestCase
         $method = new \ReflectionMethod($configuration, 'isAllowedFile');
         $method->setAccessible(true);
 
-        $this->assertTrue($method->invoke($configuration, '/var/www/config/chain.yaml'));
+        $this->assertTrue($method->invoke($configuration, '/var/www/config/pipes.yaml'));
         $this->assertTrue($method->invoke($configuration, '/var/www/config.d/commands.yaml'));
         $this->assertTrue($method->invoke($configuration, '/var/www/config/workshop.yaml'));
         $this->assertTrue($method->invoke($configuration, '/var/www/config.d/connections.yaml'));

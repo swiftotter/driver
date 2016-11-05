@@ -13,33 +13,33 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/22/16
+ * @copyright SwiftOtter Studios, 11/5/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes;
+namespace Driver\Pipes\Transport;
 
-use Driver\Commands\Pipe;
-use Driver\Pipes\Master as PipeMaster;
-use Driver\Pipes\Set\Primary;
-use Driver\Pipes\Transport\Factory as TransportFactory;
-use Driver\Pipes\Set\Factory as PipeSetFactory;
-use Driver\System\Configuration;
-use Driver\Tests\Unit\Helper\DI;
-
-class MasterTest extends \PHPUnit_Framework_TestCase
+interface TransportInterface
 {
-    /** @var PipeMaster $pipeMaster */
-    private $pipeMaster;
+    const STATUS_FAILED = 1;
+    const STATUS_SUCCESS = 2;
+    const STATUS_PENDING = 3;
 
-    protected function setUp()
-    {
-        $this->pipeMaster = DI::getContainer()->get(PipeMaster::class);
-    }
+    public function __construct($pipeSet, $statuses = [], $data = []);
 
+    public function getPipeSet();
 
-    public function testRunReturnsTransportForDefaultPipe()
-    {
+    public function getErrors();
 
-    }
+    public function getErrorsByNode($node);
+
+    public function getStatuses();
+
+    public function getStatusesByNode($node);
+
+    public function withStatus(Status $status);
+
+    public function getData($key);
+
+    public function withNewData($key, $value);
 }

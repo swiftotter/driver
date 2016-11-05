@@ -13,32 +13,26 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/22/16
+ * @copyright SwiftOtter Studios, 10/29/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes;
+namespace Driver\Pipes\Set;
 
-use Driver\Commands\Pipe;
-use Driver\Pipes\Master as PipeMaster;
-use Driver\Pipes\Set\Primary;
-use Driver\Pipes\Transport\Factory as TransportFactory;
-use Driver\Pipes\Set\Factory as PipeSetFactory;
-use Driver\System\Configuration;
-use Driver\Tests\Unit\Helper\DI;
+use Driver\Commands\Factory as CommandFactory;
 
-class MasterTest extends \PHPUnit_Framework_TestCase
+class Primary implements SetInterface
 {
-    /** @var PipeMaster $pipeMaster */
-    private $pipeMaster;
+    private $list;
+    private $commandFactory;
 
-    protected function setUp()
+    public function __construct(array $list, CommandFactory $commandFactory)
     {
-        $this->pipeMaster = DI::getContainer()->get(PipeMaster::class);
+        $this->commandFactory = $commandFactory;
+        $this->list = $list;
     }
 
-
-    public function testRunReturnsTransportForDefaultPipe()
+    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport)
     {
 
     }

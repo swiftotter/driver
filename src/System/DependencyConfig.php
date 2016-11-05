@@ -20,6 +20,9 @@
 namespace Driver\System;
 
 use DI;
+use Driver\Pipes\Set;
+use Driver\Pipes\Transport\Factory as TransportFactory;
+use Driver\Pipes\Transport\Primary as TransportPrimary;
 use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Tester\ApplicationTester as ConsoleApplicationTester;
 
@@ -27,7 +30,11 @@ class DependencyConfig
 {
     public function get()
     {
-        return [];
+        return [
+            Set\SetInterface::class => DI\factory([Set\Primary::class, 'create']),
+            Set\Factory::class => DI\object()->constructorParameter('type', Set\Primary::class),
+            TransportFactory::class => DI\object()->constructorParameter('type', TransportPrimary::class)
+        ];
     }
 
     public function getForTests()

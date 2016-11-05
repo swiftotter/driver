@@ -19,26 +19,39 @@
 
 namespace Driver\Pipes;
 
+use Driver\Pipes\Exception\PipeSetNotFound as PipeSetNotFoundException;
+use Driver\Pipes\Set\Factory as PipeSetFactory;
+use Driver\Pipes\Transport\Factory as TransportFactory;
 use Driver\System\Configuration;
 
 class Master
 {
+    const EMPTY_NODE = 'empty';
     const DEFAULT_NODE = 'default';
     protected $configuration;
+    protected $pipeSetFactory;
+    protected $transportFactory;
 
-    public function __construct(Configuration $configuration)
+    public function __construct(Configuration $configuration, PipeSetFactory $pipeSetFactory, TransportFactory $transportFactory)
     {
         $this->configuration = $configuration;
+        $this->pipeSetFactory = $pipeSetFactory;
+        $this->transportFactory = $transportFactory;
     }
 
-    protected function getDefaultPipeSet()
+    public function runDefault()
     {
-        return $this->getPipeSet('default');
+        $this->run(self::DEFAULT_NODE);
     }
 
-    protected function getPipeSet($id)
+    public function run($set)
     {
-        return [];
-//        $this->configuration->getNode()
+        $pipeSet = $this->pipeSetFactory->create($set);
+        $pipeSet($set);
+    }
+
+    protected function createTransport()
+    {
+        return $this->transportFactory->create(self::DEFAULT_NODE);
     }
 }

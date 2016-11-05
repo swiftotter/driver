@@ -29,7 +29,7 @@ class YamlLoader
     ];
 
     protected $allowedFiles = [
-        'chain',
+        'pipes',
         'commands',
         'engines',
         'workshop',
@@ -50,8 +50,9 @@ class YamlLoader
     protected function getFiltered($file = false)
     {
         $directories = new \RecursiveDirectoryIterator(realpath(__DIR__.'/../../../'));
+        $iterator = new \RecursiveIteratorIterator($directories);
 
-        foreach (new \RecursiveIteratorIterator($directories) as $path) {
+        foreach (new \RegexIterator($iterator, '/config(\.d)?\/.+\.yaml$/i') as $path) {
             if ($this->isAllowedFile($path, $file)) {
                 yield $path;
             }

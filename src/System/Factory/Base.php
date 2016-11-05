@@ -13,33 +13,17 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/22/16
+ * @copyright SwiftOtter Studios, 10/29/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes;
+namespace Driver\System\Factory;
 
-use Driver\Commands\Pipe;
-use Driver\Pipes\Master as PipeMaster;
-use Driver\Pipes\Set\Primary;
-use Driver\Pipes\Transport\Factory as TransportFactory;
-use Driver\Pipes\Set\Factory as PipeSetFactory;
-use Driver\System\Configuration;
-use Driver\Tests\Unit\Helper\DI;
-
-class MasterTest extends \PHPUnit_Framework_TestCase
+class Base
 {
-    /** @var PipeMaster $pipeMaster */
-    private $pipeMaster;
-
-    protected function setUp()
+    public function create($class, ...$args)
     {
-        $this->pipeMaster = DI::getContainer()->get(PipeMaster::class);
-    }
-
-
-    public function testRunReturnsTransportForDefaultPipe()
-    {
-
+        $class = new \ReflectionClass($class);
+        return $class->newInstanceArgs($args);
     }
 }

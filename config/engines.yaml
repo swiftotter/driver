@@ -1,2 +1,3 @@
-mysql:
-  class-name: MySql
+engines:
+  mysql:
+    class-name: MySql

@@ -13,33 +13,38 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/22/16
+ * @copyright SwiftOtter Studios, 10/28/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes;
+namespace Driver\Tests\Unit\Commands;
 
 use Driver\Commands\Pipe;
 use Driver\Pipes\Master as PipeMaster;
+use Driver\Pipes\Set\Factory;
 use Driver\Pipes\Set\Primary;
-use Driver\Pipes\Transport\Factory as TransportFactory;
-use Driver\Pipes\Set\Factory as PipeSetFactory;
 use Driver\System\Configuration;
 use Driver\Tests\Unit\Helper\DI;
 
-class MasterTest extends \PHPUnit_Framework_TestCase
+class PipeTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var PipeMaster $pipeMaster */
-    private $pipeMaster;
+    /** @var Pipe $subject */
+    private $subject;
 
     protected function setUp()
     {
-        $this->pipeMaster = DI::getContainer()->get(PipeMaster::class);
+        $configuration = new Configuration(new Configuration\YamlLoader());
+        $this->subject = DI::getContainer()->get(Pipe::class);
     }
 
-
-    public function testRunReturnsTransportForDefaultPipe()
+    public function testNameAndDescriptionAreSet()
     {
+        $configureMethod = new \ReflectionMethod($this->subject, 'configure');
+        $configureMethod->setAccessible(true);
+        $configureMethod->invoke($this->subject);
 
+        $this->assertNotEmpty($this->subject->getName());
     }
+
+
 }
