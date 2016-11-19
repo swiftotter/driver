@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<mysqldump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<database name="test_database">
+	<table_structure name="initial_test">
+		<field Field="id" Type="int(11)" Null="NO" Key="PRI" Extra="auto_increment" Comment="" />
+		<field Field="row_key" Type="varchar(50)" Null="YES" Key="" Extra="" Comment="" />
+		<field Field="value" Type="varchar(50)" Null="YES" Key="" Extra="" Comment="" />
+		<key Table="initial_test" Non_unique="0" Key_name="PRIMARY" Seq_in_index="1" Column_name="id" Collation="A" Cardinality="10" Null="" Index_type="BTREE" Comment="" Index_comment="" />
+		<options Name="initial_test" Engine="InnoDB" Version="10" Row_format="Dynamic" Rows="10" Avg_row_length="1638" Data_length="16384" Max_data_length="0" Index_length="0" Data_free="0" Auto_increment="11" Create_time="2016-11-19 17:56:45" Update_time="2016-11-19 17:58:19" Collation="utf8_general_ci" Create_options="" Comment="" />
+	</table_structure>
+	<table_data name="initial_test">
+	<row>
+		<field name="id">1</field>
+		<field name="row_key">test1</field>
+		<field name="value">value1</field>
+	</row>
+	<row>
+		<field name="id">2</field>
+		<field name="row_key">test2</field>
+		<field name="value">value2</field>
+	</row>
+	<row>
+		<field name="id">3</field>
+		<field name="row_key">test3</field>
+		<field name="value">value3</field>
+	</row>
+	<row>
+		<field name="id">4</field>
+		<field name="row_key">test4</field>
+		<field name="value">value4</field>
+	</row>
+	<row>
+		<field name="id">5</field>
+		<field name="row_key">test5</field>
+		<field name="value">value5</field>
+	</row>
+	<row>
+		<field name="id">6</field>
+		<field name="row_key">test6</field>
+		<field name="value">value6</field>
+	</row>
+	<row>
+		<field name="id">7</field>
+		<field name="row_key">test7</field>
+		<field name="value">value7</field>
+	</row>
+	<row>
+		<field name="id">8</field>
+		<field name="row_key">test8</field>
+		<field name="value">value8</field>
+	</row>
+	<row>
+		<field name="id">9</field>
+		<field name="row_key">test9</field>
+		<field name="value">value9</field>
+	</row>
+	<row>
+		<field name="id">10</field>
+		<field name="row_key">test10</field>
+		<field name="value">value10</field>
+	</row>
+	</table_data>
+</database>
+</mysqldump>

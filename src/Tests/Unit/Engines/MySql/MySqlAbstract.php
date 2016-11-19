@@ -13,19 +13,13 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 11/19/16
  * @package default
  **/
 
-namespace Driver\Commands;
+namespace Driver\Tests\Unit\Engines\MySql;
 
-use Driver\Pipes\Transport\TransportInterface;
-
-interface CommandInterface
+abstract class MySqlAbstract extends \PHPUnit_Extensions_Database_TestCase
 {
-    /**
-     * @param TransportInterface $transport
-     * @return TransportInterface
-     */
-    public function go(TransportInterface $transport);
+
 }

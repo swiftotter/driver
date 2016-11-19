@@ -20,20 +20,59 @@
 namespace Driver\Pipes\Set;
 
 use Driver\Commands\Factory as CommandFactory;
+use Driver\Pipes\Transport\Status;
 
 class Primary implements SetInterface
 {
+    const PIPE_SET_NODE = 'parent';
+
     private $list;
     private $commandFactory;
 
     public function __construct(array $list, CommandFactory $commandFactory)
     {
         $this->commandFactory = $commandFactory;
-        $this->list = $list;
+        $this->list = $this->formatList($list);
     }
 
-    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport)
+    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport, $testMode = false)
     {
+        if ($testMode) {
+            $this->list = [];
+        }
 
+        array_walk($this->list, function($name) use (&$transport) {
+            $command = $this->commandFactory->create($name);
+            $transport = $this->verifyTransport($command->go($transport), $name);
+        });
+
+        return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
+    }
+
+    private function verifyTransport(\Driver\Pipes\Transport\TransportInterface $transport, $lastCommand)
+    {
+        if (!$transport) {
+            throw new \Exception('No Transport object was returned from the last command executed: ' . $lastCommand);
+        }
+
+        return $transport;
+    }
+
+    private function formatList(array $list)
+    {
+        $output = array_reduce($list, function($commands, array $item) {
+            array_walk($item, function($name, $id) use (&$commands) {
+                while (isset($commands[$id])) {
+                    $id++;
+                }
+                $commands[$id] = $name;
+            });
+
+            return $commands;
+        }, []);
+
+        ksort($output);
+
+        return $output;
     }
 }

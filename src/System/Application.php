@@ -19,6 +19,7 @@
 
 namespace Driver\System;
 
+use DI\Container;
 use \Symfony\Component\Console\Application as ConsoleApplication;
 
 /**
@@ -30,17 +31,24 @@ use \Symfony\Component\Console\Application as ConsoleApplication;
 class Application
 {
     protected $console;
+    protected $configuration;
+    protected $container;
 
     const RUN_MODE_NORMAL = 'normal';
     const RUN_MODE_TEST = 'test';
 
-    public function __construct(ConsoleApplication $console)
+    public function __construct(ConsoleApplication $console, Configuration $configuration, Container $container)
     {
         $this->console = $console;
+        $this->configuration = $configuration;
+        $this->container = $container;
     }
 
     public function run($mode = self::RUN_MODE_NORMAL)
     {
+        foreach ($this->configuration->getNode('commands') as $name => $settings) {
+            $this->console->add($this->container->get($settings['class']));
+        }
         $this->console->run();
     }
 

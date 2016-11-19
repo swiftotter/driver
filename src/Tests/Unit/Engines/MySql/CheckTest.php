@@ -13,27 +13,27 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 11/19/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes\Set;
+namespace Driver\Test\Unit\Engines\MySql;
 
+use Driver\Engines\MySql\Check;
 use Driver\Pipes\Master;
-use Driver\Pipes\Set\Primary;
+use Driver\Pipes\Transport\Primary;
 use Driver\Pipes\Transport\TransportInterface;
-use Driver\System\Configuration;
-use Driver\Pipes\Transport\Primary as Transport;
 use Driver\Tests\Unit\Helper\DI;
 
-class PrimaryTest extends \PHPUnit_Framework_TestCase
+class CheckTest extends \PHPUnit_Framework_TestCase
 {
-    public function testInvokeReturnsTransport()
-    {
-        $pipeSetName = Master::DEFAULT_NODE;
-        $configuration = new Configuration(new Configuration\YamlLoader());
-        $set = DI::getContainer()->make(Primary::class, ['list' => $configuration->getNode('pipes/' . $pipeSetName)]);
+    protected $checkClass;
 
-        $this->assertTrue(is_a($set(new Transport($pipeSetName), true), TransportInterface::class));
+    public function testGoCorrectlyMatchesValues()
+    {
+        /** @var Check $class */
+        $class = DI::getContainer()->get(Check::class);
+
+        $this->assertTrue(is_a($class->go(new Primary(Master::class)), TransportInterface::class));
     }
 }

@@ -26,6 +26,7 @@ class Factory
 {
     private $configuration;
     private $container;
+    private $substitutions;
 
     public function __construct(Configuration $configuration, Container $container)
     {
@@ -33,19 +34,53 @@ class Factory
         $this->container = $container;
     }
 
+    /**
+     * @param $name
+     * @return CommandInterface
+     */
     public function create($name)
     {
         $className = $this->getClassName($name);
         return $this->container->get($className);
     }
 
-    protected function getClassName($name)
+    private function getClassName($name)
     {
-        $class = $this->configuration->getNode("commands/{$name}/class");
+        $class = $this->runSubstitutions($this->configuration->getNode("commands/{$name}/class"));
         if (class_exists($class) && in_array(CommandInterface::Class, class_implements($class))) {
             return $class;
         } else {
             throw new \Exception("{$name} doesn't exist or it doesn't implement the type " . CommandInterface::class . ".");
         }
+    }
+
+    private function runSubstitutions($name)
+    {
+        $substitutions = $this->getSubstitutions();
+        preg_match_all("/%(.+)%/U", $name, $matches);
+
+        if (count($matches) > 1) {
+            $replacements = array_reduce($matches[1], function($carry, $name) use ($substitutions) {
+                $carry['%'.$name.'%'] = $substitutions[$name];
+                return $carry;
+            }, []);
+
+            return str_replace(array_keys($replacements), array_values($replacements), $name);
+        } else {
+            return $name;
+        }
+    }
+
+    private function getSubstitutions()
+    {
+        if (!$this->substitutions) {
+            $databaseEngine = $this->configuration->getNode('connections/database');
+            $substitutions = [
+                'engine' => $this->configuration->getNode("engines/{$databaseEngine}/class-name")
+            ];
+            $this->substitutions = $substitutions;
+        }
+
+        return $this->substitutions;
     }
 }

@@ -13,27 +13,34 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 11/19/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes\Set;
+namespace Driver\Engines\MySql\Sandbox;
 
-use Driver\Pipes\Master;
-use Driver\Pipes\Set\Primary;
+use Driver\Commands\CommandInterface;
+use Driver\Engines\MySql\Sandbox\Sandbox;
+use Driver\Pipes\Transport\Status;
 use Driver\Pipes\Transport\TransportInterface;
 use Driver\System\Configuration;
-use Driver\Pipes\Transport\Primary as Transport;
-use Driver\Tests\Unit\Helper\DI;
+use Symfony\Component\Console\Command\Command;
 
-class PrimaryTest extends \PHPUnit_Framework_TestCase
+class Init extends Command implements CommandInterface
 {
-    public function testInvokeReturnsTransport()
-    {
-        $pipeSetName = Master::DEFAULT_NODE;
-        $configuration = new Configuration(new Configuration\YamlLoader());
-        $set = DI::getContainer()->make(Primary::class, ['list' => $configuration->getNode('pipes/' . $pipeSetName)]);
+    private $configuration;
+    private $sandbox;
 
-        $this->assertTrue(is_a($set(new Transport($pipeSetName), true), TransportInterface::class));
+    public function __construct(Configuration $configuration, Sandbox $sandbox)
+    {
+        $this->configuration = $configuration;
+        $this->sandbox = $sandbox;
+
+        return parent::__construct('Sandbox Initialization');
+    }
+
+    public function go(TransportInterface $transport)
+    {
+        return $transport->withStatus(new Status('sandbox_init', 'success'));
     }
 }
