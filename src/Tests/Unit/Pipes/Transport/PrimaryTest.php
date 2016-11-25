@@ -22,6 +22,7 @@ namespace Driver\Tests\Unit\Pipes;
 use Driver\Pipes\Master;
 use Driver\Pipes\Transport\Primary;
 use Driver\Pipes\Transport\Status;
+use Driver\Tests\Unit\Helper\DI;
 
 class PrimaryTest extends \PHPUnit_Framework_TestCase
 {
@@ -32,7 +33,7 @@ class PrimaryTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->transport = new Primary(Master::DEFAULT_NODE);
+        $this->transport = DI::getContainer()->make(Primary::class, ['pipeSet' => Master::DEFAULT_NODE, 'statuses' => [], 'data' => []]);
 
         parent::setUp();
     }
@@ -58,7 +59,7 @@ class PrimaryTest extends \PHPUnit_Framework_TestCase
 
     public function testGetErrorsReturnsValues()
     {
-        $transport = new Primary(Master::DEFAULT_NODE);
+        $transport = new Primary(Master::DEFAULT_NODE, [], [], new \Driver\System\Logs\Primary());
         $this->assertCount(1, $transport->withStatus(new Status($this->node, $this->message, true))->getErrors());
         $this->assertCount(0, $this->transport->getErrorsByNode($this->node));
     }

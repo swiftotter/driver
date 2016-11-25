@@ -17,33 +17,33 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Set;
+namespace Driver\Pipes\Stage;
 
-use Driver\Pipes\Stage\Factory as StageFactory;
+use Driver\Commands\Factory as CommandFactory;
 use Driver\Pipes\Transport\Status;
 
-class Primary implements SetInterface
+class Primary implements StageInterface
 {
     const PIPE_SET_NODE = 'parent';
 
-    private $list;
-    private $stageFactory;
+    private $actions;
+    private $commandFactory;
 
-    public function __construct(array $list, StageFactory $stageFactory)
+    public function __construct(array $actions, CommandFactory $commandFactory)
     {
-        $this->stageFactory = $stageFactory;
-        $this->list = array_keys($list);
+        $this->commandFactory = $commandFactory;
+        $this->actions = $this->formatList($actions);
     }
 
     public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport, $testMode = false)
     {
         if ($testMode) {
-            $this->list = [];
+            $this->actions = [];
         }
 
-        array_walk($this->list, function($name) use (&$transport) {
-            $stage = $this->stageFactory->create($name);
-            $transport = $this->verifyTransport($stage($transport), $name);
+        array_walk($this->actions, function($name) use (&$transport) {
+            $command = $this->commandFactory->create($name);
+            $transport = $this->verifyTransport($command->go($transport), $name);
         });
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));

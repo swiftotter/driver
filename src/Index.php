@@ -25,6 +25,9 @@ use Driver\System\Application;
 use DI\ContainerBuilder;
 use Driver\System\DependencyConfig;
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $dependencyConfig = new DependencyConfig;
 
 $containerBuilder = new ContainerBuilder;

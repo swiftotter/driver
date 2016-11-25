@@ -51,7 +51,7 @@ class Configuration
 
     public function getCharset()
     {
-        if ($charset = $this->getValue('charset')) {
+        if ($charset = $this->getValue('charset', false)) {
             return $charset;
         } else {
             return 'utf8';
@@ -60,7 +60,7 @@ class Configuration
 
     public function getHost()
     {
-        if ($host = $this->getValue('host')) {
+        if ($host = $this->getValue('host', false)) {
             return $host;
         } else {
             return 'localhost';
@@ -69,7 +69,7 @@ class Configuration
 
     public function getPort()
     {
-        if ($port = $this->getValue('port')) {
+        if ($port = $this->getValue('port', false)) {
             return $port;
         } else {
             return '3306';
@@ -78,21 +78,26 @@ class Configuration
 
     public function getDatabase()
     {
-        return $this->getValue('database');
+        return $this->getValue('database', true);
     }
 
     public function getUser()
     {
-        return $this->getValue('user');
+        return $this->getValue('user', true);
     }
 
     public function getPassword()
     {
-        return $this->getValue('password');
+        return $this->getValue('password', true);
     }
 
-    private function getValue($key)
+    private function getValue($key, $required)
     {
-        return $this->configuration->getNode("connections/mysql/{$key}");
+        $value = $this->configuration->getNode("connections/mysql/{$key}");
+        if (is_array($value) && $required) {
+            throw new \Exception("{$key} is not set. Please set it in a configuration file.");
+        }
+
+        return $value;
     }
 }

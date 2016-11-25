@@ -17,31 +17,13 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Transport;
+namespace Driver\Pipes\Stage;
 
-use Driver\System\Logs\LoggerInterface;
+use Driver\Commands\Factory as CommandFactory;
 
-interface TransportInterface
+interface StageInterface
 {
-    const STATUS_FAILED = 1;
-    const STATUS_SUCCESS = 2;
-    const STATUS_PENDING = 3;
+    public function __construct(array $list, CommandFactory $commandFactory);
 
-    public function __construct($pipeSet, $statuses = [], $data = [], LoggerInterface $log = null);
-
-    public function getPipeSet();
-
-    public function getErrors();
-
-    public function getErrorsByNode($node);
-
-    public function getStatuses();
-
-    public function getStatusesByNode($node);
-
-    public function withStatus(Status $status);
-
-    public function getData($key);
-
-    public function withNewData($key, $value);
+    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport);
 }

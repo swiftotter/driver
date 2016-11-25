@@ -19,17 +19,21 @@
 
 namespace Driver\Pipes\Transport;
 
+use Driver\System\Logs\LoggerInterface;
+
 class Primary implements TransportInterface
 {
     private $data;
     private $statuses;
     private $pipeSet;
+    private $logger;
 
-    public function __construct($pipeSet, $statuses = [], $data = [])
+    public function __construct($pipeSet, $statuses = [], $data = [], LoggerInterface $logger = null)
     {
         $this->pipeSet = $pipeSet;
         $this->statuses = $statuses;
         $this->data = $data;
+        $this->logger = $logger;
     }
 
     public function getErrors()
@@ -53,7 +57,7 @@ class Primary implements TransportInterface
 
     public function withStatus(Status $status)
     {
-        return new self($this->pipeSet, array_merge($this->statuses, [ $status ]), $this->data);
+        return new self($this->pipeSet, array_merge($this->statuses, [ $status ]), $this->data, $this->logger);
     }
 
     public function getStatuses()
@@ -70,7 +74,7 @@ class Primary implements TransportInterface
 
     public function withNewData($key, $value)
     {
-        return new self($this->pipeSet, $this->statuses, array_merge($this->data, [$key => $value]));
+        return new self($this->pipeSet, $this->statuses, array_merge($this->data, [$key => $value]), $this->logger);
     }
 
     public function getData($key)

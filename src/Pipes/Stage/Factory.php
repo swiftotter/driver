@@ -13,34 +13,37 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/19/16
+ * @copyright SwiftOtter Studios, 10/29/16
  * @package default
  **/
 
-namespace Driver\Engines\MySql\Sandbox;
+namespace Driver\Pipes\Stage;
 
-use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Sandbox\Sandbox;
-use Driver\Pipes\Transport\Status;
-use Driver\Pipes\Transport\TransportInterface;
+use DI\Container;
+use Driver\Pipes\Exception\PipeSetNotFound;
+use Driver\Pipes\Master;
 use Driver\System\Configuration;
-use Symfony\Component\Console\Command\Command;
+use Driver\System\Factory\FactoryInterface;
 
-class Init extends Command implements CommandInterface
+class Factory
 {
     private $configuration;
-    private $sandbox;
+    private $container;
+    private $type;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox)
+    public function __construct(Configuration $configuration, Container $container, $type)
     {
         $this->configuration = $configuration;
-        $this->sandbox = $sandbox;
-
-        return parent::__construct('mysql-sandbox-init');
+        $this->container = $container;
+        $this->type = $type;
     }
 
-    public function go(TransportInterface $transport)
+    /**
+     * @param $pipeSet
+     * @return StageInterface
+     */
+    public function create($actions)
     {
-        return $transport->withStatus(new Status('sandbox_init', 'success'));
+        return $this->container->make($this->type, [ 'actions' => $actions ]);
     }
 }

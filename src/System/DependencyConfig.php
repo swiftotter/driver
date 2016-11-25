@@ -20,9 +20,12 @@
 namespace Driver\System;
 
 use DI;
+use Driver\Pipes\Stage;
 use Driver\Pipes\Set;
 use Driver\Pipes\Transport\Factory as TransportFactory;
 use Driver\Pipes\Transport\Primary as TransportPrimary;
+use Driver\System\Logs\LoggerInterface;
+use Driver\System\Logs\Primary;
 use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Tester\ApplicationTester as ConsoleApplicationTester;
 
@@ -31,6 +34,11 @@ class DependencyConfig
     public function get()
     {
         return [
+            LoggerInterface::class => DI\Factory(function() {
+                return new Primary();
+            }),
+            Stage\StageInterface::class => DI\factory([Stage\Primary::class, 'create']),
+            Stage\Factory::class => DI\object()->constructorParameter('type', Stage\Primary::class),
             Set\SetInterface::class => DI\factory([Set\Primary::class, 'create']),
             Set\Factory::class => DI\object()->constructorParameter('type', Set\Primary::class),
             TransportFactory::class => DI\object()->constructorParameter('type', TransportPrimary::class)

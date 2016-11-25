@@ -22,6 +22,7 @@ namespace Driver\Engines\MySql;
 use Driver\Commands\CommandInterface;
 use Driver\Pipes\Transport\Status;
 use Driver\Pipes\Transport\TransportInterface;
+use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 
 class Check extends Command implements CommandInterface
@@ -29,19 +30,22 @@ class Check extends Command implements CommandInterface
     private $configuration;
     private $databaseSize;
     private $freeSpace;
+    private $logger;
 
-    public function __construct(Configuration $configuration, $databaseSize = null, $freeSpace = null)
+    public function __construct(Configuration $configuration, LoggerInterface $logger, $databaseSize = null, $freeSpace = null)
     {
         $this->configuration = $configuration;
         $this->databaseSize = $databaseSize;
         $this->freeSpace = $freeSpace;
+        $this->logger = $logger;
 
-        return parent::__construct('MySql System Checks');
+        return parent::__construct('mysql-system-check');
     }
 
     public function go(TransportInterface $transport)
     {
         if ($this->getDatabaseSize() < $this->getDriveFreeSpace()) {
+            $this->logger->info("Database size is less than the free space available on the PHP drive.");
             return $transport->withStatus(new Status('check', 'success'));
         } else {
             throw new \Exception('There is NOT enough free space to dump the database.');

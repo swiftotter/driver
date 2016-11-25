@@ -47,7 +47,7 @@ class Factory
     private function getClassName($name)
     {
         $class = $this->runSubstitutions($this->configuration->getNode("commands/{$name}/class"));
-        if (class_exists($class) && in_array(CommandInterface::Class, class_implements($class))) {
+        if (class_exists($class) && in_array(CommandInterface::class, class_implements($class))) {
             return $class;
         } else {
             throw new \Exception("{$name} doesn't exist or it doesn't implement the type " . CommandInterface::class . ".");
@@ -75,10 +75,15 @@ class Factory
     {
         if (!$this->substitutions) {
             $databaseEngine = $this->configuration->getNode('connections/database');
+            if (is_array($databaseEngine)) {
+                $databaseEngine = 'mysql';
+            }
+
             $substitutions = [
                 'engine' => $this->configuration->getNode("engines/{$databaseEngine}/class-name")
             ];
             $this->substitutions = $substitutions;
+
         }
 
         return $this->substitutions;

@@ -13,35 +13,17 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 11/25/16
  * @package default
  **/
 
-namespace Driver\Pipes\Transport;
+namespace Driver\System\Logs;
 
-use Driver\System\Logs\LoggerInterface;
+use Psr\Log\LoggerInterface as BaseLoggerInterface;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
-interface TransportInterface
+interface LoggerInterface extends BaseLoggerInterface
 {
-    const STATUS_FAILED = 1;
-    const STATUS_SUCCESS = 2;
-    const STATUS_PENDING = 3;
-
-    public function __construct($pipeSet, $statuses = [], $data = [], LoggerInterface $log = null);
-
-    public function getPipeSet();
-
-    public function getErrors();
-
-    public function getErrorsByNode($node);
-
-    public function getStatuses();
-
-    public function getStatusesByNode($node);
-
-    public function withStatus(Status $status);
-
-    public function getData($key);
-
-    public function withNewData($key, $value);
+    public function setParams(InputInterface $input, OutputInterface $output);
 }

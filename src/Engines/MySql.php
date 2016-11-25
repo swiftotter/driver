@@ -23,27 +23,32 @@ use Driver\Commands\CommandInterface;
 use Driver\Pipes\Transport\Status;
 use Driver\Pipes\Transport\TransportInterface;
 use Driver\Engines\MySql\Configuration;
+use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 
 class MySql extends Command implements CommandInterface
 {
     private $configuration;
+    private $logger;
 
-    public function __construct(Configuration $configuration)
+    public function __construct(Configuration $configuration, LoggerInterface $logger)
     {
         $this->configuration = $configuration;
+        $this->logger = $logger;
+
         parent::__construct(null);
     }
 
     protected function configure()
     {
-        $this->setName('Connect to MySql')
+        $this->setName('mysql-connect')
             ->setDescription('Connects to MySQL.');
     }
 
     public function go(TransportInterface $transport)
     {
         $value = $this->configuration->getConnection()->getAttribute(\PDO::ATTR_CONNECTION_STATUS);
+        $this->logger->notice('Successfully connected.');
         return $transport->withStatus(new Status('connection', 'success'));
     }
 }

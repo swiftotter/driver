@@ -34,6 +34,6 @@ class PrimaryTest extends \PHPUnit_Framework_TestCase
         $configuration = new Configuration(new Configuration\YamlLoader());
         $set = DI::getContainer()->make(Primary::class, ['list' => $configuration->getNode('pipes/' . $pipeSetName)]);
 
-        $this->assertTrue(is_a($set(new Transport($pipeSetName), true), TransportInterface::class));
+        $this->assertTrue(is_a($set(new Transport($pipeSetName, [], [], new \Driver\System\Logs\Primary()), true), TransportInterface::class));
     }
 }

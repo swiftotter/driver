@@ -47,7 +47,7 @@ class Master
     public function run($set)
     {
         $pipeSet = $this->pipeSetFactory->create($set);
-        $pipeSet($set);
+        $pipeSet($this->createTransport());
     }
 
     protected function createTransport()

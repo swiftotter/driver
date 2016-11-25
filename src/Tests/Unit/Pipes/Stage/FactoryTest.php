@@ -13,38 +13,40 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/28/16
+ * @copyright SwiftOtter Studios, 11/5/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Commands;
+namespace Driver\Tests\Unit\Pipes\Stage;
 
-use Driver\Commands\Pipe;
 use Driver\Pipes\Master as PipeMaster;
-use Driver\Pipes\Set\Factory;
-use Driver\Pipes\Set\Primary;
+use Driver\Pipes\Master;
+use Driver\Pipes\Stage\Factory;
+use Driver\Pipes\Stage\Primary;
+use Driver\Pipes\Stage\StageInterface;
 use Driver\System\Configuration;
 use Driver\Tests\Unit\Helper\DI;
 
-class PipeTest extends \PHPUnit_Framework_TestCase
+class FactoryTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var Pipe $subject */
-    private $subject;
+    /** @var Factory $factory */
+    private $factory;
 
-//    protected function setUp()
-//    {
-//        $configuration = new Configuration(new Configuration\YamlLoader());
-//        $this->subject = DI::getContainer()->make(Pipe::class, 'pipeMaster');
-//    }
-//
-//    public function testNameAndDescriptionAreSet()
-//    {
-//        $configureMethod = new \ReflectionMethod($this->subject, 'configure');
-//        $configureMethod->setAccessible(true);
-//        $configureMethod->invoke($this->subject);
-//
-//        $this->assertNotEmpty($this->subject->getName());
-//    }
+    protected function setUp()
+    {
+        $this->factory = DI::getContainer()->get(Factory::class);
+    }
 
+    public function testCreateReturnsCorrectClass()
+    {
+        $this->assertTrue(is_a($this->factory->create([]), StageInterface::class));
+    }
 
+    private function runInaccessibleFunction($class, $name, $argument = null)
+    {
+        $method = new \ReflectionMethod($class, $name);
+        $method->setAccessible(true);
+
+        return $method->invoke($this->factory, $argument);
+    }
 }

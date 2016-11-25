@@ -13,34 +13,18 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/19/16
+ * @copyright SwiftOtter Studios, 11/25/16
  * @package default
  **/
 
 namespace Driver\Engines\MySql\Sandbox;
 
-use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Sandbox\Sandbox;
-use Driver\Pipes\Transport\Status;
-use Driver\Pipes\Transport\TransportInterface;
-use Driver\System\Configuration;
-use Symfony\Component\Console\Command\Command;
-
-class Init extends Command implements CommandInterface
+class Connection
 {
-    private $configuration;
-    private $sandbox;
+    private $connection;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox)
+    public function __construct(Sandbox $sandbox, Ssl $ssl)
     {
-        $this->configuration = $configuration;
-        $this->sandbox = $sandbox;
 
-        return parent::__construct('mysql-sandbox-init');
-    }
-
-    public function go(TransportInterface $transport)
-    {
-        return $transport->withStatus(new Status('sandbox_init', 'success'));
     }
 }

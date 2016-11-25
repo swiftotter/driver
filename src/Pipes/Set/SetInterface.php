@@ -19,11 +19,11 @@
 
 namespace Driver\Pipes\Set;
 
-use Driver\Commands\Factory as CommandFactory;
+use Driver\Pipes\Stage\Factory as StageFactory;
 
 interface SetInterface
 {
-    public function __construct(array $list, CommandFactory $commandFactory);
+    public function __construct(array $list, StageFactory $stageFactory);
 
     public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport);
 }

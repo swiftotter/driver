@@ -21,16 +21,20 @@ namespace Driver\Pipes\Transport;
 
 use Driver\Pipes\Transport;
 use Driver\System\Configuration;
+use Driver\System\Log;
+use Driver\System\Logs\LoggerInterface;
 
 class Factory
 {
     private $configuration;
     private $type;
+    private $logger;
 
-    public function __construct(Configuration $configuration, $type)
+    public function __construct(Configuration $configuration, $type, LoggerInterface $logger)
     {
         $this->configuration = $configuration;
         $this->type = $type;
+        $this->logger = $logger;
     }
 
     public function create($pipeSet)

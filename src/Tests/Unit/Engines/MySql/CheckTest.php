@@ -34,6 +34,6 @@ class CheckTest extends \PHPUnit_Framework_TestCase
         /** @var Check $class */
         $class = DI::getContainer()->get(Check::class);
 
-        $this->assertTrue(is_a($class->go(new Primary(Master::class)), TransportInterface::class));
+        $this->assertTrue(is_a($class->go(new Primary(Master::class, [], [], new \Driver\System\Logs\Primary())), TransportInterface::class));
     }
 }

@@ -13,35 +13,28 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 11/24/16
  * @package default
  **/
 
-namespace Driver\Pipes\Transport;
+namespace Driver\System;
 
-use Driver\System\Logs\LoggerInterface;
+use GuzzleHttp\Client;
 
-interface TransportInterface
+class RemoteIP
 {
-    const STATUS_FAILED = 1;
-    const STATUS_SUCCESS = 2;
-    const STATUS_PENDING = 3;
+    private $ip;
 
-    public function __construct($pipeSet, $statuses = [], $data = [], LoggerInterface $log = null);
+    public function getPublicIP()
+    {
+        if (!$this->ip) {
+            $client = new Client();
+            $response = $client->request('GET', 'https://api.ipify.org?format=json');
+            $body = json_decode($response->getBody(), true);
 
-    public function getPipeSet();
+            $this->ip = $body['ip'];
+        }
 
-    public function getErrors();
-
-    public function getErrorsByNode($node);
-
-    public function getStatuses();
-
-    public function getStatusesByNode($node);
-
-    public function withStatus(Status $status);
-
-    public function getData($key);
-
-    public function withNewData($key, $value);
+        return $this->ip;
+    }
 }
