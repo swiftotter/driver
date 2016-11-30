@@ -13,18 +13,38 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 11/25/16
  * @package default
  **/
 
-namespace Driver\Pipes\Stage;
+namespace Driver\System;
 
-use Driver\Commands\Factory as CommandFactory;
-use Driver\System\YamlFormatter;
-
-interface StageInterface
+class YamlFormatter
 {
-    public function __construct(array $list, CommandFactory $commandFactory, YamlFormatter $yamlFormatter);
+    /**
+     * Converts an array like:
+     * 0 => [
+     *      100 => "test"
+     * ]
+     * TO:
+     * [
+     *      100 => "test"
+     * ]
+     * @param array $input
+     */
+    public function extractToAssociativeArray($input)
+    {
+        $output = array_reduce($input, function($commands, array $item) {
+            array_walk($item, function($name, $id) use (&$commands) {
+                while (isset($commands[$id])) {
+                    $id++;
+                }
+                $commands[$id] = $name;
+            });
 
-    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport);
+            return $commands;
+        }, []);
+
+        return $output;
+    }
 }

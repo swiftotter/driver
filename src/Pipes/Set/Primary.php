@@ -21,6 +21,9 @@ namespace Driver\Pipes\Set;
 
 use Driver\Pipes\Stage\Factory as StageFactory;
 use Driver\Pipes\Transport\Status;
+use Driver\System\YamlFormatter;
+use Haystack\Functional\HArrayFilter;
+use Haystack\HArray;
 
 class Primary implements SetInterface
 {
@@ -29,10 +32,10 @@ class Primary implements SetInterface
     private $list;
     private $stageFactory;
 
-    public function __construct(array $list, StageFactory $stageFactory)
+    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter)
     {
         $this->stageFactory = $stageFactory;
-        $this->list = array_keys($list);
+        $this->list = $yamlFormatter->extractToAssociativeArray($list);
     }
 
     public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport, $testMode = false)
@@ -41,10 +44,14 @@ class Primary implements SetInterface
             $this->list = [];
         }
 
-        array_walk($this->list, function($name) use (&$transport) {
-            $stage = $this->stageFactory->create($name);
-            $transport = $this->verifyTransport($stage($transport), $name);
-        });
+        (new HArray($this->list))
+            ->filter(function($actions) {
+                return count($actions) > 0;
+            })
+            ->walk(function($actions, $name) use (&$transport){
+                $stage = $this->stageFactory->create($actions);
+                $transport = $this->verifyTransport($stage($transport), $name);
+            });
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
@@ -56,23 +63,5 @@ class Primary implements SetInterface
         }
 
         return $transport;
-    }
-
-    private function formatList(array $list)
-    {
-        $output = array_reduce($list, function($commands, array $item) {
-            array_walk($item, function($name, $id) use (&$commands) {
-                while (isset($commands[$id])) {
-                    $id++;
-                }
-                $commands[$id] = $name;
-            });
-
-            return $commands;
-        }, []);
-
-        ksort($output);
-
-        return $output;
     }
 }

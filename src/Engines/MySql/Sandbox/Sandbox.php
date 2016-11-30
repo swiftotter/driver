@@ -42,7 +42,7 @@ class Sandbox
     private $password;
     private $statuses;
 
-    public function __construct(Configuration $configuration, RemoteIP $remoteIpFetcher, LoggerInterface $logger, $disableInstantiation = false)
+    public function __construct(Configuration $configuration, RemoteIP $remoteIpFetcher, LoggerInterface $logger, $disableInstantiation = true)
     {
         $this->configuration = $configuration;
         $this->remoteIpFetcher = $remoteIpFetcher;

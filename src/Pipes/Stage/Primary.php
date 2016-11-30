@@ -21,6 +21,8 @@ namespace Driver\Pipes\Stage;
 
 use Driver\Commands\Factory as CommandFactory;
 use Driver\Pipes\Transport\Status;
+use Driver\System\YamlFormatter;
+use React\Promise\Promise;
 
 class Primary implements StageInterface
 {
@@ -29,10 +31,10 @@ class Primary implements StageInterface
     private $actions;
     private $commandFactory;
 
-    public function __construct(array $actions, CommandFactory $commandFactory)
+    public function __construct(array $actions, CommandFactory $commandFactory, YamlFormatter $yamlFormatter)
     {
         $this->commandFactory = $commandFactory;
-        $this->actions = $this->formatList($actions);
+        $this->actions = $yamlFormatter->extractToAssociativeArray($actions);
     }
 
     public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport, $testMode = false)
@@ -40,6 +42,8 @@ class Primary implements StageInterface
         if ($testMode) {
             $this->actions = [];
         }
+
+        $promise = new Promise()
 
         array_walk($this->actions, function($name) use (&$transport) {
             $command = $this->commandFactory->create($name);

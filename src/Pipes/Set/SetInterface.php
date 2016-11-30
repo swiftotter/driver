@@ -20,10 +20,11 @@
 namespace Driver\Pipes\Set;
 
 use Driver\Pipes\Stage\Factory as StageFactory;
+use Driver\System\YamlFormatter;
 
 interface SetInterface
 {
-    public function __construct(array $list, StageFactory $stageFactory);
+    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter);
 
     public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport);
 }

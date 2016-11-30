@@ -41,6 +41,7 @@ class Init extends Command implements CommandInterface
 
     public function go(TransportInterface $transport)
     {
+        $this->sandbox->init();
         return $transport->withStatus(new Status('sandbox_init', 'success'));
     }
 }
