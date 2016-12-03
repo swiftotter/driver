@@ -22,6 +22,7 @@ namespace Driver\Pipes\Stage;
 use Driver\Commands\Factory as CommandFactory;
 use Driver\Pipes\Transport\Status;
 use Driver\System\YamlFormatter;
+use React\Promise\Deferred;
 use React\Promise\Promise;
 
 class Primary implements StageInterface
@@ -43,12 +44,21 @@ class Primary implements StageInterface
             $this->actions = [];
         }
 
-        $promise = new Promise()
+        $promises = array_map(function($name) use ($transport) {
+            $resolver = function(callable $resolve, callable $reject) use ($name, $transport) {
+                try {
+                    $command = $this->commandFactory->create($name);
+                    $resolve($this->verifyTransport($command->go($transport), $name));
+                } catch (\Exception $ex) {
+                    $reject($ex);
+                }
+            };
+            $canceller = function(callable $resolve, callable $reject){};
+            return new Promise($resolver, $canceller);
+        }, $this->actions);
 
-        array_walk($this->actions, function($name) use (&$transport) {
-            $command = $this->commandFactory->create($name);
-            $transport = $this->verifyTransport($command->go($transport), $name);
-        });
+        $compiled = \React\Promise\all($promises);
+
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
