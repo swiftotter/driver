@@ -42,6 +42,18 @@ class Init extends Command implements CommandInterface
     public function go(TransportInterface $transport)
     {
         $this->sandbox->init();
+        $tries = 0;
+        $maxTries = 50;
+
+        while(!($active = $this->sandbox->getInstanceActive()) && $tries < 50) {
+            $tries++;
+            sleep(6);
+        }
+
+        if (!$active && $tries === $maxTries) {
+            throw new \Exception('RDS instance was not able to be started.');
+        }
+
         return $transport->withStatus(new Status('sandbox_init', 'success'));
     }
 }

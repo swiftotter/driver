@@ -24,6 +24,7 @@ use Aws\Ec2\Ec2Client;
 use Aws\Rds\RdsClient;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
+use Driver\System\Random;
 use Driver\System\RemoteIP;
 
 class Sandbox
@@ -33,8 +34,10 @@ class Sandbox
     private $initialized;
     private $remoteIpFetcher;
     private $logger;
+    private $random;
 
     private $securityGroupId;
+    private $securityGroupName;
 
     private $dbName;
     private $identifier;
@@ -42,11 +45,12 @@ class Sandbox
     private $password;
     private $statuses;
 
-    public function __construct(Configuration $configuration, RemoteIP $remoteIpFetcher, LoggerInterface $logger, $disableInstantiation = true)
+    public function __construct(Configuration $configuration, RemoteIP $remoteIpFetcher, LoggerInterface $logger, $disableInstantiation = true, Random $random)
     {
         $this->configuration = $configuration;
         $this->remoteIpFetcher = $remoteIpFetcher;
         $this->logger = $logger;
+        $this->random = $random;
 
         if (!$disableInstantiation) {
             $this->init();
@@ -130,29 +134,29 @@ class Sandbox
                 'Description' => 'Temporary security group for Driver uploads'
             ]);
 
-            $client->authorizeSecurityGroupIngress([
-                'GroupName' => $name,
-                'IpPermissions' => [
-                    [
-                        'IpProtocol' => 'tcp',
-                        "IpRanges" => [
-                            [
-                                "CidrIp" => $this->getPublicIp() . '/32'
-                            ]
-                        ],
-                        "ToPort" => "3306",
-                        "FromPort" => "3306"
-                    ]
-                ]
-            ]);
-
-//            print_r($securityGroup);
-//            print_r($authorization);
-
             $this->securityGroupId = $securityGroup['GroupId'];
         }
 
         return $this->securityGroupId;
+    }
+
+    public function authorizeIp()
+    {
+        $this->getEc2Client()->authorizeSecurityGroupIngress([
+            'GroupName' => $this->getSecurityGroupName(),
+            'IpPermissions' => [
+                [
+                    'IpProtocol' => 'tcp',
+                    "IpRanges" => [
+                        [
+                            "CidrIp" => $this->getPublicIp() . '/32'
+                        ]
+                    ],
+                    "ToPort" => "3306",
+                    "FromPort" => "3306"
+                ]
+            ]
+        ]);
     }
 
     private function getPublicIp()
@@ -160,10 +164,10 @@ class Sandbox
         return $this->remoteIpFetcher->getPublicIP();
     }
 
-    private function getDBName()
+    public function getDBName()
     {
         if (!$this->dbName) {
-            $this->dbName = $this->configuration->getNode('connections/rds/instance-name');
+            $this->dbName = $this->configuration->getNode('connections/rds/instance-db-name');
 
             if (!$this->dbName) {
                 $this->dbName = $this->getRandomString(12);
@@ -186,7 +190,20 @@ class Sandbox
         return $this->identifier;
     }
 
-    private function getUsername()
+    public function getSecurityGroupName()
+    {
+        if (!$this->securityGroupName) {
+            $this->securityGroupName = $this->configuration->getNode('connections/rds/security-group-name');
+
+            if (!$this->securityGroupName) {
+                $this->securityGroupName = 'driver-temp-' . $this->getRandomString(6);
+            }
+        }
+
+        return $this->securityGroupName;
+    }
+
+    public function getUsername()
     {
         if (!$this->username) {
             $this->username = $this->configuration->getNode('connections/rds/instance-username');
@@ -199,7 +216,7 @@ class Sandbox
         return $this->username;
     }
 
-    private function getPassword()
+    public function getPassword()
     {
         if (!$this->password) {
             $this->password = $this->configuration->getNode('connections/rds/instance-password');
@@ -214,7 +231,7 @@ class Sandbox
 
     private function getRandomString($length)
     {
-        return bin2hex(openssl_random_pseudo_bytes(round($length/2)));
+        return $this->random->getRandomString($length);
     }
 
     private function getEc2Client()

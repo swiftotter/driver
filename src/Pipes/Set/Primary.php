@@ -24,6 +24,11 @@ use Driver\Pipes\Transport\Status;
 use Driver\System\YamlFormatter;
 use Haystack\Functional\HArrayFilter;
 use Haystack\HArray;
+use Icicle\Concurrent\Forking\Fork;
+use Icicle\Concurrent\Threading\Thread;
+use Icicle\Loop;
+use Icicle\Coroutine;
+use React\Promise\Deferred;
 
 class Primary implements SetInterface
 {
@@ -47,10 +52,9 @@ class Primary implements SetInterface
         (new HArray($this->list))
             ->filter(function($actions) {
                 return count($actions) > 0;
-            })
-            ->walk(function($actions, $name) use (&$transport){
+            })->walk(function($actions, $name) use ($transport){
                 $stage = $this->stageFactory->create($actions);
-                $transport = $this->verifyTransport($stage($transport), $name);
+                return $this->verifyTransport($stage($transport), $name);
             });
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));

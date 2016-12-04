@@ -32,7 +32,7 @@ class Check extends Command implements CommandInterface
     private $freeSpace;
     private $logger;
 
-    public function __construct(Configuration $configuration, LoggerInterface $logger, $databaseSize = null, $freeSpace = null)
+    public function __construct(Connection $configuration, LoggerInterface $logger, $databaseSize = null, $freeSpace = null)
     {
         $this->configuration = $configuration;
         $this->databaseSize = $databaseSize;

@@ -22,7 +22,7 @@ namespace Driver\Engines;
 use Driver\Commands\CommandInterface;
 use Driver\Pipes\Transport\Status;
 use Driver\Pipes\Transport\TransportInterface;
-use Driver\Engines\MySql\Configuration;
+use Driver\Engines\MySql\Connection;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 
@@ -31,7 +31,7 @@ class MySql extends Command implements CommandInterface
     private $configuration;
     private $logger;
 
-    public function __construct(Configuration $configuration, LoggerInterface $logger)
+    public function __construct(Connection $configuration, LoggerInterface $logger)
     {
         $this->configuration = $configuration;
         $this->logger = $logger;

@@ -9,8 +9,8 @@ commands:
     class: \Driver\Engines\MySql\Sandbox\Init
 #  export-data-from-source:
 #    class: \Driver\Engines\MySql\Export
-#  import-data-into-sandbox:
-#    class: \Driver\Engines\MySql\Sandbox\Import
+  import-data-into-sandbox:
+    class: \Driver\Engines\MySql\Sandbox\Import
 #  export-data-from-sandbox:
 #    class: \Driver\Engines\MySql\Sandbox\Export
 #  shutdown-sandbox:

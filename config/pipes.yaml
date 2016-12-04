@@ -6,7 +6,7 @@ pipes:
       - 300: start-sandbox
 #    - 400: export-data-from-source
     - import:
-#    - 500: import-data-into-sandbox
+      - 100: import-data-into-sandbox
     - commands:
   # commands go between 501 and 1999
 #    - 2000: export-data-from-sandbox

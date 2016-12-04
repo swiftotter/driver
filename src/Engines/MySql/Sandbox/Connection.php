@@ -19,12 +19,77 @@
 
 namespace Driver\Engines\MySql\Sandbox;
 
-class Connection
+use Driver\Engines\ConnectionInterface;
+use Driver\Engines\ConnectionTrait;
+use Driver\System\Configuration;
+
+class Connection implements ConnectionInterface
 {
-    private $connection;
+    use ConnectionTrait;
 
-    public function __construct(Sandbox $sandbox, Ssl $ssl)
+    private $configuration;
+    private $sandbox;
+    private $ssl;
+
+    public function __construct(Configuration $configuration, Sandbox $sandbox, Ssl $ssl)
     {
+        $this->configuration = $configuration;
+        $this->sandbox = $sandbox;
+        $this->ssl = $ssl;
+    }
 
+    public function test($onFailure)
+    {
+        try {
+            $this->getConnection();
+        } catch (\Exception $ex) {
+            if (is_callable($onFailure)) {
+                $onFailure($this);
+            }
+        }
+    }
+
+    public function authorizeIp()
+    {
+        $this->sandbox->authorizeIp();
+    }
+
+    public function getCharset()
+    {
+        if ($charset = $this->configuration->getNode('connections/mysql/charset')) {
+            return $charset;
+        } else {
+            return 'utf8';
+        }
+    }
+
+    public function getDSN()
+    {
+        return "mysql:host={$this->getHost()};dbname={$this->getDatabase()};port={$this->getPort()};charset={$this->getCharset()}";
+    }
+
+    public function getHost()
+    {
+        return $this->sandbox->getEndpointAddress();
+    }
+
+    public function getPort()
+    {
+        return $this->sandbox->getEndpointPort();
+    }
+
+    public function getDatabase()
+    {
+        return $this->sandbox->getDBName();
+    }
+
+    public function getUser()
+    {
+        return $this->sandbox->getUsername();
+    }
+
+    public function getPassword()
+    {
+        return $this->sandbox->getPassword();
     }
 }

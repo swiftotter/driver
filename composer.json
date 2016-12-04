@@ -12,7 +12,9 @@
         "phpunit/dbunit": "^2.0",
         "guzzlehttp/guzzle": "^6.2",
         "psr/log": "^1.0",
-        "react/promise": "^2.4"
+        "react/promise": "^2.4",
+        "icicleio/icicle": "^0.9.6",
+        "icicleio/concurrent": "^0.3.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^2.7",

@@ -19,29 +19,18 @@
 
 namespace Driver\Engines\MySql;
 
-class Configuration
+use Driver\Engines\ConnectionTrait;
+use Driver\Engines\ConnectionInterface;
+
+class Connection implements ConnectionInterface
 {
+    use ConnectionTrait;
+
     private $configuration;
-    private $connection;
 
     public function __construct(\Driver\System\Configuration $configuration)
     {
         $this->configuration = $configuration;
-    }
-
-    public function getConnection()
-    {
-        if (!$this->connection) {
-            $options = [
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                \PDO::ATTR_EMULATE_PREPARES => false
-            ];
-
-            $this->connection = new \PDO($this->getDSN(), $this->getUser(), $this->getPassword(), $options);
-        }
-
-        return $this->connection;
     }
 
     public function getDSN()

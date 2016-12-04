@@ -19,22 +19,56 @@
 
 namespace Driver\Engines\MySql\Sandbox;
 
+use Driver\Commands\CommandInterface;
+use Driver\Engines\MySql\Connection as LocalConnection;
+use Driver\Pipes\Transport\Status;
+use Driver\Pipes\Transport\TransportInterface;
+use Symfony\Component\Console\Command\Command;
+use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
+
 class Import extends Command implements CommandInterface
 {
-    private $configuration;
-    private $sandbox;
+    private $localConnection;
+    private $sandboxConnection;
+    private $ssl;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox)
+    public function __construct(LocalConnection $localConnection, Ssl $ssl, SandboxConnection $sandboxConnection)
     {
-        $this->configuration = $configuration;
-        $this->sandbox = $sandbox;
+        $this->localConnection = $localConnection;
+        $this->sandboxConnection = $sandboxConnection;
+        $this->ssl = $ssl;
 
-        return parent::__construct('mysql-sandbox-init');
+        return parent::__construct('mysql-sandbox-import');
     }
 
     public function go(TransportInterface $transport)
     {
-        $this->sandbox->init();
-        return $transport->withStatus(new Status('sandbox_init', 'success'));
+        $this->sandboxConnection->test(function(SandboxConnection $connection) {
+            $connection->authorizeIp();
+        });
+
+        if ($results = system($this->assembleCommand())) {
+            throw new \Exception('Import to RDS instance failed: ' . $results);
+        } else {
+            return $transport->withStatus(new Status('sandbox_init', 'success'));
+        }
+    }
+
+    public function assembleCommand()
+    {
+        return implode(' ', [
+            "mysqldump --user={$this->localConnection->getUser()}",
+                "--password={$this->localConnection->getPassword()}",
+                "--host={$this->localConnection->getHost()}",
+                "{$this->localConnection->getDatabase()}",
+            "|",
+            "mysql --user={$this->sandboxConnection->getUser()}",
+                "--password={$this->sandboxConnection->getPassword()}",
+                "--host={$this->sandboxConnection->getHost()}",
+                "--port={$this->sandboxConnection->getPort()}",
+                "--ssl-mode=VERIFY_CA",
+                "--ssl-ca={$this->ssl->getPath()}",
+                "{$this->sandboxConnection->getDatabase()}"
+        ]);
     }
 }
