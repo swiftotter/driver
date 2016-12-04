@@ -39,9 +39,22 @@ interface TransportInterface
 
     public function getStatusesByNode($node);
 
+    /**
+     * @param Status $status
+     * @return self
+     */
     public function withStatus(Status $status);
 
+    /**
+     * @param string $key
+     * @return mixed
+     */
     public function getData($key);
 
+    /**
+     * @param string $key
+     * @param string $value
+     * @return self
+     */
     public function withNewData($key, $value);
 }

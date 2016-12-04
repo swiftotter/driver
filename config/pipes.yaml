@@ -8,8 +8,9 @@ pipes:
     - import:
       - 100: import-data-into-sandbox
     - commands:
-  # commands go between 501 and 1999
-#    - 2000: export-data-from-sandbox
+#   commands go between 501 and 1999
+    - export:
+      - 2000: export-data-from-sandbox
     - shutdown:
 #    - 2100: shutdown-sandbox
   # export procedures go after 2100

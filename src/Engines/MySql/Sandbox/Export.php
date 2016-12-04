@@ -22,6 +22,7 @@ namespace Driver\Engines\MySql\Sandbox;
 use Driver\Commands\CommandInterface;
 use Driver\Pipes\Transport\Status;
 use Driver\Pipes\Transport\TransportInterface;
+use Driver\System\Configuration;
 use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
 
@@ -31,12 +32,14 @@ class Export extends Command implements CommandInterface
     private $ssl;
     private $random;
     private $filename;
+    private $configuration;
 
-    public function __construct(Connection $connection, Ssl $ssl, Random $random)
+    public function __construct(Connection $connection, Ssl $ssl, Random $random, Configuration $configuration)
     {
         $this->connection = $connection;
         $this->ssl = $ssl;
         $this->random = $random;
+        $this->configuration = $configuration;
 
         return parent::__construct('mysql-sandbox-export');
     }
@@ -51,31 +54,48 @@ class Export extends Command implements CommandInterface
             throw new \Exception('Import to RDS instance failed: ' . $results);
         } else {
             return $transport
-                ->withNewData('output_file', $this->getFilename())
+                ->withNewData('completed_file', $this->getFilename())
                 ->withStatus(new Status('sandbox_init', 'success'));
         }
     }
 
     private function assembleCommand()
     {
-        return implode(' ', [
+        $command = implode(' ', [
             "mysqldump --user={$this->connection->getUser()}",
             "--password={$this->connection->getPassword()}",
             "--host={$this->connection->getHost()}",
             "--port={$this->connection->getPort()}",
             "--ssl-mode=VERIFY_CA",
             "--ssl-ca={$this->ssl->getPath()}",
-            "{$this->connection->getDatabase()}",
-            ">",
-            "{$this->getFilename()}"
+            "{$this->connection->getDatabase()}"
         ]);
+
+        if ($this->compressOutput()) {
+            $command .= implode(' ', [
+                '|',
+                'gzip --best'
+            ]);
+        }
+
+        $command .= implode(' ', [
+            '>',
+            $this->getFilename()
+        ]);
+
+        return $command;
+    }
+
+    private function compressOutput()
+    {
+        return (bool)$this->configuration->getNode('configuration/compress-output') === true;
     }
 
     private function getFilename()
     {
         if (!$this->filename) {
             do {
-                $file = '/tmp/driver_tmp_' . $this->random->getRandomString(10) . '.sql';
+                $file = '/tmp/driver_tmp_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
             } while (file_exists($file));
 
             $this->filename = $file;

@@ -11,8 +11,8 @@ commands:
 #    class: \Driver\Engines\MySql\Export
   import-data-into-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Import
-#  export-data-from-sandbox:
-#    class: \Driver\Engines\MySql\Sandbox\Export
+  export-data-from-sandbox:
+    class: \Driver\Engines\MySql\Sandbox\Export
 #  shutdown-sandbox:
 #    class: \Driver\Engines\MySql\Sandbox\Shutdown
 #  call-post-webhook:
