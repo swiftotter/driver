@@ -13,6 +13,8 @@ commands:
     class: \Driver\Engines\MySql\Sandbox\Import
   export-data-from-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Export
+  upload-data-to-s3:
+    class: \Driver\Engines\S3\Upload
 #  shutdown-sandbox:
 #    class: \Driver\Engines\MySql\Sandbox\Shutdown
 #  call-post-webhook:

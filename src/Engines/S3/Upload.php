@@ -19,6 +19,7 @@
 
 namespace Driver\Engines\S3;
 
+use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
 use Driver\Pipes\Transport\TransportInterface;
@@ -27,7 +28,7 @@ use Symfony\Component\Console\Command\Command;
 
 class Upload extends Command implements CommandInterface
 {
-    private $configuration;
+    protected $configuration;
 
     public function __construct(Configuration $configuration)
     {
@@ -38,7 +39,38 @@ class Upload extends Command implements CommandInterface
     public function go(TransportInterface $transport)
     {
         $client = $this->getS3Client();
-        $client->upload();
+        $output = $client->putObject([
+            'Bucket' => $this->getBucket(),
+            'Key' => $this->getFileKey(),
+            'SourceFile' => $transport->getData('completed_file'),
+            'ContentType' => 'application/gzip'
+        ]);
+
+        return $transport->withNewData('s3_url', $this->getObjectUrl($output));
+    }
+
+    private function getObjectUrl(\Aws\Result $data)
+    {
+        return $data->get('ObjectURL');
+    }
+
+    private function getFileKey()
+    {
+        if ($this->compressOutput()) {
+            return $this->configuration->getNode('connections/s3/compressed-file-key');
+        } else {
+            return $this->configuration->getNode('connections/s3/uncompressed-file-key');
+        }
+    }
+
+    private function compressOutput()
+    {
+        return (bool)$this->configuration->getNode('configuration/compress-output') === true;
+    }
+
+    private function getBucket()
+    {
+        return $this->configuration->getNode('connections/s3/bucket');
     }
 
     private function getS3Client()
@@ -50,9 +82,9 @@ class Upload extends Command implements CommandInterface
     {
         $parameters = [
             'credentials' => [
-                'key' => $this->configuration->getNode("connections/ec2/key"),
-                'secret' => $this->configuration->getNode("connections/ec2/secret")],
-            'region' => $this->configuration->getNode("connections/ec2/region"),
+                'key' => $this->configuration->getNode("connections/s3/key"),
+                'secret' => $this->configuration->getNode("connections/s3/secret")],
+            'region' => $this->configuration->getNode("connections/s3/region"),
             'version' => '2006-03-01'
         ];
         return $parameters;
