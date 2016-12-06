@@ -32,14 +32,13 @@ class YamlLoader
         'pipes',
         'commands',
         'engines',
-        'workshop',
         'connections',
         'config'
     ];
 
     public function get()
     {
-        return $this->getFiltered();
+        return $this->getAllFiltered();
     }
 
     public function getIndividual($file)
@@ -47,16 +46,38 @@ class YamlLoader
         return $this->getFiltered($file);
     }
 
-    protected function getFiltered($file = false)
+    protected function getFiltered($file)
     {
-        $directories = new \RecursiveDirectoryIterator(realpath(__DIR__.'/../../../'));
-        $iterator = new \RecursiveIteratorIterator($directories);
+        $searchPath = new SearchPath(__DIR__, $this->allowedFolders);
+        $output = [];
 
-        foreach (new \RegexIterator($iterator, '/config(\.d)?\/.+\.yaml$/i') as $path) {
-            if ($this->isAllowedFile($path, $file)) {
-                yield $path;
+        foreach ($searchPath as $folder) {
+            $path = $folder . '/' . $file . '.' . $this->fileExtension;
+
+            if (file_exists($path)) {
+                $output[] = $path;
             }
         }
+
+        return $output;
+    }
+
+    protected function getAllFiltered()
+    {
+        $searchPath = new SearchPath(__DIR__, $this->allowedFolders);
+        $output = [];
+
+        foreach ($searchPath as $folder) {
+            $files = array_filter($this->allowedFiles, function($file) use ($folder) {
+                return file_exists($folder . '/' . $file . $this->fileExtension);
+            });
+
+            $output = array_merge($output, array_map(function($file) use ($folder) {
+                return $folder . '/' . $file . $this->fileExtension;
+            }, $files));
+        }
+
+        return $output;
     }
 
     /**

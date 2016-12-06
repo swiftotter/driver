@@ -7,15 +7,13 @@ commands:
     class: \Driver\Engines\MySql\Check
   start-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Init
-#  export-data-from-source:
-#    class: \Driver\Engines\MySql\Export
   import-data-into-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Import
   export-data-from-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Export
   upload-data-to-s3:
     class: \Driver\Engines\S3\Upload
-#  shutdown-sandbox:
-#    class: \Driver\Engines\MySql\Sandbox\Shutdown
-#  call-post-webhook:
-#    class: \Driver\Commands\Webhook\Post
+  shutdown-sandbox:
+    class: \Driver\Engines\MySql\Sandbox\Shutdown
+  call-post-webhook:
+    class: \Driver\Commands\Webhook\PostCommand

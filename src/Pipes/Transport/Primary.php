@@ -77,6 +77,11 @@ class Primary implements TransportInterface
         return new self($this->pipeSet, $this->statuses, array_merge($this->data, [$key => $value]), $this->logger);
     }
 
+    public function getAllData()
+    {
+        return $this->data;
+    }
+
     public function getData($key)
     {
         return isset($this->data[$key]) ? $this->data[$key] : false;

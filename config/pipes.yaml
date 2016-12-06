@@ -13,6 +13,7 @@ pipes:
       - 100: export-data-from-sandbox
       - 200: upload-data-to-s3
     - shutdown:
-#    - 2100: shutdown-sandbox
+      - 100: shutdown-sandbox
+      - 200: call-post-webhook
   # export procedures go after 2100
   empty: []

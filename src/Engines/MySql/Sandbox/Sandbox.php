@@ -92,6 +92,33 @@ class Sandbox
         return true;
     }
 
+    public function shutdown()
+    {
+        if ($this->initialized || $this->configuration->getNode('connections/rds/instance-name') || $this->getInstanceActive()) {
+            $this->logger->info("Using static RDS instance and will not shutdown: " . $this->getIdentifier());
+            return false;
+        }
+
+        $client = $this->getRdsClient();
+        $client->deleteDBInstance([
+            'DBInstanceIdentifier' => $this->getIdentifier(),
+            'SkipFinalSnapshot' => true
+        ]);
+
+        return true;
+    }
+
+    public function getJson()
+    {
+        return [
+            'host' => $this->getEndpointAddress(),
+            'port' => $this->getEndpointPort(),
+            'user' => $this->getUsername(),
+            'password' => $this->getPassword(),
+            'database' => $this->getDBName()
+        ];
+    }
+
     public function getInstanceActive()
     {
         $status = $this->getInstanceStatus();

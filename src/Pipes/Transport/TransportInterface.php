@@ -29,15 +29,37 @@ interface TransportInterface
 
     public function __construct($pipeSet, $statuses = [], $data = [], LoggerInterface $log = null);
 
+    /**
+     * @return array
+     */
     public function getPipeSet();
 
+    /**
+     * @return array
+     */
     public function getErrors();
 
+    /**
+     * @param $node
+     * @return array
+     */
     public function getErrorsByNode($node);
 
+    /**
+     * @return array
+     */
     public function getStatuses();
 
+    /**
+     * @param $node
+     * @return array
+     */
     public function getStatusesByNode($node);
+
+    /**
+     * @return array
+     */
+    public function getAllData();
 
     /**
      * @param Status $status
