@@ -5,3 +5,4 @@ composer.lock
 /vagrant/
 /config.d/
 .DS_Store
+sample/
