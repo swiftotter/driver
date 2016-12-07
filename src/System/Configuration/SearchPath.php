@@ -38,15 +38,22 @@ class SearchPath implements \Iterator
 
     private function format($directory)
     {
+        $hasVendorDir = false;
         if (strpos($directory, self::VENDOR_DIRECTORY) !== false) {
             list($initial, $continue) = explode(self::VENDOR_DIRECTORY, $directory);
+            $hasVendorDir = true;
         } else {
             $topOfSearch = strlen(realpath($directory.'/../../../'));
-            $initial = substr($directory, 0, $topOfSearch);
+            $initial = [ substr($directory, 0, $topOfSearch) ];
             $continue = substr($directory, $topOfSearch+1);
         }
-        return $this->merge(array_merge([$initial], explode('/', $continue)));
 
+        $paths = $this->merge(array_merge($initial, explode('/', $continue)));
+        if ($hasVendorDir) {
+            $paths = array_merge($paths, $this->loadVendorDirectories($initial));
+        }
+
+        return $paths;
     }
 
     private function merge($directories)
@@ -58,6 +65,11 @@ class SearchPath implements \Iterator
             $acc[] = $currentPath;
             return $acc;
         }, []);
+    }
+
+    private function loadVendorDirectories($path)
+    {
+        return glob($path . "*/*/");
     }
 
     private function findFolders($paths)
