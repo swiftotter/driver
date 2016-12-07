@@ -41,6 +41,8 @@ class SearchPath implements \Iterator
         $hasVendorDir = false;
         if (strpos($directory, self::VENDOR_DIRECTORY) !== false) {
             list($initial, $continue) = explode(self::VENDOR_DIRECTORY, $directory);
+            $initial = [ $initial ];
+            $continue = self::VENDOR_DIRECTORY . $continue;
             $hasVendorDir = true;
         } else {
             $topOfSearch = strlen(realpath($directory.'/../../../'));
@@ -50,7 +52,7 @@ class SearchPath implements \Iterator
 
         $paths = $this->merge(array_merge($initial, explode('/', $continue)));
         if ($hasVendorDir) {
-            $paths = array_merge($paths, $this->loadVendorDirectories($initial));
+            $paths = array_merge($paths, $this->loadVendorDirectories($initial[0]));
         }
 
         return $paths;
@@ -61,7 +63,10 @@ class SearchPath implements \Iterator
         $currentPath = '';
 
         return array_reduce($directories, function($acc, $path) use (&$currentPath) {
-            $currentPath .= $path . '/';
+            $currentPath .= $path;
+            if (!substr($currentPath, -1) === '/') {
+                $currentPath .= '/';
+            }
             $acc[] = $currentPath;
             return $acc;
         }, []);
@@ -69,7 +74,7 @@ class SearchPath implements \Iterator
 
     private function loadVendorDirectories($path)
     {
-        return glob($path . "*/*/");
+        return glob($path . self::VENDOR_DIRECTORY . "/*/*/", GLOB_ONLYDIR);
     }
 
     private function findFolders($paths)
