@@ -27,6 +27,9 @@ class Entry
 
     public static function go($arguments)
     {
+        if (!is_array($arguments)) {
+            $arguments = [];
+        }
         self::$arguments = $arguments;
         self::configureDebug();
 
