@@ -52,7 +52,7 @@ class YamlLoader
         $output = [];
 
         foreach ($searchPath as $folder) {
-            $path = $folder . '/' . $file . '.' . $this->fileExtension;
+            $path = $folder . '/' . $file . $this->fileExtension;
 
             if (file_exists($path)) {
                 $output[] = $path;

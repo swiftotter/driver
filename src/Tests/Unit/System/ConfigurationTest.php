@@ -60,7 +60,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
 
         $loaderMethod = new \ReflectionMethod($configuration, 'loadConfigurationFor');
         $loaderMethod->setAccessible(true);
-        $output = $loaderMethod->invoke($configuration, (string)$filePath->current());
+        $output = $loaderMethod->invoke($configuration, reset($filePath));
 
         return [
             'output' => $output,
@@ -142,7 +142,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
 
         $loaderMethod = new \ReflectionMethod($configuration, 'loadConfigurationFor');
         $loaderMethod->setAccessible(true);
-        $configuration = $loaderMethod->invoke($configuration, (string)$files->current());
+        $configuration = $loaderMethod->invoke($configuration, reset($files));
 
         $this->assertTrue(count($configuration) > 0);
     }

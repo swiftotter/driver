@@ -32,7 +32,6 @@ class YamlLoaderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($method->invoke($configuration, '/var/www/config/pipes.yaml'));
         $this->assertTrue($method->invoke($configuration, '/var/www/config.d/commands.yaml'));
-        $this->assertTrue($method->invoke($configuration, '/var/www/config/workshop.yaml'));
         $this->assertTrue($method->invoke($configuration, '/var/www/config.d/connections.yaml'));
 
         $this->assertFalse($method->invoke($configuration, '/var/www/configuration/chain.yaml'));

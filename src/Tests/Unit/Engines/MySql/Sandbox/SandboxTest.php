@@ -20,13 +20,34 @@
 namespace Driver\Tests\Unit\Enines\MySql\Sandbox;
 
 use Driver\Engines\MySql\Sandbox\Sandbox;
+use Driver\System\AwsClientFactory;
 use Driver\Tests\Unit\Helper\DI;
 
 class SandboxTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetInstanceActiveReturnsTrue()
     {
-        $sandbox = DI::getContainer()->make(Sandbox::class, ['disableInstantiation' => true]);
+        $creator = function($serviceType, $arguments) {
+            $type = '\\Aws\\AwsClient';
+            $stub = $this->getMockBuilder($type)
+                ->setMethods(['describeDBInstances'])
+                ->disableOriginalConstructor()
+                ->setConstructorArgs([$arguments])
+                ->getMock();
+
+            $stub->method('describeDBInstances')
+                ->willReturn([
+                    'DBInstances' => [
+                        [
+                            'DBInstanceStatus' => 'available'
+                        ]
+                    ]
+                ]);
+
+            return $stub;
+        };
+
+        $sandbox = DI::getContainer()->make(Sandbox::class, ['disableInstantiation' => true, 'awsClientFactory' => new AwsClientFactory($creator)]);
         $this->assertTrue($sandbox->getInstanceActive());
     }
 }

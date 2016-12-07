@@ -22,6 +22,7 @@ namespace Driver\Engines\MySql\Sandbox;
 use Aws\AwsClient;
 use Aws\Ec2\Ec2Client;
 use Aws\Rds\RdsClient;
+use Driver\System\AwsClientFactory;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
@@ -35,6 +36,7 @@ class Sandbox
     private $remoteIpFetcher;
     private $logger;
     private $random;
+    private $awsClientFactory;
 
     private $securityGroupId;
     private $securityGroupName;
@@ -45,12 +47,18 @@ class Sandbox
     private $password;
     private $statuses;
 
-    public function __construct(Configuration $configuration, RemoteIP $remoteIpFetcher, LoggerInterface $logger, Random $random, $disableInstantiation = true)
+    public function __construct(Configuration $configuration,
+                                RemoteIP $remoteIpFetcher,
+                                LoggerInterface $logger,
+                                Random $random,
+                                AwsClientFactory $awsClientFactory,
+                                $disableInstantiation = true)
     {
         $this->configuration = $configuration;
         $this->remoteIpFetcher = $remoteIpFetcher;
         $this->logger = $logger;
         $this->random = $random;
+        $this->awsClientFactory = $awsClientFactory;
 
         if (!$disableInstantiation) {
             $this->init();
@@ -263,12 +271,12 @@ class Sandbox
 
     private function getEc2Client()
     {
-        return new Ec2Client($this->getAwsParameters("ec2", '2016-09-15'));
+        return $this->awsClientFactory->create('Ec2', $this->getAwsParameters("ec2", '2016-09-15'));
     }
 
     private function getRdsClient()
     {
-        return new RdsClient($this->getAwsParameters("rds", '2014-10-31'));
+        return $this->awsClientFactory->create('Rds', $this->getAwsParameters("rds", '2014-10-31'));
     }
 
     private function getAwsParameters($type, $version)
@@ -278,7 +286,8 @@ class Sandbox
                 'key' => $this->configuration->getNode("connections/{$type}/key"),
                 'secret' => $this->configuration->getNode("connections/{$type}/secret")],
             'region' => $this->configuration->getNode("connections/{$type}/region"),
-            'version' => $version
+            'version' => $version,
+            'service' => $type
         ];
         return $parameters;
     }
