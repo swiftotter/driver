@@ -1,4 +1,4 @@
-pipes:
+pipelines:
   default:
     - setup:
       - 100: connect

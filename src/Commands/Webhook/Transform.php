@@ -21,8 +21,8 @@ namespace Driver\Commands\Webhook;
 
 use Driver\Commands\CommandInterface;
 use Driver\Engines\MySql\Sandbox\Sandbox;
-use Driver\Pipes\Transport\Status;
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Transport\Status;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Symfony\Component\Console\Command\Command;
 

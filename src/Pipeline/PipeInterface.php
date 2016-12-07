@@ -13,13 +13,16 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/29/16
+ * @copyright SwiftOtter Studios, 10/8/16
  * @package default
  **/
 
-namespace Driver\Pipes\Exception;
+namespace Driver\Pipeline;
 
-class PipeSetNotFound extends \Exception
+use Driver\Pipeline\Transport\TransportInterface;
+
+interface PipeInterface
 {
-
+    public function __construct(TransportInterface $transport);
+    public function execute();
 }

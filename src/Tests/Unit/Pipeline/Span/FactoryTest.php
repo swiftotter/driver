@@ -17,13 +17,13 @@
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes\Set;
+namespace Driver\Tests\Unit\Pipeline\Span;
 
-use Driver\Pipes\Master as PipeMaster;
-use Driver\Pipes\Master;
-use Driver\Pipes\Set\Factory;
-use Driver\Pipes\Set\Primary;
-use Driver\Pipes\Set\SetInterface;
+use Driver\Pipeline\Master as PipeMaster;
+use Driver\Pipeline\Master;
+use Driver\Pipeline\Span\Factory;
+use Driver\Pipeline\Span\Primary;
+use Driver\Pipeline\Span\SpanInterface;
 use Driver\System\Configuration;
 use Driver\Tests\Unit\Helper\DI;
 
@@ -39,7 +39,7 @@ class FactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCreateReturnsCorrectClass()
     {
-        $this->assertTrue(is_a($this->factory->create(Master::DEFAULT_NODE), SetInterface::class));
+        $this->assertTrue(is_a($this->factory->create('default'), SpanInterface::class));
     }
 
     private function runInaccessibleFunction($class, $name, $argument = null)
@@ -50,18 +50,18 @@ class FactoryTest extends \PHPUnit_Framework_TestCase
         return $method->invoke($this->factory, $argument);
     }
 
-    public function testPipeSetExists()
+    public function testPipelineExists()
     {
-        $this->assertTrue($this->runInaccessibleFunction($this->factory, 'pipeSetExists', PipeMaster::DEFAULT_NODE));
+        $this->assertTrue($this->runInaccessibleFunction($this->factory, 'pipelineExists', PipeMaster::DEFAULT_NODE));
     }
 
-    public function testGetDefaultPipeSetReturnsArray()
+    public function testGetDefaultPipelineReturnsArray()
     {
-        $this->assertTrue(is_array($this->runInaccessibleFunction($this->factory, 'getDefaultPipeSet')));
+        $this->assertTrue(is_array($this->runInaccessibleFunction($this->factory, 'getDefaultPipeline')));
     }
 
-    public function testGetDefaultPipeSetReturnsMultipleItems()
+    public function testGetDefaultPipelineReturnsMultipleItems()
     {
-        $this->assertGreaterThan(0, count($this->runInaccessibleFunction($this->factory, 'getDefaultPipeSet')));
+        $this->assertGreaterThan(0, count($this->runInaccessibleFunction($this->factory, 'getDefaultPipeline')));
     }
 }

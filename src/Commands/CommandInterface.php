@@ -19,7 +19,7 @@
 
 namespace Driver\Commands;
 
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Transport\TransportInterface;
 
 interface CommandInterface
 {

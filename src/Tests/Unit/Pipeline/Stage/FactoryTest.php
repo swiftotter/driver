@@ -17,14 +17,10 @@
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes\Stage;
+namespace Driver\Tests\Unit\Pipeline\Stage;
 
-use Driver\Pipes\Master as PipeMaster;
-use Driver\Pipes\Master;
-use Driver\Pipes\Stage\Factory;
-use Driver\Pipes\Stage\Primary;
-use Driver\Pipes\Stage\StageInterface;
-use Driver\System\Configuration;
+use Driver\Pipeline\Stage\Factory;
+use Driver\Pipeline\Stage\StageInterface;
 use Driver\Tests\Unit\Helper\DI;
 
 class FactoryTest extends \PHPUnit_Framework_TestCase

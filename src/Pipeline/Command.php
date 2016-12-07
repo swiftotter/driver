@@ -17,22 +17,18 @@
  * @package default
  **/
 
-namespace Driver\Commands;
+namespace Driver\Pipeline;
 
-use Driver\Pipes\Master as PipeMaster;
-use Driver\Pipes\Master;
-use Driver\Pipes\Transport\Factory as TransportFactory;
-use Driver\Pipes\Transport\TransportInterface;
-use Driver\System\Log;
+use Driver\Commands\CommandInterface;
+use Driver\Pipeline\Transport\Factory as TransportFactory;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Logs\LoggerInterface;
-use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\Command as ConsoleCommand;
 use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Pipe extends Command implements CommandInterface
+class Command extends ConsoleCommand implements CommandInterface
 {
     /** @var TransportFactory $transportFactory */
     private $transportFactory;
@@ -56,17 +52,17 @@ class Pipe extends Command implements CommandInterface
     protected function configure()
     {
         $this->setName('run')
-            ->setDescription('Executes the pipe set specified in the -p (--pipe-set) parameter.');
+            ->setDescription('Executes the pipe line specified in the -p (--pipe-line) parameter.');
 
-        $this->addArgument('pipe-set', InputArgument::OPTIONAL, 'The pipeset to execute (leave blank to run default pipeset).');
+        $this->addArgument('pipe-line', InputArgument::OPTIONAL, 'The pipeline to execute (leave blank to run default pipeline).');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->logger->setParams($input, $output);
 
-        if ($pipeSet = $input->getArgument('pipe-set')) {
-            $this->pipeMaster->run($pipeSet);
+        if ($pipeLine = $input->getArgument('pipe-line')) {
+            $this->pipeMaster->run($pipeLine);
         } else {
             $this->pipeMaster->runDefault();
         }

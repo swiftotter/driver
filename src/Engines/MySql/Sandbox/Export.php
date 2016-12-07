@@ -20,8 +20,8 @@
 namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
-use Driver\Pipes\Transport\Status;
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Transport\Status;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;

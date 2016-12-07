@@ -29,7 +29,7 @@ class YamlLoader
     ];
 
     protected $allowedFiles = [
-        'pipes',
+        'pipelines',
         'commands',
         'engines',
         'connections',

@@ -17,6 +17,6 @@ composer require swiftotter/driver
 ## Connection Information
 
 Connection information goes into a folder named `config` or `config.d`. The files that are recognized
-inside the aforementioned folders are: `pipes.yaml`, `commands.yaml`, `engines.yaml`, `connections.yaml`
+inside the aforementioned folders are: `pipeliness.yaml`, `commands.yaml`, `engines.yaml`, `connections.yaml`
 and `config.yaml`.
 

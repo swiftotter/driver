@@ -17,11 +17,10 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Set;
+namespace Driver\Pipeline\Span;
 
 use DI\Container;
-use Driver\Pipes\Exception\PipeSetNotFound;
-use Driver\Pipes\Master;
+use Driver\Pipeline\Master;
 use Driver\System\Configuration;
 use Driver\System\Factory\FactoryInterface;
 
@@ -39,30 +38,30 @@ class Factory
     }
 
     /**
-     * @param $pipeSet
-     * @return SetInterface
+     * @param $pipelineName
+     * @return SpanInterface
      */
-    public function create($pipeSetName)
+    public function create($pipelineName)
     {
-        return $this->container->make($this->type, [ 'list' => $this->getNamedPipeSet($pipeSetName) ]);
+        return $this->container->make($this->type, [ 'list' => $this->getNamedPipeline($pipelineName) ]);
     }
 
-    protected function getDefaultPipeSet()
+    protected function getDefaultPipeline()
     {
-        return $this->getNamedPipeSet(Master::DEFAULT_NODE);
+        return $this->getNamedPipeline(Master::DEFAULT_NODE);
     }
 
-    protected function pipeSetExists($name)
+    protected function pipelineExists($name)
     {
-        return is_array($this->configuration->getNode("pipes/{$name}"));
+        return is_array($this->configuration->getNode("pipelines/{$name}"));
     }
 
-    protected function getNamedPipeSet($name)
+    protected function getNamedPipeline($name)
     {
-        if ($this->pipeSetExists($name)) {
-            return $this->configuration->getNode("pipes/{$name}");
+        if ($this->pipelineExists($name)) {
+            return $this->configuration->getNode("pipelines/{$name}");
         } else {
-            throw new PipeSetNotFound();
+            throw new \Driver\Pipeline\Exception\PipeLineNotFound();
         }
     }
 }

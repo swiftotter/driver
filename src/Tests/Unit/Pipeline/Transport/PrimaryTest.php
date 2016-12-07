@@ -17,11 +17,11 @@
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes;
+namespace Driver\Tests\Unit\Pipeline;
 
-use Driver\Pipes\Master;
-use Driver\Pipes\Transport\Primary;
-use Driver\Pipes\Transport\Status;
+use Driver\Pipeline\Master;
+use Driver\Pipeline\Transport\Primary;
+use Driver\Pipeline\Transport\Status;
 use Driver\Tests\Unit\Helper\DI;
 
 class PrimaryTest extends \PHPUnit_Framework_TestCase
@@ -33,7 +33,7 @@ class PrimaryTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->transport = DI::getContainer()->make(Primary::class, ['pipeSet' => Master::DEFAULT_NODE, 'statuses' => [], 'data' => []]);
+        $this->transport = DI::getContainer()->make(Primary::class, ['pipeline' => Master::DEFAULT_NODE, 'statuses' => [], 'data' => []]);
 
         parent::setUp();
     }

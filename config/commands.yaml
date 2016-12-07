@@ -1,6 +1,6 @@
 commands:
-  pipe:
-    class: \Driver\Commands\Pipe
+  pipeline:
+    class: \Driver\Pipeline\Command
   connect:
     class: \Driver\Engines\MySql
   check-filesystem:

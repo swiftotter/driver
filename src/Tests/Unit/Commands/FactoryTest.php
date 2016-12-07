@@ -21,7 +21,7 @@ namespace Driver\Tests\Unit\Commands;
 
 use DI\ContainerBuilder;
 use Driver\Commands\Factory;
-use Driver\Commands\Pipe;
+use Driver\Pipeline\Command;
 use Driver\System\Configuration;
 use Driver\System\DependencyConfig;
 use Driver\Tests\Unit\Helper\DI;
@@ -31,6 +31,6 @@ class FactoryTest extends \PHPUnit_Framework_TestCase
     public function testCreateReturnsPipeClass()
     {
         $factory = DI::getContainer()->get(Factory::class);
-        $this->assertSame(Pipe::class, get_class($factory->create('pipe')));
+        $this->assertSame(Command::class, get_class($factory->create('pipeline')));
     }
 }

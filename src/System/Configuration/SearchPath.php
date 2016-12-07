@@ -64,7 +64,7 @@ class SearchPath implements \Iterator
 
         return array_reduce($directories, function($acc, $path) use (&$currentPath) {
             $currentPath .= $path;
-            if (!substr($currentPath, -1) === '/') {
+            if (substr($currentPath, -1) !== '/') {
                 $currentPath .= '/';
             }
             $acc[] = $currentPath;

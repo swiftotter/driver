@@ -17,20 +17,14 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Set;
+namespace Driver\Pipeline\Span;
 
-use Driver\Pipes\Stage\Factory as StageFactory;
-use Driver\Pipes\Transport\Status;
+use Driver\Pipeline\Stage\Factory as StageFactory;
+use Driver\Pipeline\Transport\Status;
 use Driver\System\YamlFormatter;
-use Haystack\Functional\HArrayFilter;
 use Haystack\HArray;
-use Icicle\Concurrent\Forking\Fork;
-use Icicle\Concurrent\Threading\Thread;
-use Icicle\Loop;
-use Icicle\Coroutine;
-use React\Promise\Deferred;
 
-class Primary implements SetInterface
+class Primary implements SpanInterface
 {
     const PIPE_SET_NODE = 'parent';
 
@@ -43,7 +37,7 @@ class Primary implements SetInterface
         $this->list = $yamlFormatter->extractToAssociativeArray($list);
     }
 
-    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport, $testMode = false)
+    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
     {
         if ($testMode) {
             $this->list = [];
@@ -60,7 +54,7 @@ class Primary implements SetInterface
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
 
-    private function verifyTransport(\Driver\Pipes\Transport\TransportInterface $transport, $lastCommand)
+    private function verifyTransport(\Driver\Pipeline\Transport\TransportInterface $transport, $lastCommand)
     {
         if (!$transport) {
             throw new \Exception('No Transport object was returned from the last command executed: ' . $lastCommand);

@@ -19,7 +19,7 @@
 
 namespace Driver\Tests\Unit\System;
 
-use Driver\Pipes\Transport\Error;
+use Driver\Pipeline\Transport\Error;
 use Driver\System\Factory;
 
 class FactoryTest extends \PHPUnit_Framework_TestCase

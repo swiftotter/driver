@@ -22,7 +22,7 @@ namespace Driver\Engines\S3;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Symfony\Component\Console\Command\Command;
 

@@ -20,9 +20,9 @@
 namespace Driver\Test\Unit\Engines\MySql;
 
 use Driver\Engines\MySql\Check;
-use Driver\Pipes\Master;
-use Driver\Pipes\Transport\Primary;
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Master;
+use Driver\Pipeline\Transport\Primary;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\Tests\Unit\Helper\DI;
 
 class CheckTest extends \PHPUnit_Framework_TestCase

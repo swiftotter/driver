@@ -20,8 +20,8 @@
 namespace Driver\Engines;
 
 use Driver\Commands\CommandInterface;
-use Driver\Pipes\Transport\Status;
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Transport\Status;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\Engines\MySql\Connection;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;

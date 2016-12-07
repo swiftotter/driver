@@ -17,33 +17,23 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Transport;
+namespace Driver\Tests\Unit\Pipeline\Set;
 
-class Status
+use Driver\Pipeline\Master;
+use Driver\Pipeline\Span\Primary;
+use Driver\Pipeline\Transport\TransportInterface;
+use Driver\System\Configuration;
+use Driver\Pipeline\Transport\Primary as Transport;
+use Driver\Tests\Unit\Helper\DI;
+
+class PrimaryTest extends \PHPUnit_Framework_TestCase
 {
-    private $node;
-    private $message;
-    private $isError;
-
-    public function __construct($node, $message, $isError = false)
+    public function testInvokeReturnsTransport()
     {
-        $this->node = $node;
-        $this->message = $message;
-        $this->isError = $isError;
-    }
+        $pipelineName = Master::DEFAULT_NODE;
+        $configuration = new Configuration(new Configuration\YamlLoader());
+        $set = DI::getContainer()->make(Primary::class, ['list' => $configuration->getNode('pipelines/' . $pipelineName)]);
 
-    public function isError()
-    {
-        return (bool)$this->isError;
-    }
-
-    public function getNode()
-    {
-        return $this->node;
-    }
-
-    public function getMessage()
-    {
-        return $this->message;
+        $this->assertTrue(is_a($set(new Transport($pipelineName, [], [], new \Driver\System\Logs\Primary()), true), TransportInterface::class));
     }
 }

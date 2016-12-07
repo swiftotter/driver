@@ -17,28 +17,19 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Transport;
+namespace Driver\Pipeline\Transport;
 
-use Driver\Pipes\Transport;
-use Driver\System\Configuration;
-use Driver\System\Log;
-use Driver\System\Logs\LoggerInterface;
-
-class Factory
+class Error
 {
-    private $configuration;
-    private $type;
-    private $logger;
+    private $message;
 
-    public function __construct(Configuration $configuration, $type, LoggerInterface $logger)
+    public function __construct($message)
     {
-        $this->configuration = $configuration;
-        $this->type = $type;
-        $this->logger = $logger;
+        $this->message = $message;
     }
 
-    public function create($pipeSet)
+    public function getMessage()
     {
-        return new $this->type($pipeSet);
+        return $this->message;
     }
 }

@@ -13,27 +13,31 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 10/29/16
  * @package default
  **/
 
-namespace Driver\Tests\Unit\Pipes\Set;
+namespace Driver\Pipeline\Transport;
 
-use Driver\Pipes\Master;
-use Driver\Pipes\Set\Primary;
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Transport;
 use Driver\System\Configuration;
-use Driver\Pipes\Transport\Primary as Transport;
-use Driver\Tests\Unit\Helper\DI;
+use Driver\System\Logs\LoggerInterface;
 
-class PrimaryTest extends \PHPUnit_Framework_TestCase
+class Factory
 {
-    public function testInvokeReturnsTransport()
-    {
-        $pipeSetName = Master::DEFAULT_NODE;
-        $configuration = new Configuration(new Configuration\YamlLoader());
-        $set = DI::getContainer()->make(Primary::class, ['list' => $configuration->getNode('pipes/' . $pipeSetName)]);
+    private $configuration;
+    private $type;
+    private $logger;
 
-        $this->assertTrue(is_a($set(new Transport($pipeSetName, [], [], new \Driver\System\Logs\Primary()), true), TransportInterface::class));
+    public function __construct(Configuration $configuration, $type, LoggerInterface $logger)
+    {
+        $this->configuration = $configuration;
+        $this->type = $type;
+        $this->logger = $logger;
+    }
+
+    public function create($pipeline)
+    {
+        return new $this->type($pipeline);
     }
 }

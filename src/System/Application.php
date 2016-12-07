@@ -49,6 +49,7 @@ class Application
         foreach ($this->configuration->getNode('commands') as $name => $settings) {
             $this->console->add($this->container->get($settings['class']));
         }
+
         $this->console->run();
     }
 

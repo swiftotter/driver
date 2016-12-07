@@ -17,7 +17,7 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Transport;
+namespace Driver\Pipeline\Transport;
 
 use Driver\System\Logs\LoggerInterface;
 
@@ -27,12 +27,12 @@ interface TransportInterface
     const STATUS_SUCCESS = 2;
     const STATUS_PENDING = 3;
 
-    public function __construct($pipeSet, $statuses = [], $data = [], LoggerInterface $log = null);
+    public function __construct($pipeline, $statuses = [], $data = [], LoggerInterface $log = null);
 
     /**
      * @return array
      */
-    public function getPipeSet();
+    public function getPipeline();
 
     /**
      * @return array

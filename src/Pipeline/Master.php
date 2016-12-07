@@ -17,11 +17,11 @@
  * @package default
  **/
 
-namespace Driver\Pipes;
+namespace Driver\Pipeline;
 
-use Driver\Pipes\Exception\PipeSetNotFound as PipeSetNotFoundException;
-use Driver\Pipes\Set\Factory as PipeSetFactory;
-use Driver\Pipes\Transport\Factory as TransportFactory;
+use Driver\Pipeline\Exception\PipeLineNotFound as PipeLineNotFoundException;
+use Driver\Pipeline\Span\Factory as PipeLineSpanFactory;
+use Driver\Pipeline\Transport\Factory as TransportFactory;
 use Driver\System\Configuration;
 
 class Master
@@ -29,13 +29,13 @@ class Master
     const EMPTY_NODE = 'empty';
     const DEFAULT_NODE = 'default';
     protected $configuration;
-    protected $pipeSetFactory;
+    protected $pipeLineFactory;
     protected $transportFactory;
 
-    public function __construct(Configuration $configuration, PipeSetFactory $pipeSetFactory, TransportFactory $transportFactory)
+    public function __construct(Configuration $configuration, PipeLineSpanFactory $pipeLineFactory, TransportFactory $transportFactory)
     {
         $this->configuration = $configuration;
-        $this->pipeSetFactory = $pipeSetFactory;
+        $this->pipeLineFactory = $pipeLineFactory;
         $this->transportFactory = $transportFactory;
     }
 
@@ -46,8 +46,8 @@ class Master
 
     public function run($set)
     {
-        $pipeSet = $this->pipeSetFactory->create($set);
-        $pipeSet($this->createTransport());
+        $pipeline = $this->pipeLineFactory->create($set);
+        $pipeline($this->createTransport());
     }
 
     protected function createTransport()

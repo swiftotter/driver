@@ -17,14 +17,14 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Set;
+namespace Driver\Pipeline\Stage;
 
-use Driver\Pipes\Stage\Factory as StageFactory;
+use Driver\Commands\Factory as CommandFactory;
 use Driver\System\YamlFormatter;
 
-interface SetInterface
+interface StageInterface
 {
-    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter);
+    public function __construct(array $list, CommandFactory $commandFactory, YamlFormatter $yamlFormatter);
 
-    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport);
+    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport);
 }

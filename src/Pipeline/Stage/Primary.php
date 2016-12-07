@@ -17,17 +17,12 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Stage;
+namespace Driver\Pipeline\Stage;
 
 use Driver\Commands\Factory as CommandFactory;
-use Driver\Pipes\Transport\Status;
-use Driver\Pipes\Transport\TransportInterface;
+use Driver\Pipeline\Transport\Status;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\YamlFormatter;
-use Icicle\Concurrent;
-use Icicle\Coroutine;
-use Icicle\Loop;
-use React\Promise\Deferred;
-use React\Promise\Promise;
 
 class Primary implements StageInterface
 {
@@ -42,7 +37,7 @@ class Primary implements StageInterface
         $this->actions = $yamlFormatter->extractToAssociativeArray($actions);
     }
 
-    public function __invoke(\Driver\Pipes\Transport\TransportInterface $transport, $testMode = false)
+    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
     {
         if ($testMode) {
             $this->actions = [];
@@ -56,7 +51,7 @@ class Primary implements StageInterface
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
 
-    private function verifyTransport(\Driver\Pipes\Transport\TransportInterface $transport, $lastCommand)
+    private function verifyTransport(\Driver\Pipeline\Transport\TransportInterface $transport, $lastCommand)
     {
         if (!$transport) {
             throw new \Exception('No Transport object was returned from the last command executed: ' . $lastCommand);

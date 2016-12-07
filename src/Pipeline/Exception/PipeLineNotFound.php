@@ -17,19 +17,9 @@
  * @package default
  **/
 
-namespace Driver\Pipes\Transport;
+namespace Driver\Pipeline\Exception;
 
-class Error
+class PipeLineNotFound extends \Exception
 {
-    private $message;
 
-    public function __construct($message)
-    {
-        $this->message = $message;
-    }
-
-    public function getMessage()
-    {
-        return $this->message;
-    }
 }
