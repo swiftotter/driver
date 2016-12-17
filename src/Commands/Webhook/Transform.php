@@ -21,6 +21,7 @@ namespace Driver\Commands\Webhook;
 
 use Driver\Commands\CommandInterface;
 use Driver\Engines\MySql\Sandbox\Sandbox;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
@@ -33,17 +34,24 @@ class Transform extends Command implements CommandInterface
     private $configuration;
     private $webhook;
     private $sandbox;
+    private $properties;
 
-    public function __construct(Configuration $configuration, Webhook $webhook, Sandbox $sandbox)
+    public function __construct(Configuration $configuration, Webhook $webhook, Sandbox $sandbox, array $properties)
     {
         $this->configuration = $configuration;
         $this->webhook = $webhook;
         $this->sandbox = $sandbox;
+        $this->properties = $properties;
 
         parent::__construct('webhook-transform-command');
     }
 
-    public function go(TransportInterface $transport)
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $url = $this->configuration->getNode('connections/webhooks/transform-url');
 

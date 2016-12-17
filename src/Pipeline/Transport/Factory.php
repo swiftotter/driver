@@ -22,22 +22,25 @@ namespace Driver\Pipeline\Transport;
 use Driver\Pipeline\Transport;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
+use Driver\Pipeline\Environment\Factory as EnvironmentFactory;
 
 class Factory
 {
     private $configuration;
     private $type;
     private $logger;
+    private $environmentFactory;
 
-    public function __construct(Configuration $configuration, $type, LoggerInterface $logger)
+    public function __construct(Configuration $configuration, $type, LoggerInterface $logger, EnvironmentFactory $environmentFactory)
     {
         $this->configuration = $configuration;
         $this->type = $type;
         $this->logger = $logger;
+        $this->environmentFactory = $environmentFactory;
     }
 
     public function create($pipeline)
     {
-        return new $this->type($pipeline);
+        return new $this->type($pipeline, [], [], $this->environmentFactory->createDefault());
     }
 }

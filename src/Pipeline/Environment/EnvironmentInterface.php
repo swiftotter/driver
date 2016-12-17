@@ -17,20 +17,40 @@
  * @package default
  **/
 
-namespace Driver\Pipeline\Stage;
+namespace Driver\Pipeline\Environment;
 
-use Driver\Commands\Factory as CommandFactory;
-use Driver\Pipeline\Environment\EnvironmentInterface;
+use Driver\Pipeline\Stage\Factory as StageFactory;
+use Driver\System\YamlFormatter;
 
-interface StageInterface
+interface EnvironmentInterface
 {
-    public function __construct(array $list, $name, CommandFactory $commandFactory, EnvironmentInterface $environmentInterface);
+    public function __construct($name, array $properties);
 
-    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport);
+    /**
+     * @return array
+     */
+    public function getFiles();
 
+    /**
+     * @param string $type
+     * @param string $path
+     * @return void
+     */
+    public function addFile($type, $path);
+
+    /**
+     * @return string
+     */
     public function getName();
 
-    public function withEnvironment(EnvironmentInterface $environment);
+    /**
+     * @param $key
+     * @return string
+     */
+    public function getData($key);
 
-    public function isRepeatable();
+    /**
+     * @return array
+     */
+    public function getAllData();
 }

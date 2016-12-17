@@ -19,22 +19,62 @@
 
 namespace Driver\Pipeline\Stage;
 
+use Driver\Commands\CommandInterface;
 use Driver\Commands\Factory as CommandFactory;
+use Driver\Pipeline\Command;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\YamlFormatter;
+use GuzzleHttp\Promise\Promise;
 
 class Primary implements StageInterface
 {
     const PIPE_SET_NODE = 'parent';
+    const REPEAT_PREFIX = 'repeat';
 
     private $actions;
     private $commandFactory;
+    private $environment;
+    private $name;
 
-    public function __construct(array $actions, CommandFactory $commandFactory, YamlFormatter $yamlFormatter)
+    public function __construct(array $actions, $name, CommandFactory $commandFactory, EnvironmentInterface $environment = null)
     {
         $this->commandFactory = $commandFactory;
-        $this->actions = $yamlFormatter->extractToAssociativeArray($actions);
+        $this->actions = $this->sortActions($this->initActions($actions));
+        $this->name = $name;
+        $this->environment = $environment;
+    }
+
+    private function initActions($actions)
+    {
+        return array_map(function($properties) {
+            if (is_a($properties, CommandInterface::class)) {
+                return $properties;
+            } else {
+                return $this->commandFactory->create($properties['name'], $properties);
+            }
+        }, $actions);
+    }
+
+    public function isRepeatable()
+    {
+        return substr($this->name, 0, strlen(self::REPEAT_PREFIX)) === self::REPEAT_PREFIX;
+    }
+
+    public function withEnvironment(EnvironmentInterface $environment)
+    {
+        return new self($this->actions, $this->name, $this->commandFactory, $environment);
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function getEnvironment()
+    {
+        return $this->environment;
     }
 
     public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
@@ -43,38 +83,58 @@ class Primary implements StageInterface
             $this->actions = [];
         }
 
-        $transport = array_reduce($this->actions, function(TransportInterface $transport, $name) {
-            $command = $this->commandFactory->create($name);
-            return $this->verifyTransport($command->go($transport), $name);
+        $transport = array_reduce($this->actions, function(TransportInterface $transport, CommandInterface $command) {
+            return $this->verifyTransport($command->go($transport, $this->environment), $command);
         }, $transport);
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
 
-    private function verifyTransport(\Driver\Pipeline\Transport\TransportInterface $transport, $lastCommand)
+    private function sortActions($actions)
+    {
+        $getSort = function(CommandInterface $command) {
+            $properties = $command->getProperties();
+            if (isset($properties['sort'])) {
+                return $properties['sort'];
+            } else {
+                return 1000;
+            }
+        };
+
+        usort($actions, function(CommandInterface $a, CommandInterface $b) use ($getSort) {
+            if ($getSort($a) == $getSort($b)) {
+                return 0;
+            }
+            return ($getSort($a) < $getSort($b)) ? -1 : 1;
+        });
+
+        return $actions;
+    }
+
+    private function verifyTransport(\Driver\Pipeline\Transport\TransportInterface $transport, CommandInterface $command)
     {
         if (!$transport) {
-            throw new \Exception('No Transport object was returned from the last command executed: ' . $lastCommand);
+            throw new \Exception('No Transport object was returned from the last command executed: ' . get_class($command));
         }
 
         return $transport;
     }
 
-    private function formatList(array $list)
-    {
-        $output = array_reduce($list, function($commands, array $item) {
-            array_walk($item, function($name, $id) use (&$commands) {
-                while (isset($commands[$id])) {
-                    $id++;
-                }
-                $commands[$id] = $name;
-            });
-
-            return $commands;
-        }, []);
-
-        ksort($output);
-
-        return $output;
-    }
+//    private function formatList(array $list)
+//    {
+//        $output = array_reduce($list, function($commands, array $item) {
+//            array_walk($item, function($name, $id) use (&$commands) {
+//                while (isset($commands[$id])) {
+//                    $id++;
+//                }
+//                $commands[$id] = $name;
+//            });
+//
+//            return $commands;
+//        }, []);
+//
+//        ksort($output);
+//
+//        return $output;
+//    }
 }

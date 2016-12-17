@@ -21,6 +21,7 @@ namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
 use Driver\Engines\MySql\Sandbox\Sandbox;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
@@ -30,16 +31,23 @@ class Init extends Command implements CommandInterface
 {
     private $configuration;
     private $sandbox;
+    private $properties;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox)
+    public function __construct(Configuration $configuration, Sandbox $sandbox, $properties = [])
     {
         $this->configuration = $configuration;
         $this->sandbox = $sandbox;
+        $this->properties = $properties;
 
         return parent::__construct('mysql-sandbox-init');
     }
 
-    public function go(TransportInterface $transport)
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $this->sandbox->init();
         $tries = 0;

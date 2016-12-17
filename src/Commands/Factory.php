@@ -38,10 +38,10 @@ class Factory
      * @param $name
      * @return CommandInterface
      */
-    public function create($name)
+    public function create($name, $properties = [])
     {
         $className = $this->getClassName($name);
-        return $this->container->get($className);
+        return $this->container->make($className, ['properties' => $properties]);
     }
 
     private function getClassName($name)

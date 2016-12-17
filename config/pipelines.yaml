@@ -1,19 +1,27 @@
 pipelines:
-  default:
-    - setup:
-      - 100: connect
-      - 200: check-filesystem
-      - 300: start-sandbox
+  default: # pipeline span
+    - setup: # pipeline stage
+      - name: connect
+        sort: 100
+      - name: check-filesystem
+        sort: 200
+      - name: start-sandbox
+        sort: 300
 #    - 400: export-data-from-source
     - import:
-      - 100: import-data-into-sandbox
-    - commands:
+      - name: import-data-into-sandbox
+        sort: 100
+    - repeat-commands:
 #   commands go between 501 and 1999
-    - export:
-      - 100: export-data-from-sandbox
-      - 200: upload-data-to-s3
+    - repeat-export:
+      - name: export-data-from-sandbox
+        sort: 100
+      - name: upload-data-to-s3
+        sort: 200
     - shutdown:
-      - 100: shutdown-sandbox
-      - 200: call-post-webhook
+      - name: shutdown-sandbox
+        sort: 100
+#      - name: call-post-webhook
+#        sort: 200
   # export procedures go after 2100
   empty: []

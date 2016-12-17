@@ -20,6 +20,7 @@
 namespace Driver\System;
 
 use DI;
+use Driver\Pipeline\Environment;
 use Driver\Pipeline\Stage;
 use Driver\Pipeline\Span;
 use Driver\Pipeline\Transport\Factory as TransportFactory;
@@ -37,6 +38,8 @@ class DependencyConfig
             LoggerInterface::class => DI\Factory(function() {
                 return new Primary();
             }),
+            Environment\EnvironmentInterface::class => DI\factory([Environment\Primary::class, 'create']),
+            Environment\Factory::class => DI\object()->constructorParameter('type', Environment\Primary::class),
             Stage\StageInterface::class => DI\factory([Stage\Primary::class, 'create']),
             Stage\Factory::class => DI\object()->constructorParameter('type', Stage\Primary::class),
             Span\SpanInterface::class => DI\factory([Span\Primary::class, 'create']),

@@ -20,6 +20,7 @@
 namespace Driver\Engines\MySql;
 
 use Driver\Commands\CommandInterface;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Logs\LoggerInterface;
@@ -31,18 +32,25 @@ class Check extends Command implements CommandInterface
     private $databaseSize;
     private $freeSpace;
     private $logger;
+    private $properties;
 
-    public function __construct(Connection $configuration, LoggerInterface $logger, $databaseSize = null, $freeSpace = null)
+    public function __construct(Connection $configuration, LoggerInterface $logger, array $properties = [], $databaseSize = null, $freeSpace = null)
     {
         $this->configuration = $configuration;
         $this->databaseSize = $databaseSize;
         $this->freeSpace = $freeSpace;
         $this->logger = $logger;
+        $this->properties = $properties;
 
         return parent::__construct('mysql-system-check');
     }
 
-    public function go(TransportInterface $transport)
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         if ($this->getDatabaseSize() < $this->getDriveFreeSpace()) {
             $this->logger->info("Database size is less than the free space available on the PHP drive.");

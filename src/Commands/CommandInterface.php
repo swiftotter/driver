@@ -19,6 +19,7 @@
 
 namespace Driver\Commands;
 
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\TransportInterface;
 
 interface CommandInterface
@@ -27,5 +28,7 @@ interface CommandInterface
      * @param TransportInterface $transport
      * @return TransportInterface
      */
-    public function go(TransportInterface $transport);
+    public function go(TransportInterface $transport, EnvironmentInterface $environment);
+
+    public function getProperties();
 }

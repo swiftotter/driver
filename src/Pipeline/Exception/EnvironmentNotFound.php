@@ -13,24 +13,13 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 10/29/16
  * @package default
  **/
 
-namespace Driver\Pipeline\Stage;
+namespace Driver\Pipeline\Exception;
 
-use Driver\Commands\Factory as CommandFactory;
-use Driver\Pipeline\Environment\EnvironmentInterface;
-
-interface StageInterface
+class EnvironmentLineNotFound extends \Exception
 {
-    public function __construct(array $list, $name, CommandFactory $commandFactory, EnvironmentInterface $environmentInterface);
 
-    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport);
-
-    public function getName();
-
-    public function withEnvironment(EnvironmentInterface $environment);
-
-    public function isRepeatable();
 }

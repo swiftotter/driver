@@ -22,6 +22,7 @@ namespace Driver\Engines\S3;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Symfony\Component\Console\Command\Command;
@@ -29,19 +30,20 @@ use Symfony\Component\Console\Command\Command;
 class Upload extends Command implements CommandInterface
 {
     protected $configuration;
+    protected $properties;
 
-    public function __construct(Configuration $configuration)
+    public function __construct(Configuration $configuration, array $properties = [])
     {
         $this->configuration = $configuration;
         parent::__construct('s3-upload');
     }
 
-    public function go(TransportInterface $transport)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $client = $this->getS3Client();
         $output = $client->putObject([
             'Bucket' => $this->getBucket(),
-            'Key' => $this->getFileKey(),
+            'Key' => $this->getFileName($environment),
             'SourceFile' => $transport->getData('completed_file'),
             'ContentType' => 'application/gzip'
         ]);
@@ -49,9 +51,19 @@ class Upload extends Command implements CommandInterface
         return $transport->withNewData('s3_url', $this->getObjectUrl($output));
     }
 
-    private function getObjectUrl(\Aws\Result $data)
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    protected function getObjectUrl(\Aws\Result $data)
     {
         return $data->get('ObjectURL');
+    }
+
+    private function getFileName(EnvironmentInterface $environment)
+    {
+        return str_replace('{{environment}}', $environment->getName(), $this->getFileKey());
     }
 
     private function getFileKey()

@@ -20,6 +20,7 @@
 namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
@@ -33,33 +34,43 @@ class Export extends Command implements CommandInterface
     private $random;
     private $filename;
     private $configuration;
+    private $properties;
 
-    public function __construct(Connection $connection, Ssl $ssl, Random $random, Configuration $configuration)
+    public function __construct(Connection $connection, Ssl $ssl, Random $random, Configuration $configuration, array $properties = [])
     {
         $this->connection = $connection;
         $this->ssl = $ssl;
         $this->random = $random;
         $this->configuration = $configuration;
+        $this->properties = $properties;
 
         return parent::__construct('mysql-sandbox-export');
     }
 
-    public function go(TransportInterface $transport)
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $this->connection->test(function(Connection $connection) {
             $connection->authorizeIp();
         });
 
-        if ($results = system($this->assembleCommand())) {
+        $environmentName = $environment->getName();
+
+        if ($results = system($this->assembleCommand($environmentName))) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
         } else {
             return $transport
-                ->withNewData('completed_file', $this->getFilename())
+                ->withNewData('completed_file', $this->getFilename($environmentName))
+                ->withNewData($environmentName . '_completed_file', $this->getFilename($environmentName))
                 ->withStatus(new Status('sandbox_init', 'success'));
         }
     }
 
-    private function assembleCommand()
+    private function assembleCommand($environmentName)
     {
         $command = implode(' ', [
             "mysqldump --user={$this->connection->getUser()}",
@@ -80,7 +91,7 @@ class Export extends Command implements CommandInterface
 
         $command .= implode(' ', [
             '>',
-            $this->getFilename()
+            $this->getFilename($environmentName)
         ]);
 
         return $command;
@@ -91,11 +102,11 @@ class Export extends Command implements CommandInterface
         return (bool)$this->configuration->getNode('configuration/compress-output') === true;
     }
 
-    private function getFilename()
+    private function getFilename($environmentName)
     {
         if (!$this->filename) {
             do {
-                $file = '/tmp/driver_tmp_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
+                $file = '/tmp/driver_tmp_' . $environmentName . '_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
             } while (file_exists($file));
 
             $this->filename = $file;

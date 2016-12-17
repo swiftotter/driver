@@ -19,12 +19,14 @@
 
 namespace Driver\Pipeline\Span;
 
+use Driver\Pipeline\Environment\Factory;
+use Driver\Pipeline\Environment\Manager;
 use Driver\Pipeline\Stage\Factory as StageFactory;
 use Driver\System\YamlFormatter;
 
 interface SpanInterface
 {
-    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter);
+    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter, Manager $environmentManager, Factory $environmentFactory);
 
     public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport);
 }

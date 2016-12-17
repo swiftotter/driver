@@ -39,8 +39,8 @@ class Factory
      * @param $actions
      * @return StageInterface
      */
-    public function create($actions)
+    public function create($actions, $name)
     {
-        return $this->container->make($this->type, [ 'actions' => $actions ]);
+        return $this->container->make($this->type, [ 'actions' => $actions, 'name' => $name ]);
     }
 }

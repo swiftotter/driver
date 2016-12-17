@@ -13,24 +13,35 @@
  * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
+ * @copyright SwiftOtter Studios, 12/10/16
  * @package default
  **/
 
-namespace Driver\Pipeline\Stage;
+namespace Driver\Commands\Environment;
 
-use Driver\Commands\Factory as CommandFactory;
+use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
+use Driver\Pipeline\Transport\TransportInterface;
+use Symfony\Component\Console\Command\Command;
 
-interface StageInterface
+class Setup extends Command implements CommandInterface
 {
-    public function __construct(array $list, $name, CommandFactory $commandFactory, EnvironmentInterface $environmentInterface);
+    private $properties;
 
-    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport);
+    public function __construct($properties = [])
+    {
+        $this->properties = $properties;
+        parent::__construct('environment-configuration');
+    }
 
-    public function getName();
+    public function getProperties()
+    {
+        return $this->properties;
+    }
 
-    public function withEnvironment(EnvironmentInterface $environment);
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    {
+        return $transport->withEnvironment($environment);
+    }
 
-    public function isRepeatable();
 }

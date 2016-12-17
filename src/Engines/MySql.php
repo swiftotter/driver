@@ -20,6 +20,7 @@
 namespace Driver\Engines;
 
 use Driver\Commands\CommandInterface;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\Engines\MySql\Connection;
@@ -30,13 +31,20 @@ class MySql extends Command implements CommandInterface
 {
     private $configuration;
     private $logger;
+    private $properties;
 
-    public function __construct(Connection $configuration, LoggerInterface $logger)
+    public function __construct(Connection $configuration, LoggerInterface $logger, array $properties = [])
     {
         $this->configuration = $configuration;
         $this->logger = $logger;
+        $this->properties = $properties;
 
         parent::__construct(null);
+    }
+
+    public function getProperties()
+    {
+        return $this->properties;
     }
 
     protected function configure()
@@ -45,7 +53,7 @@ class MySql extends Command implements CommandInterface
             ->setDescription('Connects to MySQL.');
     }
 
-    public function go(TransportInterface $transport)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $value = $this->configuration->getConnection()->getAttribute(\PDO::ATTR_CONNECTION_STATUS);
         $this->logger->notice('Successfully connected.');

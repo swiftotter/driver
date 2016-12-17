@@ -33,7 +33,8 @@ class YamlLoader
         'commands',
         'engines',
         'connections',
-        'config'
+        'config',
+        'environments'
     ];
 
     public function get()

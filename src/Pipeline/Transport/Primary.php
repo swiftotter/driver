@@ -19,6 +19,7 @@
 
 namespace Driver\Pipeline\Transport;
 
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\System\Logs\LoggerInterface;
 
 class Primary implements TransportInterface
@@ -27,13 +28,15 @@ class Primary implements TransportInterface
     private $statuses;
     private $pipeline;
     private $logger;
+    private $environment;
 
-    public function __construct($pipeline, $statuses = [], $data = [], LoggerInterface $logger = null)
+    public function __construct($pipeline, $statuses = [], $data = [], EnvironmentInterface $environment = null, LoggerInterface $logger = null)
     {
         $this->pipeline = $pipeline;
         $this->statuses = $statuses;
         $this->data = $data;
         $this->logger = $logger;
+        $this->environment = $environment;
     }
 
     public function getErrors()
@@ -57,7 +60,7 @@ class Primary implements TransportInterface
 
     public function withStatus(Status $status)
     {
-        return new self($this->pipeline, array_merge($this->statuses, [ $status ]), $this->data, $this->logger);
+        return new self($this->pipeline, array_merge($this->statuses, [ $status ]), $this->data, $this->environment, $this->logger);
     }
 
     public function getStatuses()
@@ -74,7 +77,7 @@ class Primary implements TransportInterface
 
     public function withNewData($key, $value)
     {
-        return new self($this->pipeline, $this->statuses, array_merge($this->data, [$key => $value]), $this->logger);
+        return new self($this->pipeline, $this->statuses, array_merge($this->data, [$key => $value]), $this->environment, $this->logger);
     }
 
     public function getAllData()

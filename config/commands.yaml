@@ -17,3 +17,5 @@ commands:
     class: \Driver\Engines\MySql\Sandbox\Shutdown
   call-post-webhook:
     class: \Driver\Commands\Webhook\PostCommand
+  setup-environment:
+    class: \Driver\Commands\Environment\Setup

@@ -19,7 +19,11 @@
 
 namespace Driver\Pipeline\Span;
 
+use Driver\Pipeline\Environment\EnvironmentInterface;
+use Driver\Pipeline\Environment\Factory as EnvironmentFactory;
+use Driver\Pipeline\Environment\Manager as EnvironmentManager;
 use Driver\Pipeline\Stage\Factory as StageFactory;
+use Driver\Pipeline\Stage\StageInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\System\YamlFormatter;
 use Haystack\HArray;
@@ -27,31 +31,79 @@ use Haystack\HArray;
 class Primary implements SpanInterface
 {
     const PIPE_SET_NODE = 'parent';
+    const UNSET_ENVIRONMENT = 'default';
 
-    private $list;
+    private $stages;
     private $stageFactory;
+    private $environmentManager;
+    private $environmentFactory;
 
-    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter)
+    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter, EnvironmentManager $environmentManager, EnvironmentFactory $environmentFactory)
     {
         $this->stageFactory = $stageFactory;
-        $this->list = $yamlFormatter->extractToAssociativeArray($list);
+        $this->environmentManager = $environmentManager;
+        $this->environmentFactory = $environmentFactory;
+
+        $this->stages = $this->generateStageMap($yamlFormatter->extractToAssociativeArray($list));
     }
 
     public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
     {
         if ($testMode) {
-            $this->list = [];
+            $stages = [];
+        } else {
+            $stages = $this->stages;
         }
 
-        (new HArray($this->list))
-            ->filter(function($actions) {
-                return count($actions) > 0;
-            })->walk(function($actions, $name) use ($transport){
-                $stage = $this->stageFactory->create($actions);
-                return $this->verifyTransport($stage($transport), $name);
+        (new HArray($stages))
+            ->walk(function(StageInterface $stage) use ($transport){
+                return $this->verifyTransport($stage($transport), $stage->getName());
             });
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
+    }
+
+    private function generateStageMap($list)
+    {
+        $stages = $this->mapToStageObjects($this->filterStages($list));
+
+        $output = new \ArrayIterator();
+        $defaultEnvironment = new \ArrayIterator([ $this->environmentFactory->createDefault() ]);
+
+        array_walk($stages, function(StageInterface $stage) use (&$output, $defaultEnvironment) {
+            if ($stage->isRepeatable()) {
+                $output = $this->repeatForEnvironments($stage, $output, $this->environmentManager->getRunFor());
+            } else {
+                $output = $this->repeatForEnvironments($stage, $output, $defaultEnvironment);
+            }
+        });
+
+        return $output->getArrayCopy();
+    }
+
+    private function filterStages(array $stages)
+    {
+        return (new HArray($stages))
+            ->filter(function($actions) {
+                return count($actions) > 0;
+            })->toArray();
+    }
+
+    private function mapToStageObjects(array $stages)
+    {
+        return array_map(function($actions, $name) {
+            return $this->stageFactory->create($actions, $name);
+        }, array_values($stages), array_keys($stages));
+    }
+
+    private function repeatForEnvironments(StageInterface $stage, \ArrayIterator $output, \ArrayIterator $environments)
+    {
+        return array_reduce($environments->getArrayCopy(), function(\ArrayIterator $input, EnvironmentInterface $environment) use ($stage) {
+            $output = new \ArrayIterator($input->getArrayCopy());
+            $output->append($stage->withEnvironment($environment));
+
+            return $output;
+        }, $output);
     }
 
     private function verifyTransport(\Driver\Pipeline\Transport\TransportInterface $transport, $lastCommand)

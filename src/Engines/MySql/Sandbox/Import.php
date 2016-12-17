@@ -21,6 +21,7 @@ namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
 use Driver\Engines\MySql\Connection as LocalConnection;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Symfony\Component\Console\Command\Command;
@@ -31,17 +32,19 @@ class Import extends Command implements CommandInterface
     private $localConnection;
     private $sandboxConnection;
     private $ssl;
+    private $properties;
 
-    public function __construct(LocalConnection $localConnection, Ssl $ssl, SandboxConnection $sandboxConnection)
+    public function __construct(LocalConnection $localConnection, Ssl $ssl, SandboxConnection $sandboxConnection, array $properties = [])
     {
         $this->localConnection = $localConnection;
         $this->sandboxConnection = $sandboxConnection;
         $this->ssl = $ssl;
+        $this->properties = $properties;
 
         return parent::__construct('mysql-sandbox-import');
     }
 
-    public function go(TransportInterface $transport)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $this->sandboxConnection->test(function(SandboxConnection $connection) {
             $connection->authorizeIp();
@@ -52,6 +55,11 @@ class Import extends Command implements CommandInterface
         } else {
             return $transport->withStatus(new Status('sandbox_init', 'success'));
         }
+    }
+
+    public function getProperties()
+    {
+        return $this->properties;
     }
 
     public function assembleCommand()

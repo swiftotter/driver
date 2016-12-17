@@ -20,25 +20,34 @@
 namespace Driver\Commands\Webhook;
 
 use Driver\Commands\CommandInterface;
+use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
+use JmesPath\Env;
 use Symfony\Component\Console\Command\Command;
 
 class PostCommand extends Command implements CommandInterface
 {
     private $configuration;
     private $webhook;
+    private $properties;
 
-    public function __construct(Configuration $configuration, Webhook $webhook)
+    public function __construct(Configuration $configuration, Webhook $webhook, array $properties = [])
     {
         $this->configuration = $configuration;
         $this->webhook = $webhook;
+        $this->properties = $properties;
 
         parent::__construct('webhook-post-command');
     }
 
-    public function go(TransportInterface $transport)
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $url = $this->configuration->getNode('connections/webhooks/post-url');
 
