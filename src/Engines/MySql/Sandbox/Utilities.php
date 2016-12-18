@@ -39,10 +39,10 @@ class Utilities
         try {
             $result = $this->connection->query("SELECT 1 FROM $tableName LIMIT 1");
         } catch (\Exception $e) {
-            return FALSE;
+            return false;
         }
 
-        return $result !== FALSE;
+        return $result !== false;
     }
 
     public function clearTable($tableName)
@@ -51,12 +51,15 @@ class Utilities
             $this->connection->beginTransaction();
 
             if ($this->tableExists($tableName)) {
+                $this->connection->query("set foreign_key_checks=0");
                 $this->connection->query("TRUNCATE TABLE {$tableName}");
             }
 
             $this->connection->commit();
         } catch (\Exception $ex) {
             $this->connection->rollBack();
+        } finally {
+            $this->connection->query("set foreign_key_checks=1");
         }
     }
 
@@ -64,9 +67,9 @@ class Utilities
     {
         if ($this->prefix === false) {
             $testTable = 'core_config_data';
-            $result = $this->connection->query('SHOW TABLES;', \PDO::FETCH_COLUMN);
+            $result = $this->connection->query('SHOW TABLES;');
 
-            $fullTableName = array_filter($result->fetchColumn(), function ($tableName) use ($testTable) {
+            $fullTableName = array_filter($result->fetchColumn(0), function ($tableName) use ($testTable) {
                 return strpos($tableName, $testTable) !== false;
             });
 

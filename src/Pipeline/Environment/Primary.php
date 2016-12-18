@@ -19,6 +19,7 @@
 
 namespace Driver\Pipeline\Environment;
 
+use Driver\Engines\MySql\Sandbox\Utilities;
 use Driver\Pipeline\Stage\Factory as StageFactory;
 use Driver\Pipeline\Transport\Status;
 use Driver\System\YamlFormatter;
@@ -30,11 +31,16 @@ class Primary implements EnvironmentInterface
     private $name;
     private $properties;
     private $files;
+    private $ignoredTables;
 
-    public function __construct($name, array $properties)
+    /** @var Utilities $utilities */
+    private $utilities;
+
+    public function __construct($name, array $properties, Utilities $utilities)
     {
         $this->properties = $properties;
         $this->name = $name;
+        $this->utilities = $utilities;
     }
 
     public function addFile($type, $path)
@@ -60,5 +66,50 @@ class Primary implements EnvironmentInterface
     public function getAllData()
     {
         return $this->properties;
+    }
+
+    public function addIgnoredTable($tableName)
+    {
+        $this->ignoredTables[] = $tableName;
+    }
+
+    public function getIgnoredTables()
+    {
+        return $this->ignoredTables;
+    }
+
+    public function getSort()
+    {
+        if (isset($this->properties['sort'])) {
+            return (int)$this->properties['sort'];
+        } else {
+            return 1000;
+        }
+    }
+
+    public function getTransformations()
+    {
+        if (isset($this->properties['transformations'])) {
+            return $this->flattenTransformations($this->properties['transformations']);
+        } else {
+            return [];
+        }
+    }
+
+    private function flattenTransformations($input)
+    {
+        $output = [];
+        array_walk($input, function($transformations, $tableName) use (&$output) {
+            $output = array_merge($output, $this->parseVariables($this->utilities->tableName($tableName), $transformations));
+        });
+
+        return $output;
+    }
+
+    protected function parseVariables($tableName, array $input)
+    {
+        return array_map(function($query) use ($tableName) {
+            return str_replace("{{table_name}}", $tableName, $query);
+        }, $input);
     }
 }

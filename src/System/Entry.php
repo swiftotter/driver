@@ -27,6 +27,8 @@ class Entry
 
     public static function go($arguments)
     {
+        set_time_limit(0);
+
         if (!is_array($arguments)) {
             $arguments = [];
         }

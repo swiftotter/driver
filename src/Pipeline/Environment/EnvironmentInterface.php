@@ -19,12 +19,13 @@
 
 namespace Driver\Pipeline\Environment;
 
+use Driver\Engines\MySql\Sandbox\Utilities;
 use Driver\Pipeline\Stage\Factory as StageFactory;
 use Driver\System\YamlFormatter;
 
 interface EnvironmentInterface
 {
-    public function __construct($name, array $properties);
+    public function __construct($name, array $properties, Utilities $utilities);
 
     /**
      * @return array
@@ -53,4 +54,25 @@ interface EnvironmentInterface
      * @return array
      */
     public function getAllData();
+
+    /**
+     * @return array
+     */
+    public function getTransformations();
+
+    /**
+     * @return int
+     */
+    public function getSort();
+
+    /**
+     * @return array
+     */
+    public function getIgnoredTables();
+
+    /**
+     * @param $tableName
+     * @return void
+     */
+    public function addIgnoredTable($tableName);
 }

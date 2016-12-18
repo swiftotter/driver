@@ -1,10 +1,4 @@
 environments:
   default:
     sort: 1
-    empty: false
-    transformations:
-#      admin_user:
-#        query: "UPDATE admin_user SET password = CONCAT(MD5('xxNewPassword'), ':xx') WHERE username = 'admin';"
-#        query: "DELETE FROM admin_user WHERE username <> 'admin';"
-  initial:
-    empty: false
+    empty: true

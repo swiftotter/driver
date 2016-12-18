@@ -20,6 +20,7 @@
 namespace Driver\Pipeline\Environment;
 
 use DI\Container;
+use Driver\Engines\MySql\Sandbox\Utilities;
 use Driver\Pipeline\Master;
 use Driver\System\Configuration;
 use Driver\System\Factory\FactoryInterface;
@@ -28,15 +29,17 @@ class Factory
 {
     const DEFAULT_ENV = 'default';
 
-    protected $configuration;
-    protected $container;
-    protected $type;
+    private $configuration;
+    private $container;
+    private $type;
+    private $utilities;
 
-    public function __construct(Configuration $configuration, Container $container, $type)
+    public function __construct(Configuration $configuration, Container $container, Utilities $utilities, $type)
     {
         $this->configuration = $configuration;
         $this->container = $container;
         $this->type = $type;
+        $this->utilities = $utilities;
     }
 
     public function createDefault()
@@ -55,7 +58,8 @@ class Factory
     {
         return $this->container->make($this->type, [
             'name' => $name,
-            'properties' => $this->getEnvironmentProperties($name)
+            'properties' => $this->getEnvironmentProperties($name),
+            'utilities' => $this->utilities
         ]);
     }
 

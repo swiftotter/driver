@@ -19,3 +19,5 @@ commands:
     class: \Driver\Commands\Webhook\PostCommand
   setup-environment:
     class: \Driver\Commands\Environment\Setup
+  run-transformations:
+    class: \Driver\Engines\MySql\Transformation

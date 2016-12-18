@@ -51,11 +51,6 @@ class Manager
         $this->runFor = new \ArrayIterator($this->mapNamesToEnvironments($environmentList));
     }
 
-    public function getStageEnvironmentSetterCommandFor(EnvironmentInterface $environment)
-    {
-        return [ 0 => Setup::class ];
-    }
-
     private function getAllEnvironments()
     {
         $output = (new HArray($this->configuration->getNode('environments')))
@@ -66,11 +61,21 @@ class Manager
         return array_keys($output);
     }
 
-    private function mapNamesToEnvironments($environments)
+    private function mapNamesToEnvironments(array $environments)
     {
-        return (new HArray($environments))->map(function($name) {
+        $mapped = (new HArray($environments))->map(function($name) {
             return $this->factory->create($name);
+        })->toArray();
+
+        usort($mapped, function(EnvironmentInterface $a, EnvironmentInterface $b) {
+            if ($a->getSort() == $b->getSort()) {
+                return 0;
+            }
+
+            return ($a->getSort() < $b->getSort()) ? -1 : 1;
         });
+
+        return $mapped;
     }
 
     /**

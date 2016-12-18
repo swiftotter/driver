@@ -55,6 +55,10 @@ class PostCommand extends Command implements CommandInterface
             $this->webhook->post($url, $transport->getAllData());
         }
 
+        if (isset($this->properties['url'])) {
+            $this->webhook->post($this->properties['url'], $transport->getAllData());
+        }
+
         return $transport->withStatus(new Status('webhook_postcommand', 'success'));
     }
 }
