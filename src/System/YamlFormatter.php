@@ -35,11 +35,17 @@ class YamlFormatter
     public function extractToAssociativeArray($input)
     {
         $output = array_reduce($input, function($commands, array $item) {
-            array_walk($item, function($name, $id) use (&$commands) {
-                while (isset($commands[$id])) {
-                    $id++;
+            array_walk($item, function($values, $name) use (&$commands) {
+                if (isset($commands[$name]) && !is_array($commands[$name]) && is_array($values)) {
+                    $values[] = $values;
+                    $commands[$name] = $values;
+                } else if (isset($commands[$name]) && is_array($commands[$name]) && is_array($values)) {
+                    $commands[$name] = array_merge($commands[$name], $values);
+                } else if (isset($commands[$name])) { // if $commands[$name] is set, turn it into an array
+                    $commands[$name] = [ $commands[$name], $values ];
+                } else { // if $commands[$name] is not set
+                    $commands[$name] = $values;
                 }
-                $commands[$id] = $name;
             });
 
             return $commands;

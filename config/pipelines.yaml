@@ -7,17 +7,12 @@ pipelines:
         sort: 200
       - name: start-sandbox
         sort: 300
-#    - 400: export-data-from-source
     - import:
       - name: import-data-into-sandbox
         sort: 100
     - repeat-commands:
       - name: run-transformations
         sort: 1000
-        properties:
-          - transformations:
-            admin_user:
-
     - repeat-export:
       - name: export-data-from-sandbox
         sort: 100

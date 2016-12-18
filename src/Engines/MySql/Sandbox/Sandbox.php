@@ -91,6 +91,10 @@ class Sandbox
             'VpcSecurityGroupIds' => [ $this->getSecurityGroup() ]
         ];
 
+        if ($parameterGroupName = $this->getDbParameterGroupName()) {
+             $parameters['DBParameterGroupName'] = $parameterGroupName;
+        }
+
         $this->instance = $client->createDBInstance($parameters);
 
         $this->logger->info("RDS instance is initializing: " . $this->getIdentifier());
@@ -143,6 +147,17 @@ class Sandbox
     {
         $status = $this->getInstanceStatus();
         return isset($status['Endpoint']['Port']) ? $status['Endpoint']['Port'] : 3306;
+    }
+
+    public function getDbParameterGroupName()
+    {
+        $value = $this->configuration->getNode('connections/rds/parameter-group-name');
+
+        if (!is_array($value) && $value) {
+            return $value;
+        } else {
+            return false;
+        }
     }
 
     public function getInstanceStatus($force = false)

@@ -67,6 +67,7 @@ class Import extends Command implements CommandInterface
         return implode(' ', [
             "mysqldump --user={$this->localConnection->getUser()}",
                 "--password={$this->localConnection->getPassword()}",
+                "--skip-extended-insert",
                 "--host={$this->localConnection->getHost()}",
                 "{$this->localConnection->getDatabase()}",
             "|",
