@@ -8,8 +8,10 @@ pipelines:
       - name: start-sandbox
         sort: 300
     - import:
-      - name: import-data-into-sandbox
+      - name: export-data-from-system-primary
         sort: 100
+      - name: import-data-into-sandbox
+        sort: 200
     - repeat-commands:
       - name: run-transformations
         sort: 1000

@@ -7,6 +7,8 @@ commands:
     class: \Driver\Engines\MySql\Check
   start-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Init
+  export-data-from-system-primary:
+    class: \Driver\Engines\MySql\Export\Primary
   import-data-into-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Import
   export-data-from-sandbox:

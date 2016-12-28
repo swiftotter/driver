@@ -34,6 +34,8 @@ class Check extends Command implements CommandInterface
     private $logger;
     private $properties;
 
+    const DB_SIZE_KEY = 'database_size';
+
     public function __construct(Connection $configuration, LoggerInterface $logger, array $properties = [], $databaseSize = null, $freeSpace = null)
     {
         $this->configuration = $configuration;
@@ -54,7 +56,7 @@ class Check extends Command implements CommandInterface
     {
         if ($this->getDatabaseSize() < $this->getDriveFreeSpace()) {
             $this->logger->info("Database size is less than the free space available on the PHP drive.");
-            return $transport->withStatus(new Status('check', 'success'));
+            return $transport->withNewData(self::DB_SIZE_KEY, $this->getDatabaseSize())->withStatus(new Status('check', 'success'));
         } else {
             throw new \Exception('There is NOT enough free space to dump the database.');
         }

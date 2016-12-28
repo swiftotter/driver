@@ -22,22 +22,17 @@ namespace Driver\Engines\MySql\Sandbox;
 class Utilities
 {
     private $connection;
-    private $prefix = false;
+    private $cachedTables = false;
 
     public function __construct(Connection $connection)
     {
-        $this->connection = $connection->getConnection();
-    }
-
-    public function tableName($tableName)
-    {
-        return $this->getPrefix() . $tableName;
+        $this->connection = $connection;
     }
 
     public function tableExists($tableName)
     {
         try {
-            $result = $this->connection->query("SELECT 1 FROM $tableName LIMIT 1");
+            $result = $this->connection->getConnection()->query("SELECT 1 FROM $tableName LIMIT 1");
         } catch (\Exception $e) {
             return false;
         }
@@ -47,36 +42,52 @@ class Utilities
 
     public function clearTable($tableName)
     {
+        $connection = $this->connection->getConnection();
         try {
-            $this->connection->beginTransaction();
+            $connection->beginTransaction();
 
             if ($this->tableExists($tableName)) {
-                $this->connection->query("set foreign_key_checks=0");
-                $this->connection->query("TRUNCATE TABLE {$tableName}");
+                $connection->query("set foreign_key_checks=0");
+                $connection->query("TRUNCATE TABLE {$tableName}");
             }
 
-            $this->connection->commit();
+            $connection->commit();
         } catch (\Exception $ex) {
-            $this->connection->rollBack();
+            $connection->rollBack();
         } finally {
-            $this->connection->query("set foreign_key_checks=1");
+            $connection->query("set foreign_key_checks=1");
         }
     }
 
-    private function getPrefix()
+    public function tableName($tableName)
     {
-        if ($this->prefix === false) {
-            $testTable = 'core_config_data';
-            $result = $this->connection->query('SHOW TABLES;');
+        $fullTableName = array_reduce($this->getTables(), function ($carry, $sourceTableName) use ($tableName) {
+            if (strlen($sourceTableName) < strlen($tableName)) {
+                return $carry;
+            }
 
-            $fullTableName = array_filter($result->fetchColumn(0), function ($tableName) use ($testTable) {
-                return strpos($tableName, $testTable) !== false;
-            });
+            if ($sourceTableName == $tableName) {
+                return $tableName;
+            }
 
-            list($prefix) = explode($testTable, $fullTableName);
-            $this->prefix = $prefix;
+            if (substr_compare($sourceTableName, $tableName, strlen($sourceTableName) - strlen($tableName), strlen($tableName)) === 0) {
+                return $sourceTableName;
+            }
+
+            return $carry;
+        }, '');
+
+        return $fullTableName;
+    }
+
+    private function getTables()
+    {
+        if ($this->cachedTables === false) {
+            $result = $this->connection->getConnection()->query('SHOW TABLES;');
+
+            $this->cachedTables = $result->fetchAll(\PDO::FETCH_COLUMN, 0);
         }
 
-        return $this->prefix;
+        return $this->cachedTables;
     }
 }

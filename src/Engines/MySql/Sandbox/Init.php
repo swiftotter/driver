@@ -51,9 +51,9 @@ class Init extends Command implements CommandInterface
     {
         $this->sandbox->init();
         $tries = 0;
-        $maxTries = 50;
+        $maxTries = 200;
 
-        while(!($active = $this->sandbox->getInstanceActive()) && $tries < 50) {
+        while(!($active = $this->sandbox->getInstanceActive()) && $tries < $maxTries) {
             $tries++;
             sleep(6);
         }

@@ -81,14 +81,16 @@ class Sandbox
         $client = $this->getRdsClient();
 
         $parameters = [
-            'DBName' => 'd' . $this->getDBName(),
+            'DBName' => $this->getDBName(),
             'DBInstanceIdentifier' => $this->getIdentifier(),
-            'AllocatedStorage' => 5,
+            'AllocatedStorage' => 100,
             'DBInstanceClass' => $this->configuration->getNode('connections/rds/instance-type'),
-            'Engine' => 'MySQL',
-            'MasterUsername' => 'u' . $this->getUsername(),
+            'Engine' => $this->getEngine(),
+            'MasterUsername' => $this->getUsername(),
             'MasterUserPassword' => $this->getPassword(),
-            'VpcSecurityGroupIds' => [ $this->getSecurityGroup() ]
+            'VpcSecurityGroupIds' => [ $this->getSecurityGroup() ],
+            'BackupRetentionPeriod' => 0,
+            'StorageType' => $this->getStorageType()
         ];
 
         if ($parameterGroupName = $this->getDbParameterGroupName()) {
@@ -160,29 +162,32 @@ class Sandbox
         }
     }
 
-    public function getInstanceStatus($force = false)
+    public function getInstanceStatus()
     {
-        if (!$this->statuses[$this->getIdentifier()] || $force) {
+        try {
             $client = $this->getRdsClient();
             $result = $client->describeDBInstances(['DBInstanceIdentifier' => $this->getIdentifier()]);
             if (isset($result['DBInstances'][0])) {
                 $this->statuses[$this->getIdentifier()] = $result['DBInstances'][0];
             }
-        }
 
-        return $this->statuses[$this->getIdentifier()];
+            return $this->statuses[$this->getIdentifier()];
+        } catch (\Exception $ex) {
+            return ['DBInstanceStatus' => false];
+        }
     }
 
     private function getSecurityGroup()
     {
         if (!$this->securityGroupId) {
-            $name = 'driver-temp-' . $this->getRandomString(6);
             $client = $this->getEc2Client();
 
             $securityGroup = $client->createSecurityGroup([
-                'GroupName' => $name,
+                'GroupName' => $this->getSecurityGroupName(),
                 'Description' => 'Temporary security group for Driver uploads'
             ]);
+
+            $this->authorizeIp();
 
             $this->securityGroupId = $securityGroup['GroupId'];
         }
@@ -192,21 +197,27 @@ class Sandbox
 
     public function authorizeIp()
     {
-        $this->getEc2Client()->authorizeSecurityGroupIngress([
-            'GroupName' => $this->getSecurityGroupName(),
-            'IpPermissions' => [
-                [
-                    'IpProtocol' => 'tcp',
-                    "IpRanges" => [
-                        [
-                            "CidrIp" => $this->getPublicIp() . '/32'
-                        ]
-                    ],
-                    "ToPort" => "3306",
-                    "FromPort" => "3306"
+        try {
+            $this->getEc2Client()->authorizeSecurityGroupIngress([
+                'GroupName' => $this->getSecurityGroupName(),
+                'IpPermissions' => [
+                    [
+                        'IpProtocol' => 'tcp',
+                        "IpRanges" => [
+                            [
+                                "CidrIp" => $this->getPublicIp() . '/32'
+                            ]
+                        ],
+                        "ToPort" => "3306",
+                        "FromPort" => "3306"
+                    ]
                 ]
-            ]
-        ]);
+            ]);
+        } catch (\Exception $ex) {
+            if (stripos($ex->getMessage(), 'InvalidPermission.Duplicate') === false) {
+                throw $ex;
+            }
+        }
     }
 
     private function getPublicIp()
@@ -220,7 +231,7 @@ class Sandbox
             $this->dbName = $this->configuration->getNode('connections/rds/instance-db-name');
 
             if (!$this->dbName) {
-                $this->dbName = $this->getRandomString(12);
+                $this->dbName = 'd' . $this->getRandomString(12);
             }
         }
 
@@ -238,6 +249,28 @@ class Sandbox
         }
 
         return $this->identifier;
+    }
+
+    private function getStorageType()
+    {
+        $storageType = $this->configuration->getNode('connections/rds/storage-type');
+
+        if (!$storageType) {
+            $storageType = 'standard';
+        }
+
+        return $storageType;
+    }
+
+    private function getEngine()
+    {
+        $engine = $this->configuration->getNode('connections/rds/engine');
+
+        if (!$engine) {
+            $engine = 'MySQL';
+        }
+
+        return $engine;
     }
 
     public function getSecurityGroupName()
@@ -259,7 +292,7 @@ class Sandbox
             $this->username = $this->configuration->getNode('connections/rds/instance-username');
 
             if (!$this->username) {
-                $this->username = $this->getRandomString(12);
+                $this->username = 'u' . $this->getRandomString(12);
             }
         }
 

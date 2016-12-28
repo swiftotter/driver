@@ -20,6 +20,7 @@
 namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
+use Driver\Commands\ErrorInterface;
 use Driver\Engines\MySql\Sandbox\Sandbox;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
@@ -27,7 +28,7 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Symfony\Component\Console\Command\Command;
 
-class Shutdown extends Command implements CommandInterface
+class Shutdown extends Command implements CommandInterface, ErrorInterface
 {
     private $configuration;
     private $sandbox;
@@ -49,8 +50,17 @@ class Shutdown extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $this->sandbox->shutdown();
+        return $this->apply($transport, $environment);
+    }
 
+    public function error(TransportInterface $transport, EnvironmentInterface $environment)
+    {
+        return $this->apply($transport, $environment);
+    }
+
+    private function apply(TransportInterface $transport, EnvironmentInterface $environment)
+    {
+        $this->sandbox->shutdown();
         return $transport->withStatus(new Status('sandbox_shutdown', 'success'));
     }
 }

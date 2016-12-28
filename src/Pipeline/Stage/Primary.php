@@ -20,6 +20,7 @@
 namespace Driver\Pipeline\Stage;
 
 use Driver\Commands\CommandInterface;
+use Driver\Commands\ErrorInterface;
 use Driver\Commands\Factory as CommandFactory;
 use Driver\Pipeline\Command;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -27,6 +28,7 @@ use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\YamlFormatter;
 use GuzzleHttp\Promise\Promise;
+use Haystack\HArray;
 
 class Primary implements StageInterface
 {
@@ -84,10 +86,37 @@ class Primary implements StageInterface
         }
 
         $transport = array_reduce($this->actions, function(TransportInterface $transport, CommandInterface $command) {
-            return $this->verifyTransport($command->go($transport, $this->environment), $command);
+            return $this->runCommand($transport, $command);
         }, $transport);
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
+    }
+
+    private function runCommand(TransportInterface $transport, CommandInterface $command)
+    {
+        try {
+            if (!$this->hasError($transport)) {
+                return $this->verifyTransport($command->go($transport, $this->environment), $command);
+            } else if ($this->hasErrorHandler($command)) {
+                return $this->verifyTransport($command->error($transport, $this->environment), $command);
+            } else {
+                return $transport;
+            }
+        } catch (\Exception $ex) {
+            return $transport->withStatus(new Status($command, $ex->getMessage(), true));
+        }
+    }
+
+    private function hasErrorHandler(CommandInterface $command)
+    {
+        return is_a($command, ErrorInterface::class);
+    }
+
+    private function hasError(TransportInterface $transport)
+    {
+        return (new HArray($transport->getStatuses()))->reduce(function($carry, Status $status) {
+            return $carry || $status->isError();
+        }, false);
     }
 
     private function sortActions($actions)

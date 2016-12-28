@@ -17,49 +17,52 @@
  * @package default
  **/
 
-namespace Driver\Engines\MySql\Sandbox;
+namespace Driver\Engines\MySql\Export;
 
 use Driver\Commands\CommandInterface;
 use Driver\Engines\MySql\Connection as LocalConnection;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
+use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
+use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
 use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
 
-class Import extends Command implements CommandInterface
+class Primary extends Command implements CommandInterface
 {
     private $localConnection;
     private $sandboxConnection;
     private $ssl;
     private $properties;
     private $logger;
+    private $random;
+    private $path;
+    private $configuration;
 
-    public function __construct(LocalConnection $localConnection, Ssl $ssl, SandboxConnection $sandboxConnection, LoggerInterface $logger, array $properties = [])
+    const DEFAULT_DUMP_PATH = '/tmp';
+
+    public function __construct(LocalConnection $localConnection, Configuration $configuration, LoggerInterface $logger, Random $random, array $properties = [])
     {
         $this->localConnection = $localConnection;
-        $this->sandboxConnection = $sandboxConnection;
-        $this->ssl = $ssl;
         $this->properties = $properties;
         $this->logger = $logger;
+        $this->random = $random;
+        $this->configuration = $configuration;
 
-        return parent::__construct('mysql-sandbox-import');
+        return parent::__construct('mysql-default-export');
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $this->sandboxConnection->test(function(SandboxConnection $connection) {
-            $connection->authorizeIp();
-        });
+        $this->logger->notice($this->assembleCommand());
 
-        $this->logger->notice($this->assembleCommand($transport->getData('dump-file')));
-
-        if ($results = system($this->assembleCommand($transport->getData('dump-file')))) {
+        if ($results = system($this->assembleCommand())) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
         } else {
-            $this->logger->notice("Import to RDS completed.");
-            return $transport->withStatus(new Status('sandbox_init', 'success'));
+            $this->logger->notice("Database dump has completed.");
+            return $transport->withStatus(new Status('sandbox_init', 'success'))->withNewData('dump-file', $this->getDumpFile());
         }
     }
 
@@ -68,18 +71,33 @@ class Import extends Command implements CommandInterface
         return $this->properties;
     }
 
-    public function assembleCommand($path)
+    public function assembleCommand()
     {
         return implode(' ', [
-            "mysql --user={$this->sandboxConnection->getUser()}",
-                "--password={$this->sandboxConnection->getPassword()}",
-                "--host={$this->sandboxConnection->getHost()}",
-                "--port={$this->sandboxConnection->getPort()}",
-                "--ssl-mode=VERIFY_CA",
-                "--ssl-ca={$this->ssl->getPath()}",
-                "{$this->sandboxConnection->getDatabase()}",
-            "<",
-            $path
+            "mysqldump --user={$this->localConnection->getUser()}",
+                "--password={$this->localConnection->getPassword()}",
+                "--single-transaction",
+                "--compress",
+                "--order-by-primary",
+                "--host={$this->localConnection->getHost()}",
+                "{$this->localConnection->getDatabase()}",
+            ">",
+            $this->getDumpFile()
         ]);
+    }
+
+    private function getDumpFile()
+    {
+        if (!$this->path) {
+            $path = $this->configuration->getNode('connections/mysql/dump-path');
+            if (!$path) {
+                $path = self::DEFAULT_DUMP_PATH;
+            }
+            $filename = 'driver-' . $this->random->getRandomString(6) . '.sql';
+
+            $this->path = $path . '/' . $filename;
+        }
+
+        return $this->path;
     }
 }

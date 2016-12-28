@@ -95,6 +95,8 @@ class Primary implements LoggerInterface
     {
         $styler = $this->getStyler();
 
+        $message = date('m/d/y H:i:s') . ' ' . $message;
+
         if (!$styler) {
             return;
         }
