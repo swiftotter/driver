@@ -177,3 +177,31 @@ connections:
     instance-db-name:
     security-group-name:
 ```
+
+### Terminology
+
+* **Pipeline** (specified in `pipelines.yaml`): a series of stages. Representative of the work to take a production database and transform it. These are found under the `pipelines` node. You can execute a specific pipeline with the `--pipe-line` argument in the command line.
+* **Stage**: groups of actions inside of a pipeline. Stages are run sequentially Right now, Driver does work this way, but actions could run in parallel. 
+
+### Environments
+
+Ok, so Driver sounds really cool to create you a staging database. But, what about a database for the devs? There is a few changes for that: we want to clear out all other admin users (and reset the remaining admin user's password) as well as set unique urls for the website and possibly other things.
+
+There is a solution for that, too. Environments allow you to easily make modifications to the database, per-site.
+
+**Note:** you can execute specific commands per environment. These changes do not revert for each environment, but rather they are applied according to their sort order. If one environment uses the data in the `admin_users` table, and another environment clears out all data in the `admin_users` table, you set the sort order for the first table lower (ex. `100`) and the sort order for the second table higher (ex. `200`).
+
+
+#### Environment Reference:
+
+```
+environments:
+  ENVIRONMENT_NAME:
+    sort: # lower runs sooner, higher runs later
+    transformations:
+      TABLE_NAME:
+        - "UPDATE {{table_name}} SET value = 'test-value' WHERE path = 'id';"
+```
+
+**Notes:**
+* The `{{table_name}}` is substituted for the `TABLE_NAME` reference above. Driver will look for a table that **ends** with `TABLE_NAME`. For example, if your `TABLE_NAME` is `core_config_data`, Driver will search for a table in the database that ends with `core_config_data`. Thus, `mage_core_config_data`, `sample_core_config_data` and `core_config_data` would all match.
