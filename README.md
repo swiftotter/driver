@@ -2,12 +2,24 @@
 ### A database task-runner
 
 Driver is the easy way to turn a production database into a staging or development-friendly database.
-It is built with the ultimate aim of complete flexibility. Additionally, with the built-in capability
+It is built with the aim of complete flexibility. Additionally, with the built-in capability
 of working with RDS, Driver can run transformations on database host that is completely separate from
 your production environment.
 
 Because Driver is a task-runner, there is a good chance that you will need to create some tasks to run.
 There are some additional modules out there to help you with this. You will also need to specify configuration.
+
+## TL;DR
+
+Driver resides on your production machine, preferrably with your website's codebase (via composer). You setup a cron job to run Driver.
+
+* **Driver connects to your production database ONCE via `mysqldump`.**
+* Driver dumps that to a file on your system.
+* Driver creates a RDS instance and pushes the database dump up to RDS (via **https**).
+* Driver runs whatever actions you would like (configured globally or per environment).
+* Driver dumps the transformed data, zips it and pushes it up to S3.
+
+For a 3-5GB database, this process could take 2 hours or more. The downtime (associated with `mysqldump`'s table locking) is only a couple of minutes. It take a while to run, but it also uses very few resources and is a background process so you won't be waiting for it.
 
 ## Quickstart
 
@@ -48,7 +60,7 @@ connections:
     region: us-east-1
 ```
 
-It should run! Be prepared for it to take some time.
+It should run! Be prepared for it to take some time (on the order of hours).
 ```
 ./vendor/bin/driver run
 ```
@@ -126,3 +138,42 @@ in the control panel. Check the Programmatic access as Driver will be needing a 
 Select Add existing policies directly and choose your newly-created policy. Review it and then create the user.
 
 Place the Access key ID and Secret access key in your configuration.
+
+
+### Connection Reference
+
+```
+connections:
+  database: mysql # Currently, this is the only supported engine.
+  webhooks:
+    post-url: https://whatever-your-site-is.com # When the process is complete, Driver will ping this url.
+  mysql: # Source database connection information
+    database: your_database_name # REQUIRED
+    charset: # defaults to utf8
+    engine: mysql
+    port: # defaults to 3306
+    host: # defaults to 127.0.0.1
+    user: # REQUIRED: database username
+    password: # REQUIRED: database password
+    dump-path: /tmp # Where to put the dumps while they are transitioning between the server and RDS
+  s3:
+    engine: s3
+    key: # REQUIRED: your S3 login key (can be the same as RDS if both access policies are allowed)
+    secret: # REQUIRED: your S3 login secret
+    bucket: # REQUIRED: which bucket would like this dumped into?
+    region: # defaults to us-east-1
+  rds:
+    key: # REQUIRED: your RDS login key
+    secret: # REQUIRED: your RDS login secret
+    region: #defaults to us-east-1
+    ## FOR CREATING A RDS INSTANCE:
+    instance-type: # REQUIRED: choose from left column in https://aws.amazon.com/rds/details/#DB_Instance_Classes
+    engine: MySQL
+    storage-type: gp2
+    ## FOR USING AN EXISTING RDS INSTANCE:
+    instance-identifier:
+    instance-username:
+    instance-password:
+    instance-db-name:
+    security-group-name:
+```
