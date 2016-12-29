@@ -5,17 +5,17 @@
     "require": {
         "php-di/php-di": "^5.4",
         "aws/aws-sdk-php": "^3.19",
-        "symfony/yaml": "^3.1",
+        "symfony/yaml": "^2.3",
         "symfony/console": "^2.8",
         "symfony/event-dispatcher": "^2.5",
         "ericpoe/haystack": "^1.0",
-        "phpunit/dbunit": "^2.0",
         "guzzlehttp/guzzle": "^6.2",
         "psr/log": "^1.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^2.7",
-        "phpunit/phpunit": "^5.6"
+        "phpunit/phpunit": "^5.6",
+        "phpunit/dbunit": "^2.0"
     },
     "bin": ["bin/driver"],
     "autoload": {
