@@ -34,6 +34,7 @@ class Primary implements StageInterface
 {
     const PIPE_SET_NODE = 'parent';
     const REPEAT_PREFIX = 'repeat';
+    const EMPTY_NODE = 'empty';
 
     private $actions;
     private $commandFactory;
@@ -54,7 +55,9 @@ class Primary implements StageInterface
             if (is_a($properties, CommandInterface::class)) {
                 return $properties;
             } else {
-                return $this->commandFactory->create($properties['name'], $properties);
+                if ($properties['name'] !== self::EMPTY_NODE) {
+                    return $this->commandFactory->create($properties['name'], $properties);
+                }
             }
         }, $actions);
     }
@@ -95,6 +98,8 @@ class Primary implements StageInterface
     private function runCommand(TransportInterface $transport, CommandInterface $command)
     {
         try {
+            var_dump("Executing Stage: ");
+            var_dump($command->getProperties());
             if (!$this->hasError($transport)) {
                 return $this->verifyTransport($command->go($transport, $this->environment), $command);
             } else if ($this->hasErrorHandler($command)) {
@@ -121,6 +126,7 @@ class Primary implements StageInterface
 
     private function sortActions($actions)
     {
+        $actions = array_filter($actions);
         $getSort = function(CommandInterface $command) {
             $properties = $command->getProperties();
             if (isset($properties['sort'])) {

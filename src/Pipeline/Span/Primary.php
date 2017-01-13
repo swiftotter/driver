@@ -44,7 +44,7 @@ class Primary implements SpanInterface
         $this->environmentManager = $environmentManager;
         $this->environmentFactory = $environmentFactory;
 
-        $this->stages = $this->generateStageMap($yamlFormatter->extractToAssociativeArray($list));
+        $this->stages = $this->generateStageMap($yamlFormatter->extractSpanList($list));
     }
 
     public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
@@ -57,6 +57,7 @@ class Primary implements SpanInterface
 
         (new HArray($stages))
             ->walk(function(StageInterface $stage) use ($transport){
+                var_dump("Executing Span: " . $stage->getName());
                 return $this->verifyTransport($stage($transport), $stage->getName());
             });
 
@@ -65,7 +66,7 @@ class Primary implements SpanInterface
 
     private function generateStageMap($list)
     {
-        $stages = $this->mapToStageObjects($this->filterStages($list));
+        $stages = $this->mapToStageObjects($this->sortStages($this->filterStages($list)));
 
         $output = new \ArrayIterator();
         $defaultEnvironment = new \ArrayIterator([ $this->environmentFactory->createDefault() ]);
@@ -81,6 +82,18 @@ class Primary implements SpanInterface
         return $output->getArrayCopy();
     }
 
+    private function sortStages(array $stages)
+    {
+        uasort($stages, function($a, $b) {
+            if ($a['sort'] == $b['sort']) {
+                return 0;
+            }
+            return ($a['sort'] < $b['sort']) ? -1 : 1;
+        });
+
+        return $stages;
+    }
+
     private function filterStages(array $stages)
     {
         return (new HArray($stages))
@@ -91,9 +104,13 @@ class Primary implements SpanInterface
 
     private function mapToStageObjects(array $stages)
     {
-        return array_map(function($actions, $name) {
-            return $this->stageFactory->create($actions, $name);
-        }, array_values($stages), array_keys($stages));
+        return array_filter(array_map(function($stage, $name) {
+            if (isset($stage['actions'])) {
+                return $this->stageFactory->create($stage['actions'], $name);
+            } else {
+                return null;
+            }
+        }, array_values($stages), array_keys($stages)));
     }
 
     private function repeatForEnvironments(StageInterface $stage, \ArrayIterator $output, \ArrayIterator $environments)

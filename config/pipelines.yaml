@@ -1,26 +1,47 @@
 pipelines:
   default: # pipeline span
-    - setup: # pipeline stage
-      - name: connect
-        sort: 100
-      - name: check-filesystem
-        sort: 200
-      - name: start-sandbox
-        sort: 300
-    - import:
-      - name: export-data-from-system-primary
-        sort: 100
-      - name: import-data-into-sandbox
-        sort: 200
-    - repeat-commands:
-      - name: run-transformations
-        sort: 1000
-    - repeat-export:
-      - name: export-data-from-sandbox
-        sort: 100
-      - name: upload-data-to-s3
-        sort: 200
-    - shutdown:
-      - name: shutdown-sandbox
-        sort: 100
+    - name: setup # pipeline stage
+      sort: 100
+      actions:
+        - name: connect
+          sort: 100
+        - name: check-filesystem
+          sort: 200
+        - name: start-sandbox
+          sort: 300
+
+    - name: import
+      sort: 200
+      actions:
+        - name: export-data-from-system-primary
+          sort: 100
+        - name: import-data-into-sandbox
+          sort: 200
+
+    - name: global-commands
+      sort: 300
+      actions:
+        - name: empty
+          sort: 1
+
+    - name: repeat-commands
+      sort: 400
+      actions:
+        - name: run-transformations
+          sort: 1000
+
+    - name: repeat-export
+      sort: 400
+      actions:
+        - name: export-data-from-sandbox
+          sort: 100
+        - name: upload-data-to-s3
+          sort: 200
+
+    - name: shutdown
+      sort: 500
+      actions:
+        - name: shutdown-sandbox
+          sort: 100
+
   empty: []

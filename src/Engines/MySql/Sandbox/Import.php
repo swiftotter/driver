@@ -70,7 +70,7 @@ class Import extends Command implements CommandInterface
 
     public function assembleCommand($path)
     {
-        return implode(' ', [
+        $command = implode(' ', [
             "mysql --user={$this->sandboxConnection->getUser()}",
                 "--password={$this->sandboxConnection->getPassword()}",
                 "--host={$this->sandboxConnection->getHost()}",
@@ -81,5 +81,11 @@ class Import extends Command implements CommandInterface
             "<",
             $path
         ]);
+
+        if (stripos($this->localConnection->getConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION), 'maria') !== false) {
+            $command = str_replace('--ssl-mode=VERIFY_CA', '--ssl', $command);
+        }
+
+        return $command;
     }
 }

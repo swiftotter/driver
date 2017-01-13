@@ -77,8 +77,6 @@ class Export extends Command implements CommandInterface
             "--password={$this->connection->getPassword()}",
             "--host={$this->connection->getHost()}",
             "--port={$this->connection->getPort()}",
-            "--ssl-mode=VERIFY_CA",
-            "--ssl-ca={$this->ssl->getPath()}",
             "{$this->connection->getDatabase()}"
         ]);
 
