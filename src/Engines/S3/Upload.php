@@ -35,6 +35,8 @@ class Upload extends Command implements CommandInterface
     public function __construct(Configuration $configuration, array $properties = [])
     {
         $this->configuration = $configuration;
+        $this->properties = $properties;
+
         parent::__construct('s3-upload');
     }
 
@@ -63,7 +65,7 @@ class Upload extends Command implements CommandInterface
 
     private function getFileName(EnvironmentInterface $environment)
     {
-        return str_replace('{{environment}}', $environment->getName(), $this->getFileKey());
+        return str_replace('{{environment}}', '-' . $environment->getName(), $this->getFileKey());
     }
 
     private function getFileKey()

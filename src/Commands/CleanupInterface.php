@@ -17,22 +17,16 @@
  * @package default
  **/
 
-namespace Driver\Pipeline\Stage;
+namespace Driver\Commands;
 
-use Driver\Commands\Factory as CommandFactory;
 use Driver\Pipeline\Environment\EnvironmentInterface;
+use Driver\Pipeline\Transport\TransportInterface;
 
-interface StageInterface
+interface CleanupInterface
 {
-    public function __construct(array $list, $name, CommandFactory $commandFactory, EnvironmentInterface $environmentInterface);
-
-    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport);
-
-    public function cleanup(\Driver\Pipeline\Transport\TransportInterface $transport);
-
-    public function getName();
-
-    public function withEnvironment(EnvironmentInterface $environment);
-
-    public function isRepeatable();
+    /**
+     * @param TransportInterface $transport
+     * @return TransportInterface
+     */
+    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment);
 }

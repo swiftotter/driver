@@ -34,7 +34,7 @@ recommended to create a new IAM user with appropriate permissions to access EC2,
 will be coming).
 
 Place inside it a file with the following information (replacing all of the brackets and their content):
-```
+```yaml
 connections:
   database: mysql
   mysql:
@@ -108,7 +108,7 @@ You will need to do two things in your AWS control panel:
 Open your control panel and go to IAM. Click on the Policies tab on the sidebar. Choose to Create New Policy.
 Select Create Your Own Policy (if you want to use the one below) and enter the following code.
 
-```
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -142,11 +142,19 @@ Place the Access key ID and Secret access key in your configuration.
 
 ### Connection Reference
 
-```
+```yaml
+configuration:
+  compress-output: true # if set, the output will be compressed and the compressed-file-key will be used.
+
 connections:
   database: mysql # Currently, this is the only supported engine.
   webhooks:
     post-url: https://whatever-your-site-is.com # When the process is complete, Driver will ping this url.
+    transform-url: # During the transformation process, Driver will ping this url with connection information.
+                   # You could write your own scripts to be executed at this url.
+    auth:
+      user: # for HTTP basic authentication
+      password: # for HTTP basic authentication
   mysql: # Source database connection information
     database: your_database_name # REQUIRED
     charset: # defaults to utf8
@@ -162,20 +170,25 @@ connections:
     secret: # REQUIRED: your S3 login secret
     bucket: # REQUIRED: which bucket would like this dumped into?
     region: # defaults to us-east-1
+    compressed-file-key: # name in the bucket for a compressed file. 
+    uncompressed-file-key: # name for an uncompressed file.
+    # It is recommended to include {{environment}} in the filename to avoid multiple environments overwriting the file.
   rds:
     key: # REQUIRED: your RDS login key
     secret: # REQUIRED: your RDS login secret
     region: #defaults to us-east-1
-    ## FOR CREATING A RDS INSTANCE:
+    ## BEGIN NEW RDS INSTANCE:
     instance-type: # REQUIRED: choose from left column in https://aws.amazon.com/rds/details/#DB_Instance_Classes
     engine: MySQL
     storage-type: gp2
-    ## FOR USING AN EXISTING RDS INSTANCE:
+    ## END NEW RDS INSTANCE
+    ## BEGIN EXISTING RDS INSTANCE:
     instance-identifier:
     instance-username:
     instance-password:
     instance-db-name:
     security-group-name:
+    ## END EXISTING RDS INSTANCE
 ```
 
 ### Terminology
@@ -285,6 +298,10 @@ environments:
     transformations:
       TABLE_NAME:
         - "UPDATE {{table_name}} SET value = 'test-value' WHERE path = 'id';"
+    ignored_tables:
+        # These are ignored in the final dump: mysqldump ... --ignored-tables=DATABASE.table_1
+        - table_1
+        - table_2
 ```
 
 **Notes:**

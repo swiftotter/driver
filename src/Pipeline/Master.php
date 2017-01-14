@@ -47,7 +47,8 @@ class Master
     public function run($set)
     {
         $pipeline = $this->pipeLineFactory->create($set);
-        $pipeline($this->createTransport());
+        $transport = $pipeline($this->createTransport());
+        $pipeline->cleanup($transport);
     }
 
     protected function createTransport()

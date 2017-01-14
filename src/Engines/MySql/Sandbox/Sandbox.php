@@ -108,7 +108,7 @@ class Sandbox
 
     public function shutdown()
     {
-        if ($this->initialized || $this->configuration->getNode('connections/rds/instance-name') || $this->getInstanceActive()) {
+        if ($this->configuration->getNode('connections/rds/instance-name')) {
             $this->logger->info("Using static RDS instance and will not shutdown: " . $this->getIdentifier());
             return false;
         }

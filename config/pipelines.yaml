@@ -29,17 +29,13 @@ pipelines:
       actions:
         - name: run-transformations
           sort: 1000
-
-    - name: repeat-export
-      sort: 400
-      actions:
         - name: export-data-from-sandbox
-          sort: 100
+          sort: 2000
         - name: upload-data-to-s3
-          sort: 200
+          sort: 3000
 
     - name: shutdown
-      sort: 500
+      sort: 600
       actions:
         - name: shutdown-sandbox
           sort: 100

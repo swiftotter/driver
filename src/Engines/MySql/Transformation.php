@@ -20,7 +20,7 @@
 namespace Driver\Engines\MySql;
 
 use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Sandbox\Connection;
+use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
 use Driver\Engines\MySql\Sandbox\Utilities;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
@@ -37,7 +37,7 @@ class Transformation extends Command implements CommandInterface
     private $utilities;
     private $logger;
 
-    public function __construct(Configuration $configuration, Connection $sandbox, Utilities $utilities, LoggerInterface $logger, array $properties = [])
+    public function __construct(Configuration $configuration, SandboxConnection $sandbox, Utilities $utilities, LoggerInterface $logger, array $properties = [])
     {
         $this->configuration = $configuration;
         $this->properties = $properties;

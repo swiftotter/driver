@@ -49,19 +49,26 @@ class Primary implements SpanInterface
 
     public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
     {
-        if ($testMode) {
-            $stages = [];
-        } else {
-            $stages = $this->stages;
-        }
+        $stages = !$testMode ? $this->stages : [];
 
         (new HArray($stages))
             ->walk(function(StageInterface $stage) use ($transport){
-                var_dump("Executing Span: " . $stage->getName());
                 return $this->verifyTransport($stage($transport), $stage->getName());
             });
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
+    }
+
+    public function cleanup(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
+    {
+        $stages = !$testMode ? $this->stages : [];
+
+        (new HArray($stages))
+            ->walk(function(StageInterface $stage) use ($transport){
+                return $stage->cleanup($transport);
+            });
+
+        return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'cleaned'));
     }
 
     private function generateStageMap($list)

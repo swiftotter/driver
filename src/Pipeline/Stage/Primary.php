@@ -19,6 +19,7 @@
 
 namespace Driver\Pipeline\Stage;
 
+use Driver\Commands\CleanupInterface;
 use Driver\Commands\CommandInterface;
 use Driver\Commands\ErrorInterface;
 use Driver\Commands\Factory as CommandFactory;
@@ -84,22 +85,33 @@ class Primary implements StageInterface
 
     public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
     {
-        if ($testMode) {
-            $this->actions = [];
-        }
+        $actions = !$testMode ? $this->actions : [];
 
-        $transport = array_reduce($this->actions, function(TransportInterface $transport, CommandInterface $command) {
+        $transport = array_reduce($actions, function(TransportInterface $transport, CommandInterface $command) {
             return $this->runCommand($transport, $command);
         }, $transport);
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
 
+    public function cleanup(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
+    {
+        $actions = !$testMode ? $this->actions : [];
+
+        $transport = array_reduce($actions, function(TransportInterface $transport, CommandInterface $command) {
+            /** @var CleanupInterface $command */
+            if (is_a($command, CleanupInterface::class)) {
+                $command->cleanup($transport, $this->environment);
+            }
+            return $transport;
+        }, $transport);
+
+        return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'cleaned'));
+    }
+
     private function runCommand(TransportInterface $transport, CommandInterface $command)
     {
         try {
-            var_dump("Executing Stage: ");
-            var_dump($command->getProperties());
             if (!$this->hasError($transport)) {
                 return $this->verifyTransport($command->go($transport, $this->environment), $command);
             } else if ($this->hasErrorHandler($command)) {

@@ -19,6 +19,7 @@
 
 namespace Driver\Engines\MySql\Export;
 
+use Driver\Commands\CleanupInterface;
 use Driver\Commands\CommandInterface;
 use Driver\Engines\MySql\Connection as LocalConnection;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -30,7 +31,7 @@ use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
 use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
 
-class Primary extends Command implements CommandInterface
+class Primary extends Command implements CommandInterface, CleanupInterface
 {
     private $localConnection;
     private $sandboxConnection;
@@ -65,6 +66,14 @@ class Primary extends Command implements CommandInterface
             return $transport->withStatus(new Status('sandbox_init', 'success'))->withNewData('dump-file', $this->getDumpFile());
         }
     }
+
+    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment)
+    {
+        if ($this->getDumpFile() && file_exists($this->getDumpFile())) {
+            @unlink($this->getDumpFile());
+        }
+    }
+
 
     public function getProperties()
     {
