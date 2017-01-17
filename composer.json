@@ -1,6 +1,7 @@
 {
     "name": "swiftotter/driver",
     "description": "A database production to sandbox utility to sanitize data.",
+    "version":"0.4",
     "type": "library",
     "require": {
         "php-di/php-di": "^5.4",
