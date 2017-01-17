@@ -5,8 +5,8 @@
     "require": {
         "php-di/php-di": "^5.4",
         "aws/aws-sdk-php": "^3.19",
-        "symfony/yaml": "^2.3",
-        "symfony/console": "^2.8",
+        "symfony/yaml": ">=2.3",
+        "symfony/console": ">=2.8",
         "symfony/event-dispatcher": "^2.5",
         "ericpoe/haystack": "^1.0",
         "guzzlehttp/guzzle": "^6.2",
