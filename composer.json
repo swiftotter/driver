@@ -1,13 +1,13 @@
 {
     "name": "swiftotter/driver",
     "description": "A database production to sandbox utility to sanitize data.",
-    "version":"0.4",
+    "version":"0.5",
     "type": "library",
     "require": {
         "php-di/php-di": "^5.4",
         "aws/aws-sdk-php": "^3.19",
         "symfony/yaml": ">=2.3",
-        "symfony/console": ">=2.8",
+        "symfony/console": ">=2.6",
         "symfony/event-dispatcher": "^2.5",
         "ericpoe/haystack": "^1.0",
         "guzzlehttp/guzzle": "^6.2",
