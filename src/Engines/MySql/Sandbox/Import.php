@@ -53,7 +53,7 @@ class Import extends Command implements CommandInterface
             $connection->authorizeIp();
         });
 
-        $this->logger->notice($this->assembleCommand($transport->getData('dump-file')));
+        $this->logger->notice("Importing database into RDS");
 
         if ($results = system($this->assembleCommand($transport->getData('dump-file')))) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
