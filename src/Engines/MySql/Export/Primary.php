@@ -83,8 +83,8 @@ class Primary extends Command implements CommandInterface, CleanupInterface
     public function assembleCommand()
     {
         return implode(' ', [
-            "mysqldump --user={$this->localConnection->getUser()}",
-                "--password={$this->localConnection->getPassword()}",
+            "mysqldump --user=\"{$this->localConnection->getUser()}\"",
+                "--password=\"{$this->localConnection->getPassword()}\"",
                 "--single-transaction",
                 "--compress",
                 "--order-by-primary",
