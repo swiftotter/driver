@@ -57,7 +57,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $this->logger->notice($this->assembleCommand());
+        $this->logger->notice("Exporting database from local MySql");
 
         if ($results = system($this->assembleCommand())) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
