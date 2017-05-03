@@ -27,7 +27,9 @@ class Configuration
     /** @var YamlLoader $loader */
     protected $loader;
 
-    protected $nodes = [];
+    protected $nodes = [
+        'pipelines' => []
+    ];
 
     protected $files = [];
 
@@ -66,7 +68,14 @@ class Configuration
                 $contents = Yaml::parse($this->loader->load($file));
                 $this->files[$file] = $contents;
                 if (is_array($contents)) {
+                    $pipelines = [];
+                    if (isset($contents['pipelines'])) {
+                        $pipelines = $contents['pipelines'];
+                        unset($contents['pipelines']);
+                    }
+
                     $this->nodes = array_merge_recursive($this->nodes, $contents);
+                    $this->nodes['pipelines'] = $this->mergePipelines($pipelines);
                 }
             } catch (ParseException $e) {
                 $this->files[$file] = [];
@@ -74,6 +83,77 @@ class Configuration
         }
 
         return $this->files[$file];
+    }
+
+    /**
+     * Special handling for pipelines as they don't exactly follow the key/value pattern.
+     *
+     * @param $input
+     */
+    protected function mergePipelines($new)
+    {
+        if (!isset($this->nodes['pipelines']) || !count($this->nodes['pipelines'])) {
+            return $new;
+        }
+
+        if (!count($new)) {
+            return $this->nodes['pipelines'];
+        }
+
+       return array_reduce(array_keys($this->nodes['pipelines']), function($carry, $key) use ($new) {
+            $existing = $this->nodes['pipelines'];
+            if (!isset($new[$key])) {
+                $carry[$key] = $existing;
+                return $carry;
+            }
+            if (!isset($existing[$key])) {
+                $carry[$key] = $new[$key];
+                return $carry;
+            }
+
+            $carry[$key] = $this->mergePipeline($existing[$key], $new[$key]);
+            return $carry;
+        }, []);
+    }
+
+    protected function mergePipeline($existing, $new)
+    {
+        array_walk($new, function($value) use (&$existing) {
+            $existing = $this->mergeStageIntoPipeline($existing, $value);
+        });
+
+        return $existing;
+    }
+
+    protected function mergeStageIntoPipeline($existing, $newStage)
+    {
+        $matched = false;
+
+        $output = array_reduce(array_keys($existing), function($carry, $existingKey) use ($existing, $newStage, &$matched) {
+            $existingStage = $existing[$existingKey];
+            $currentMatch = isset($newStage['name']) && isset($existingStage['name']) && $newStage['name'] == $existingStage['name'];
+            $matched = $matched || $currentMatch;
+
+            if (!$currentMatch) {
+                return $carry;
+            }
+
+            $carry[$existingKey] = array_merge($existingStage, $newStage);
+            $carry[$existingKey]['actions'] = array_merge($existingStage['actions'], $newStage['actions']);
+
+            return $carry;
+        }, $existing);
+
+        if (!$matched) {
+            $output[] = $newStage;
+        }
+
+        return $output;
+    }
+
+    protected function consolidateStage($existing, $new)
+    {
+
     }
 
     protected function stripFileExtension($file)

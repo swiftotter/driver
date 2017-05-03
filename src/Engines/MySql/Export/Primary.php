@@ -59,7 +59,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
     {
         $this->logger->notice("Exporting database from local MySql");
 
-        if ($results = system($this->assembleCommand())) {
+        if ($results = system($this->assembleCommand($environment))) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
         } else {
             $this->logger->notice("Database dump has completed.");
@@ -80,7 +80,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         return $this->properties;
     }
 
-    public function assembleCommand()
+    public function assembleCommand(EnvironmentInterface $environment)
     {
         return implode(' ', [
             "mysqldump --user=\"{$this->localConnection->getUser()}\"",
@@ -90,9 +90,20 @@ class Primary extends Command implements CommandInterface, CleanupInterface
                 "--order-by-primary",
                 "--host={$this->localConnection->getHost()}",
                 "{$this->localConnection->getDatabase()}",
+            $this->assembleIgnoredTables($environment),
             ">",
             $this->getDumpFile()
         ]);
+    }
+
+    private function assembleIgnoredTables(EnvironmentInterface $environment)
+    {
+        $tables = $environment->getIgnoredTables();
+        $output = implode(' | ', array_map(function($table) {
+            return "awk '!/^INSERT INTO `{$table}` VALUES/'";
+        }, $tables));
+
+        return $output ? ' | ' . $output : '';
     }
 
     private function getDumpFile()

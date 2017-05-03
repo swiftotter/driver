@@ -10,6 +10,12 @@ pipelines:
         - name: start-sandbox
           sort: 300
 
+    - name: processors
+      sort: 150
+      actions:
+        - name: empty
+          sort: 1
+
     - name: import
       sort: 200
       actions:
