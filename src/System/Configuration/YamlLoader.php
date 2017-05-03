@@ -78,7 +78,7 @@ class YamlLoader
             }, $files));
         }
 
-        return $output;
+        return array_reverse($output);
     }
 
     /**

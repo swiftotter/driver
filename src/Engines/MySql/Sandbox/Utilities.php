@@ -24,7 +24,7 @@ class Utilities
     private $connection;
     private $cachedTables = false;
 
-    public function __construct(Connection $connection)
+    public function __construct(\Driver\Engines\MySql\Connection $connection)
     {
         $this->connection = $connection;
     }
@@ -40,24 +40,24 @@ class Utilities
         return $result !== false;
     }
 
-    public function clearTable($tableName)
-    {
-        $connection = $this->connection->getConnection();
-        try {
-            $connection->beginTransaction();
-
-            if ($this->tableExists($tableName)) {
-                $connection->query("set foreign_key_checks=0");
-                $connection->query("TRUNCATE TABLE {$tableName}");
-            }
-
-            $connection->commit();
-        } catch (\Exception $ex) {
-            $connection->rollBack();
-        } finally {
-            $connection->query("set foreign_key_checks=1");
-        }
-    }
+//    public function clearTable($tableName)
+//    {
+//        $connection = $this->connection->getConnection();
+//        try {
+//            $connection->beginTransaction();
+//
+//            if ($this->tableExists($tableName)) {
+//                $connection->query("set foreign_key_checks=0");
+//                $connection->query("TRUNCATE TABLE {$tableName}");
+//            }
+//
+//            $connection->commit();
+//        } catch (\Exception $ex) {
+//            $connection->rollBack();
+//        } finally {
+//            $connection->query("set foreign_key_checks=1");
+//        }
+//    }
 
     public function tableName($tableName)
     {
