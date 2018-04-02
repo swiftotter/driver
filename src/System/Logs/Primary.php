@@ -20,7 +20,6 @@
 namespace Driver\System\Logs;
 
 use Driver\System\Logs\LoggerInterface;
-use Mageplaza\Smtp\Model\Log;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
