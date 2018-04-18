@@ -22,10 +22,23 @@ namespace Driver\System\Logs;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Console\Logger\ConsoleLogger;
+use Psr\Log\LogLevel;
 
 class Primary implements LoggerInterface
 {
+    /**
+     * @var array
+     */
+    private $logLevelMap = [
+        1 => LogLevel::DEBUG,
+        2 => LogLevel::INFO,
+        5 => LogLevel::NOTICE,
+        8 => LogLevel::WARNING,
+        9 => LogLevel::ERROR,
+        10 => LogLevel::CRITICAL
+    ];
+
     /**
      * @var InputInterface $input
      */
@@ -34,15 +47,22 @@ class Primary implements LoggerInterface
      * @var OutputInterface $output
      */
     private $output;
-    private $styler;
 
-    private function getStyler()
+    /**
+     * @var ConsoleLogger $consoleLogger
+     */
+    private $consoleLogger;
+
+    /**
+     * @return ConsoleLogger
+     */
+    private function getConsoleLogger()
     {
-        if (!$this->styler && $this->input && $this->output) {
-            $this->styler = new SymfonyStyle($this->input, $this->output);
+        if (!$this->consoleLogger && $this->input && $this->output) {
+            $this->consoleLogger = new ConsoleLogger($this->output, [], []);
         }
 
-        return $this->styler;
+        return $this->consoleLogger;
     }
 
     public function setParams(InputInterface $input, OutputInterface $output)
@@ -91,38 +111,25 @@ class Primary implements LoggerInterface
         $this->log(1, $message);
     }
 
+    /**
+     * @param int    $level
+     * @param string $message
+     * @param array  $context
+     */
     public function log($level, $message, array $context = array())
     {
-        $styler = $this->getStyler();
+        /** @var ConsoleLogger $consoleLogger */
+        $consoleLogger = $this->getConsoleLogger();
 
         $message = date('m/d/y H:i:s') . ' ' . $message;
 
-        if (!$styler) {
+        if (!$consoleLogger || !(array_key_exists($level, $this->logLevelMap))) {
             return;
         }
 
-        switch($level) {
-            case 1:
-            case 2:
-            case 3:
-                $styler->comment($message);
-                break;
-            case 4:
-            case 5:
-            case 6:
-                $styler->comment($message);
-                break;
-            case 7:
-            case 8:
-                $styler->caution($message);
-                break;
-            case 9:
-            case 10:
-            default:
-                $styler->error($message);
-                break;
-        }
+        /** @var string $levelKey */
+        $logVerbosityLevel = $this->logLevelMap[$level];
+
+        $this->consoleLogger->log($logVerbosityLevel, $message);
     }
-
-
 }
