@@ -100,7 +100,13 @@ class Configuration
             return $this->nodes['pipelines'];
         }
 
-       return array_reduce(array_keys($this->nodes['pipelines']), function($carry, $key) use ($new) {
+        /** @var array $pipelinesKeys */
+        $pipelinesKeys = array_merge(
+            array_keys($this->nodes['pipelines']),
+            array_keys($new)
+        );
+
+        return array_reduce($pipelinesKeys, function($carry, $key) use ($new) {
             $existing = $this->nodes['pipelines'];
             if (!isset($new[$key])) {
                 $carry[$key] = $existing;
