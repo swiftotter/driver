@@ -43,7 +43,7 @@ class Manager
         }
         else if (is_string($environments)) {
             $environmentList = array_filter(explode(',', $environments));
-            $environmentList = array_walk($environmentList, 'trim');
+            array_walk($environmentList, 'trim');
         } else {
             $environmentList = $environments;
         }
