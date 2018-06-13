@@ -136,8 +136,12 @@ class Export extends Command implements CommandInterface, CleanupInterface
     private function getFilename($environmentName)
     {
         if (!$this->filename) {
+            $path = $this->configuration->getNode('connections/rds/dump-path');
+            if (!$path) {
+                $path ='/tmp';
+            }
             do {
-                $file = '/tmp/driver_tmp_' . $environmentName . '_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
+                $file = $path . '/driver_tmp_' . $environmentName . '_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
             } while (file_exists($file));
 
             $this->filename = $file;
