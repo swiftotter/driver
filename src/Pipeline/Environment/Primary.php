@@ -75,8 +75,12 @@ class Primary implements EnvironmentInterface
 
     public function getIgnoredTables()
     {
-        if (!$this->ignoredTables && isset($this->properties['ignored_tables'])) {
-            $this->ignoredTables = $this->properties['ignored_tables'];
+        if (!$this->ignoredTables) {
+            if (isset($this->properties['ignored_tables'])) {
+                $this->ignoredTables = $this->properties['ignored_tables'];
+            } else {
+                $this->ignoredTables = [];
+            }
         }
         return $this->ignoredTables;
     }

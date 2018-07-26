@@ -80,4 +80,9 @@ interface TransportInterface
      * @return self
      */
     public function withNewData($key, $value);
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger();
 }

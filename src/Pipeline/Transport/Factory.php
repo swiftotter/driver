@@ -41,6 +41,6 @@ class Factory
 
     public function create($pipeline)
     {
-        return new $this->type($pipeline, [], [], $this->environmentFactory->createDefault());
+        return new $this->type($pipeline, [], [], $this->environmentFactory->createDefault(), $this->logger);
     }
 }
