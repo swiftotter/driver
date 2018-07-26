@@ -50,6 +50,8 @@ class Upload extends Command implements CommandInterface
             'ContentType' => 'application/gzip'
         ]);
 
+        $transport->getLogger()->notice("Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
+
         return $transport->withNewData('s3_url', $this->getObjectUrl($output));
     }
 

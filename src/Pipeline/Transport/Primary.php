@@ -30,8 +30,13 @@ class Primary implements TransportInterface
     private $logger;
     private $environment;
 
-    public function __construct($pipeline, $statuses = [], $data = [], EnvironmentInterface $environment = null, LoggerInterface $logger = null)
-    {
+    public function __construct(
+        $pipeline,
+        $statuses = [],
+        $data = [],
+        EnvironmentInterface $environment = null,
+        LoggerInterface $logger = null
+    ) {
         $this->pipeline = $pipeline;
         $this->statuses = $statuses;
         $this->data = $data;
@@ -88,5 +93,10 @@ class Primary implements TransportInterface
     public function getData($key)
     {
         return isset($this->data[$key]) ? $this->data[$key] : false;
+    }
+
+    public function getLogger()
+    {
+        return $this->logger;
     }
 }

@@ -60,6 +60,8 @@ class Shutdown extends Command implements CommandInterface, ErrorInterface
 
     private function apply(TransportInterface $transport, EnvironmentInterface $environment)
     {
+        $transport->getLogger()->notice("Shutting down RDS");
+
         $this->sandbox->shutdown();
         return $transport->withStatus(new Status('sandbox_shutdown', 'success'));
     }

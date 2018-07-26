@@ -63,6 +63,8 @@ class Export extends Command implements CommandInterface, CleanupInterface
             $connection->authorizeIp();
         });
 
+        $transport->getLogger()->notice("Exporting database from remote MySql RDS");
+
         $environmentName = $environment->getName();
         $command = $this->assembleCommand($environmentName, $environment->getIgnoredTables());
 
