@@ -7,7 +7,7 @@
         "aws/aws-sdk-php": "^3.19",
         "symfony/yaml": ">=2.3",
         "symfony/console": ">=2.6",
-        "symfony/event-dispatcher": "^2.5",
+        "symfony/event-dispatcher": ">=2.5",
         "ericpoe/haystack": "^1.0",
         "guzzlehttp/guzzle": "^6.2",
         "psr/log": "^1.0"
