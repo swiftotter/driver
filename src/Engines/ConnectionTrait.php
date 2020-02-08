@@ -24,7 +24,7 @@ trait ConnectionTrait
 {
     private $connection;
 
-    public function getConnection()
+    public function getConnection(): \PDO
     {
         if (!$this->connection) {
             $options = [

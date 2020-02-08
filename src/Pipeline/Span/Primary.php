@@ -25,6 +25,7 @@ use Driver\Pipeline\Environment\Manager as EnvironmentManager;
 use Driver\Pipeline\Stage\Factory as StageFactory;
 use Driver\Pipeline\Stage\StageInterface;
 use Driver\Pipeline\Transport\Status;
+use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\YamlFormatter;
 use Haystack\HArray;
 
@@ -47,19 +48,19 @@ class Primary implements SpanInterface
         $this->stages = $this->generateStageMap($yamlFormatter->extractSpanList($list));
     }
 
-    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
+    public function __invoke(TransportInterface $transport, $testMode = false)
     {
         $stages = !$testMode ? $this->stages : [];
 
-        (new HArray($stages))
-            ->walk(function(StageInterface $stage) use ($transport){
-                return $this->verifyTransport($stage($transport), $stage->getName());
-            });
+        /** @var StageInterface $stage */
+        foreach ($stages as $stage) {
+            $this->verifyTransport($stage($transport), $stage->getName());
+        };
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
 
-    public function cleanup(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
+    public function cleanup(TransportInterface $transport, $testMode = false)
     {
         $stages = !$testMode ? $this->stages : [];
 
@@ -130,7 +131,7 @@ class Primary implements SpanInterface
         }, $output);
     }
 
-    private function verifyTransport(\Driver\Pipeline\Transport\TransportInterface $transport, $lastCommand)
+    private function verifyTransport(TransportInterface $transport, $lastCommand)
     {
         if (!$transport) {
             throw new \Exception('No Transport object was returned from the last command executed: ' . $lastCommand);

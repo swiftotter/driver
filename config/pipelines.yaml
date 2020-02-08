@@ -1,5 +1,13 @@
+#
+# You should have few, if any changes to make to this file (in the form of another pipelines file being present
+# in the project). However, if you are creating another workflow, like WordPress, you might update or add some
+# commands.
+#
+# Most changes will be in the environments area. There, you can create unique outputs so that dumps can be targeted
+# at specific environments (like staging and local).
+
 pipelines:
-  default: # pipeline span
+  default: # pipeline span, usually default is the only one
     - name: setup # pipeline stage
       sort: 100
       actions:
@@ -9,12 +17,6 @@ pipelines:
           sort: 200
         - name: start-sandbox
           sort: 300
-
-    - name: processors
-      sort: 150
-      actions:
-        - name: empty
-          sort: 1
 
     - name: import
       sort: 200
@@ -27,8 +29,10 @@ pipelines:
     - name: global-commands
       sort: 300
       actions:
-        - name: empty
-          sort: 1
+        - name: reduce
+          sort: 100
+        - name: anonymize
+          sort: 200
 
     - name: repeat-commands
       sort: 400

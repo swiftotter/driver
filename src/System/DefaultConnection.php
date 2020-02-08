@@ -1,44 +1,38 @@
 <?php
+declare(strict_types=1);
 /**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/19/16
- * @package default
+ * @by SwiftOtter, Inc. 2/8/20
+ * @website https://swiftotter.com
  **/
 
-namespace Driver\Engines\MySql;
+namespace Driver\System;
 
-use Driver\Engines\ConnectionTrait;
 use Driver\Engines\ConnectionInterface;
+use Driver\Engines\ConnectionTrait;
 
-class Connection implements ConnectionInterface
+class DefaultConnection implements ConnectionInterface
 {
     use ConnectionTrait;
 
+    /** @var Configuration  */
     private $configuration;
 
-    public function __construct(\Driver\System\Configuration $configuration)
+    public function __construct(Configuration $configuration)
     {
         $this->configuration = $configuration;
     }
 
-    public function getDSN()
+    public function isAvailable(): bool
+    {
+        return true;
+    }
+
+    public function getDSN(): string
     {
         return "mysql:host={$this->getHost()};dbname={$this->getDatabase()};port={$this->getPort()};charset={$this->getCharset()}";
     }
 
-    public function getCharset()
+    public function getCharset(): string
     {
         if ($charset = $this->getValue('charset', false)) {
             return $charset;
@@ -47,7 +41,7 @@ class Connection implements ConnectionInterface
         }
     }
 
-    public function getHost()
+    public function getHost(): string
     {
         if ($host = $this->getValue('host', false)) {
             return $host;
@@ -56,7 +50,7 @@ class Connection implements ConnectionInterface
         }
     }
 
-    public function getPort()
+    public function getPort(): string
     {
         if ($port = $this->getValue('port', false)) {
             return $port;
@@ -65,17 +59,17 @@ class Connection implements ConnectionInterface
         }
     }
 
-    public function getDatabase()
+    public function getDatabase(): string
     {
         return $this->getValue('database', true);
     }
 
-    public function getUser()
+    public function getUser(): string
     {
         return $this->getValue('user', true);
     }
 
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->getValue('password', true);
     }

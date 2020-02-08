@@ -23,22 +23,37 @@ use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
+use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 
 class Check extends Command implements CommandInterface
 {
+    /** @var LocalConnectionLoader */
     private $configuration;
+
+    /** @var int */
     private $databaseSize;
+
+    /** @var int */
     private $freeSpace;
+
+    /** @var LoggerInterface */
     private $logger;
+
+    /** @var array */
     private $properties;
 
     const DB_SIZE_KEY = 'database_size';
 
-    public function __construct(Connection $configuration, LoggerInterface $logger, array $properties = [], $databaseSize = null, $freeSpace = null)
-    {
-        $this->configuration = $configuration;
+    public function __construct(
+        LocalConnectionLoader $connection,
+        LoggerInterface $logger,
+        array $properties = [],
+        $databaseSize = null,
+        $freeSpace = null
+    ) {
+        $this->configuration = $connection;
         $this->databaseSize = $databaseSize;
         $this->freeSpace = $freeSpace;
         $this->logger = $logger;
@@ -77,7 +92,10 @@ class Check extends Command implements CommandInterface
             return $this->databaseSize;
         } else {
             $connection = $this->configuration->getConnection();
-            $statement = $connection->prepare('SELECT ceiling(sum(data_length + index_length) / 1024 / 1024) as DB_SIZE FROM information_schema.tables WHERE table_schema = :database_name GROUP BY table_schema;');
+            $statement = $connection->prepare(
+                'SELECT ceiling(sum(data_length + index_length) / 1024 / 1024) as DB_SIZE FROM information_schema.tables WHERE table_schema = :database_name GROUP BY table_schema;'
+            );
+
             $statement->execute(['database_name' => $this->configuration->getDatabase() ]);
             return $statement->fetch(\PDO::FETCH_ASSOC)["DB_SIZE"];
         }

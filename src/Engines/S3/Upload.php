@@ -23,36 +23,53 @@ use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
+use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
+use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 
 class Upload extends Command implements CommandInterface
 {
     protected $configuration;
     protected $properties;
+    /** @var LoggerInterface */
+    private $logger;
 
-    public function __construct(Configuration $configuration, array $properties = [])
+    public function __construct(Configuration $configuration, LoggerInterface $logger, array $properties = [])
     {
         $this->configuration = $configuration;
         $this->properties = $properties;
+        $this->logger = $logger;
 
         parent::__construct('s3-upload');
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $client = $this->getS3Client();
-        $output = $client->putObject([
-            'Bucket' => $this->getBucket(),
-            'Key' => $this->getFileName($environment),
-            'SourceFile' => $transport->getData('completed_file'),
-            'ContentType' => 'application/gzip'
-        ]);
+        try {
+            $transport->getLogger()->notice("Beginning file upload to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
 
-        $transport->getLogger()->notice("Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
+            $client = $this->getS3Client();
+            $output = $client->putObject([
+                'Bucket' => $this->getBucket(),
+                'Key' => $this->getDirectory() . $this->getFileName($environment),
+                'SourceFile' => $transport->getData($environment->getName() . '_completed_file'),
+                'ContentType' => 'application/gzip'
+            ]);
 
-        return $transport->withNewData('s3_url', $this->getObjectUrl($output));
+            $transport->getLogger()->notice("Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
+
+            return $transport->withNewData('s3_url', $this->getObjectUrl($output));
+        } catch (\Exception $ex) {
+            $this->logger->error('Failed putting object to S3.', [
+                $ex->getMessage(),
+                $ex->getTraceAsString()
+            ]);
+
+            return $transport->withStatus(new Status('s3-upload', $ex->getMessage(), true));
+        }
+
     }
 
     public function getProperties()
@@ -92,6 +109,16 @@ class Upload extends Command implements CommandInterface
         return $this->configuration->getNode('connections/s3/bucket');
     }
 
+    private function getDirectory()
+    {
+        $directory = $this->configuration->getNode('connections/s3/directory');
+        if ($directory) {
+            $directory .= '/';
+        }
+
+        return $directory;
+    }
+
     private function getS3Client()
     {
         return new S3Client($this->getAwsParameters());
@@ -101,9 +128,13 @@ class Upload extends Command implements CommandInterface
     {
         $parameters = [
             'credentials' => [
-                'key' => $this->configuration->getNode("connections/s3/key"),
-                'secret' => $this->configuration->getNode("connections/s3/secret")],
-            'region' => $this->configuration->getNode("connections/s3/region"),
+                'key' => $this->configuration->getNode("connections/s3/key")
+                    ?? $this->configuration->getNode("connections/aws/key"),
+                'secret' => $this->configuration->getNode("connections/s3/secret")
+                    ?? $this->configuration->getNode("connections/aws/secret")
+            ],
+            'region' => $this->configuration->getNode("connections/s3/region")
+                ?? $this->configuration->getNode("connections/aws/region"),
             'version' => '2006-03-01'
         ];
         return $parameters;

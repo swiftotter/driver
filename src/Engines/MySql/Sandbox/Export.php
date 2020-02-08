@@ -70,8 +70,10 @@ class Export extends Command implements CommandInterface, CleanupInterface
 
         $this->files[] = $this->getFilename($environmentName);
 
-        if ($results = system($command)) {
-            throw new \Exception('Import to RDS instance failed: ' . $results);
+        $results = system($command);
+
+        if ($results) {
+            throw new \Exception('Export from RDS instance failed: ' . $results);
         } else {
             return $transport
                 ->withNewData('completed_file', $this->getFilename($environmentName))

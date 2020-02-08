@@ -75,4 +75,15 @@ interface EnvironmentInterface
      * @return void
      */
     public function addIgnoredTable($tableName);
+
+    /**
+     * @return array
+     */
+    public function getEmptyTables();
+
+    /**
+     * @param $tableName
+     * @return void
+     */
+    public function addEmptyTable($tableName);
 }

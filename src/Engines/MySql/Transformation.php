@@ -34,11 +34,15 @@ class Transformation extends Command implements CommandInterface
     private $configuration;
     private $properties;
     private $sandbox;
-    private $utilities;
     private $logger;
 
-    public function __construct(Configuration $configuration, SandboxConnection $sandbox, Utilities $utilities, LoggerInterface $logger, array $properties = [])
-    {
+    public function __construct(
+        Configuration $configuration,
+        SandboxConnection $sandbox,
+        Utilities $utilities,
+        LoggerInterface $logger,
+        array $properties = []
+    ) {
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->sandbox = $sandbox;
@@ -51,7 +55,7 @@ class Transformation extends Command implements CommandInterface
     {
         $this->applyTransformationsTo($this->sandbox->getConnection(), $environment->getTransformations());
 
-        return $transport->withStatus(new Status('mysql_transformation', 'success'));
+        return $transport->withStatus(new Status('mysql-transformation', 'success'));
     }
 
     public function getProperties()
@@ -59,19 +63,24 @@ class Transformation extends Command implements CommandInterface
         return $this->properties;
     }
 
-    protected function applyTransformationsTo(\PDO $connection, $transformations)
+    private function applyTransformationsTo(\PDO $connection, $transformations)
     {
-        try {
-            $connection->beginTransaction();
+        array_walk($transformations, function ($query) use ($connection) {
+            try {
+                $this->logger->info("Attempting: " . $query);
 
-            array_walk($transformations, function ($query) use ($connection) {
+                $connection->beginTransaction();
                 $connection->query($query);
-            });
+                $connection->commit();
 
-            $connection->commit();
-        } catch (\Exception $ex) {
-            $connection->rollBack();
-        }
+                $this->logger->info("Successfully executed: " . $query);
+            } catch (\Exception $ex) {
+                $connection->rollBack();
+                $this->logger->error("Query transformation failed: " . $query, [
+                    $ex->getMessage(),
+                    $ex->getTraceAsString()
+                ]);
+            }
+        });
     }
-
 }

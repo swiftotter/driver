@@ -35,6 +35,7 @@ will be coming).
 
 Place inside it a file with the following information (replacing all of the brackets and their content):
 ```yaml
+# 
 connections:
   database: mysql
   mysql:

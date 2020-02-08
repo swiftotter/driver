@@ -21,19 +21,21 @@ namespace Driver\Engines;
 
 interface ConnectionInterface
 {
-    public function getConnection();
+    public function isAvailable(): bool;
 
-    public function getDSN();
+    public function getConnection(): \PDO;
 
-    public function getCharset();
+    public function getDSN(): string;
 
-    public function getHost();
+    public function getCharset(): string;
 
-    public function getPort();
+    public function getHost(): string;
 
-    public function getDatabase();
+    public function getPort(): string;
 
-    public function getUser();
+    public function getDatabase(): string;
 
-    public function getPassword();
+    public function getUser(): string;
+
+    public function getPassword(): string;
 }

@@ -47,13 +47,14 @@ class Sandbox
     private $password;
     private $statuses;
 
-    public function __construct(Configuration $configuration,
-                                RemoteIP $remoteIpFetcher,
-                                LoggerInterface $logger,
-                                Random $random,
-                                AwsClientFactory $awsClientFactory,
-                                $disableInstantiation = true)
-    {
+    public function __construct(
+        Configuration $configuration,
+        RemoteIP $remoteIpFetcher,
+        LoggerInterface $logger,
+        Random $random,
+        AwsClientFactory $awsClientFactory,
+        $disableInstantiation = true
+    ) {
         $this->configuration = $configuration;
         $this->remoteIpFetcher = $remoteIpFetcher;
         $this->logger = $logger;
@@ -113,10 +114,15 @@ class Sandbox
             return false;
         }
 
-        $client = $this->getRdsClient();
-        $client->deleteDBInstance([
+        $rds = $this->getRdsClient();
+        $rds->deleteDBInstance([
             'DBInstanceIdentifier' => $this->getIdentifier(),
             'SkipFinalSnapshot' => true
+        ]);
+
+        $ec2 = $this->getEc2Client();
+        $ec2->deleteSecurityGroup([
+            'GroupId' => $this->getSecurityGroup()
         ]);
 
         return true;
@@ -317,26 +323,42 @@ class Sandbox
         return $this->random->getRandomString($length);
     }
 
+    /**
+     * @return \Aws\Ec2\Ec2Client
+     */
     private function getEc2Client()
     {
         return $this->awsClientFactory->create('Ec2', $this->getAwsParameters("ec2", '2016-09-15'));
     }
 
+    /**
+     * @return \Aws\Rds\RdsClient
+     */
     private function getRdsClient()
     {
         return $this->awsClientFactory->create('Rds', $this->getAwsParameters("rds", '2014-10-31'));
     }
 
+    /**
+     * @param $type
+     * @param $version
+     * @return array
+     */
     private function getAwsParameters($type, $version)
     {
         $parameters = [
             'credentials' => [
-                'key' => $this->configuration->getNode("connections/{$type}/key"),
-                'secret' => $this->configuration->getNode("connections/{$type}/secret")],
-            'region' => $this->configuration->getNode("connections/{$type}/region"),
+                'key' => $this->configuration->getNode("connections/{$type}/key")
+                    ?? $this->configuration->getNode("connections/aws/key"),
+                'secret' => $this->configuration->getNode("connections/{$type}/secret")
+                    ?? $this->configuration->getNode("connections/aws/secret")
+            ],
+            'region' => $this->configuration->getNode("connections/{$type}/region")
+                ?? $this->configuration->getNode("connections/aws/region"),
             'version' => $version,
             'service' => $type
         ];
+
         return $parameters;
     }
 }

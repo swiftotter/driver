@@ -11,6 +11,10 @@ commands:
     class: \Driver\Engines\MySql\Export\Primary
   import-data-into-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Import
+  anonymize:
+    class: \Driver\Engines\MySql\Transformation\Anonymize
+  reduce:
+    class: \Driver\Engines\MySql\Transformation\Reduce
   export-data-from-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Export
   upload-data-to-s3:

@@ -21,31 +21,44 @@ namespace Driver\Engines\MySql\Export;
 
 use Driver\Commands\CleanupInterface;
 use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Connection as LocalConnection;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
+use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
-use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
 
 class Primary extends Command implements CommandInterface, CleanupInterface
 {
+    /** @var LocalConnectionLoader */
     private $localConnection;
-    private $sandboxConnection;
-    private $ssl;
+
+    /** @var array */
     private $properties;
+
+    /** @var LoggerInterface */
     private $logger;
+
+    /** @var Random */
     private $random;
+
+    /** @var ?string */
     private $path;
+
+    /** @var Configuration */
     private $configuration;
 
     const DEFAULT_DUMP_PATH = '/tmp';
 
-    public function __construct(LocalConnection $localConnection, Configuration $configuration, LoggerInterface $logger, Random $random, array $properties = [])
-    {
+    public function __construct(
+        LocalConnectionLoader $localConnection,
+        Configuration $configuration,
+        LoggerInterface $logger,
+        Random $random,
+        array $properties = []
+    ) {
         $this->localConnection = $localConnection;
         $this->properties = $properties;
         $this->logger = $logger;
@@ -67,7 +80,13 @@ class Primary extends Command implements CommandInterface, CleanupInterface
             )
         );
 
-        $results = system($this->assembleCommand($environment));
+        $results = null;
+        $command = implode(';', array_filter([
+            $this->assembleCommand($environment),
+            $this->assembleEmptyCommand($environment)
+        ]));
+
+        $results = system($command);
 
         if ($results) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
@@ -90,20 +109,63 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         return $this->properties;
     }
 
+    public function assembleEmptyCommand(EnvironmentInterface $environment)
+    {
+        $tables = implode(' ', $environment->getEmptyTables());
+
+        if (!$tables) {
+            return '';
+        }
+
+        return implode(' ', array_merge(
+            $this->getDumpCommand($environment),
+            [
+                "--no-data",
+                $tables,
+                "| sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/'",
+                ">>",
+                $this->getDumpFile()
+            ]
+        ));
+    }
+
     public function assembleCommand(EnvironmentInterface $environment)
     {
-        return implode(' ', [
+        return implode(' ', array_merge(
+            $this->getDumpCommand($environment),
+            [
+                $this->assembleEmptyTables($environment),
+                $this->assembleIgnoredTables($environment),
+                "| sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/'",
+                ">",
+                $this->getDumpFile()
+            ]
+        ));
+    }
+
+    private function getDumpCommand(EnvironmentInterface $environment)
+    {
+        return [
             "mysqldump --user=\"{$this->localConnection->getUser()}\"",
-                "--password=\"{$this->localConnection->getPassword()}\"",
-                "--single-transaction",
-                "--compress",
-                "--order-by-primary",
-                "--host={$this->localConnection->getHost()}",
-                "{$this->localConnection->getDatabase()}",
-            $this->assembleIgnoredTables($environment),
-            ">",
-            $this->getDumpFile()
-        ]);
+            "--password=\"{$this->localConnection->getPassword()}\"",
+            "--single-transaction",
+            "--compress",
+            "--order-by-primary",
+            "--host={$this->localConnection->getHost()}",
+            "{$this->localConnection->getDatabase()}"
+        ];
+    }
+
+    private function assembleEmptyTables(EnvironmentInterface $environment)
+    {
+        $tables = $environment->getEmptyTables();
+        $output = [];
+
+        foreach ($tables as $table) {
+            $output[] = '--ignore-table=' . $this->localConnection->getDatabase() . '.' . $table;
+        }
+
+        return implode(' ', $output);
     }
 
     private function assembleIgnoredTables(EnvironmentInterface $environment)

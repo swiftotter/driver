@@ -1,0 +1,5 @@
+connections:
+  rds:
+    instance-type: db.t3.medium
+    engine: MySQL
+    storage-type: gp2

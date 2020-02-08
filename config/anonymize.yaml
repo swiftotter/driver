@@ -1,0 +1,270 @@
+anonymize:
+  seed:
+    - firstname: Joseph
+      lastname: Maxwell
+      company: SwiftOtter, Inc.
+      street: 123 Main Street
+      city: Kansas City
+      postcode: 66073
+      region: Missouri
+      country_id: US
+      region_id: 36
+      phone: 202-555-0109
+      ip: 240.36.159.75
+
+    - firstname: Samina
+      lastname: Cote
+      street: 2475 Cinnamon Lane
+      city: San Antonio
+      postcode: 78201
+      region: Texas
+      country_id: US
+      region_id: 57
+      phone: 202-555-0156
+      ip: 181.226.219.191
+
+    - firstname: Tina
+      lastname: Wilde
+      street: 3931 Jessie Street
+      city: Arabia
+      postcode: 45688
+      region: Ohio
+      country_id: US
+      region_id: 47
+      phone: 202-555-0184
+      ip: 78.223.172.48
+
+    - firstname: Dillan
+      lastname: Lucero
+      street: 184 James Street
+      city: New York
+      postcode: 14450
+      region: New York
+      country_id: US
+      region_id: 12
+      phone: 202-555-0135
+      ip: 203.54.176.154
+
+    - firstname: Dominik
+      lastname: Petty
+      street: 4914 Goff Avenue
+      city: Plainwell
+      postcode: 49080
+      region: West Virginia
+      country_id: US
+      region_id: 63
+      phone: 202-555-0115
+      ip: 51.113.119.34
+
+    - firstname: Reece
+      lastname: Forbes
+      street: 565 Sampson Street
+      city: Albany
+      postcode: 53502
+      region: New York
+      region_id: 43
+      country_id: US
+      phone: 202-555-0190
+      ip: 85.127.2.228
+
+    - firstname: Susan
+      lastname: Chadwick
+      street: 1763 Davis Avenue
+      city: Sacramento
+      postcode: 95814
+      region: California
+      country_id: US
+      region_id: 12
+      phone: (244) 949-1729
+      ip: 147.199.158.244
+
+    - firstname: Ahmed
+      lastname: Macgregor
+      street: 451 Wildwood Street
+      city: Akron
+      postcode: 43308
+      region: Ohio
+      country_id: US
+      region_id: 47
+      phone: 907-555-0187
+      ip: 152.56.2.51
+
+    - firstname: Lexi-Mae
+      lastname: Barton
+      company: Acme Brands, Inc.
+      street: 3180 Dancing Dove Lane
+      city: New York
+      postcode: 10004
+      region: New York
+      country_id: US
+      region_id: 43
+      phone: 907-555-0192
+      ip: 53.243.127.225
+
+    - firstname: Cassia
+      lastname: Casteneda
+      street: 2255 Red Maple Drive
+      city: Alhambra
+      postcode: 91801
+      region: Oregon
+      country_id: US
+      region_id: 49
+      phone: 404-555-0175
+      ip: 174.146.43.47
+
+    - firstname: Robert
+      lastname: Kramer
+      company: Data, Inc.
+      street: 1367 Lowndes Hill Park Road
+      city: Sherman Oaks
+      postcode: 91403
+      region: Washington
+      country_id: US
+      region_id: 62
+      phone: 404-555-0162
+      ip: 173.8.26.43
+
+    - firstname: Mercedes
+      lastname: Montemayor
+      street: 674 Cemetery Street
+      city: Magnolia
+      postcode: 61336
+      region: Illinois
+      country_id: US
+      region_id: 23
+      phone: 307-555-0141
+      ip: 68.65.218.25
+
+    - firstname: Paula
+      lastname: Walker
+      street: 3357 Zappia Drive
+      city: Lexington
+      postcode: 40507
+      region: Kentucky
+      country_id: US
+      region_id: 27
+      phone: 307-555-0126
+      ip: 50.151.191.15
+
+    - firstname: Beltane
+      lastname: Lefèbvre
+      street: 3477 Lake Floyd Circle
+      city: Patuxent Naval Air Test c
+      postcode: 20670
+      region: Maryland
+      country_id: US
+      region_id: 31
+      phone: 307-555-0127
+      ip: 87.172.86.188
+
+    - firstname: Leilani
+      lastname: Bishop
+      street: 1445 Thompson Street
+      city: Seal Beach
+      postcode: 90740
+      region: California
+      country_id: US
+      region_id: 12
+      phone: 515-555-0164
+      ip: 213.56.195.24
+
+    - firstname: Rufus
+      lastname: Cervantes
+      street: 1247 Heliport Loop
+      city: Bloomington
+      postcode: 47408
+      region: Illinois
+      country_id: US
+      region_id: 23
+      phone: 515-555-0142
+      ip: 124.9.254.185
+
+    - firstname: Carole
+      lastname: Barrow
+      street: 2462 Pritchard Court
+      city: Rio
+      postcode: 26755
+      region: West Virginia
+      country_id: US
+      region_id: 63
+      phone: 515-555-0102
+      ip: 194.59.122.241
+
+    - firstname: Jaylen
+      lastname: Meadows
+      street: 1767 Stroop Hill Road
+      city: Fort Wayne
+      postcode: 46852
+      region: Indiana
+      region_id: 24
+      country_id: US
+      phone: 860-555-0172
+      ip: 68.162.14.52
+
+    - firstname: Alfie-Jay
+      lastname: Franco
+      street: 4474 Brookview Drive
+      city: San Jose
+      postcode: 95113
+      region: California
+      region_id: 12
+      country_id: US
+      phone: 860-555-0178
+      ip: 25.19.163.174
+
+    - firstname: Jokubas
+      lastname: Mccray
+      company: Thank You Notes Express
+      street: 720 Scenic Way
+      city: Warrensburg
+      postcode: 62573
+      region: Missouri
+      region_id: 36
+      country_id: US
+      phone: 860-555-0131
+      ip: 132.60.238.89
+
+    - firstname: Carine
+      lastname: Ricard
+      street: 55, place de Miremond
+      city: VILLENEUVE-SUR-LOT
+      postcode: 47300
+      country_id: FR
+      phone: 05.48.01.14.91
+      ip: 38.28.94.247
+
+    - firstname: Laurent
+      lastname: Thibodeau
+      street: 69, boulevard Aristide Briand
+      city: Le Bouscat
+      postcode: 33110
+      country_id: FR
+      phone: 05.45.43.97.63
+      ip: 87.122.192.251
+
+    - firstname: Andrée
+      lastname: Bienvenue
+      street: 59, Avenue des Pr'es
+      city: MONTIGNY-LÈS-METZ
+      postcode: 57158
+      country_id: FR
+      phone: 03.31.34.92.91
+      ip: 171.120.59.109
+
+    - firstname: Eloïse
+      lastname: Spijkers
+      street: Verlengde Koolhoverweg 10
+      city: Bocholtz
+      postcode: 6351
+      country_id: NL
+      phone: 06-58223374
+      ip: 249.230.160.198
+
+    - firstname: Mirza
+      lastname: Hulsen
+      street: De Zaalsteden 70
+      city: Gieten
+      postcode: 9461
+      country_id: NL
+      phone: 06-40996488
+      ip: 49.87.75.212

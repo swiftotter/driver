@@ -83,7 +83,7 @@ class Primary implements StageInterface
         return $this->environment;
     }
 
-    public function __invoke(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
+    public function __invoke(TransportInterface $transport, $testMode = false)
     {
         $actions = !$testMode ? $this->actions : [];
 
@@ -94,7 +94,7 @@ class Primary implements StageInterface
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
 
-    public function cleanup(\Driver\Pipeline\Transport\TransportInterface $transport, $testMode = false)
+    public function cleanup(TransportInterface $transport, $testMode = false)
     {
         $actions = !$testMode ? $this->actions : [];
 
@@ -158,7 +158,7 @@ class Primary implements StageInterface
         return $actions;
     }
 
-    private function verifyTransport(\Driver\Pipeline\Transport\TransportInterface $transport, CommandInterface $command)
+    private function verifyTransport(TransportInterface $transport, CommandInterface $command)
     {
         if (!$transport) {
             throw new \Exception('No Transport object was returned from the last command executed: ' . get_class($command));

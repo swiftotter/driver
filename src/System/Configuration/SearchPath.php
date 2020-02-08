@@ -28,7 +28,6 @@ class SearchPath implements \Iterator
     private $position = 0;
     private $folders;
 
-
     public function __construct($directory = __DIR__, $allowedFolders)
     {
         $this->allowedFolders = $allowedFolders;

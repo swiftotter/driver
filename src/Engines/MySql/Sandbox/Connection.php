@@ -49,12 +49,22 @@ class Connection implements ConnectionInterface
         }
     }
 
+    public function isAvailable(): bool
+    {
+        try {
+            $this->getConnection();
+            return true;
+        } catch (\Exception $ex) {
+            return false;
+        }
+    }
+
     public function authorizeIp()
     {
         $this->sandbox->authorizeIp();
     }
 
-    public function getCharset()
+    public function getCharset(): string
     {
         if ($charset = $this->configuration->getNode('connections/mysql/charset')) {
             return $charset;
@@ -63,32 +73,32 @@ class Connection implements ConnectionInterface
         }
     }
 
-    public function getDSN()
+    public function getDSN(): string
     {
         return "mysql:host={$this->getHost()};dbname={$this->getDatabase()};port={$this->getPort()};charset={$this->getCharset()}";
     }
 
-    public function getHost()
+    public function getHost(): string
     {
         return $this->sandbox->getEndpointAddress();
     }
 
-    public function getPort()
+    public function getPort(): string
     {
         return $this->sandbox->getEndpointPort();
     }
 
-    public function getDatabase()
+    public function getDatabase(): string
     {
         return $this->sandbox->getDBName();
     }
 
-    public function getUser()
+    public function getUser(): string
     {
         return $this->sandbox->getUsername();
     }
 
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->sandbox->getPassword();
     }

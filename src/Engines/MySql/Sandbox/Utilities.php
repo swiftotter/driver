@@ -19,12 +19,14 @@
 
 namespace Driver\Engines\MySql\Sandbox;
 
+use Driver\System\LocalConnectionLoader;
+
 class Utilities
 {
     private $connection;
     private $cachedTables = false;
 
-    public function __construct(\Driver\Engines\MySql\Connection $connection)
+    public function __construct(LocalConnectionLoader $connection)
     {
         $this->connection = $connection;
     }

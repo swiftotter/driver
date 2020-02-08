@@ -20,24 +20,38 @@
 namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Connection as LocalConnection;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
+use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
 
 class Import extends Command implements CommandInterface
 {
+    /** @var LocalConnectionLoader */
     private $localConnection;
+
+    /** @var Connection */
     private $sandboxConnection;
+
+    /** @var Ssl */
     private $ssl;
+
+    /** @var array */
     private $properties;
+
+    /** @var LoggerInterface */
     private $logger;
 
-    public function __construct(LocalConnection $localConnection, Ssl $ssl, SandboxConnection $sandboxConnection, LoggerInterface $logger, array $properties = [])
-    {
+    public function __construct(
+        LocalConnectionLoader $localConnection,
+        Ssl $ssl,
+        SandboxConnection $sandboxConnection,
+        LoggerInterface $logger,
+        array $properties = []
+    ) {
         $this->localConnection = $localConnection;
         $this->sandboxConnection = $sandboxConnection;
         $this->ssl = $ssl;
@@ -54,8 +68,9 @@ class Import extends Command implements CommandInterface
         });
 
         $this->logger->notice("Importing database into RDS");
+        $results = system($this->assembleCommand($transport->getData('dump-file')));
 
-        if ($results = system($this->assembleCommand($transport->getData('dump-file')))) {
+        if ($results) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
         } else {
             $this->logger->notice("Import to RDS completed.");
@@ -75,7 +90,7 @@ class Import extends Command implements CommandInterface
                 "--password={$this->sandboxConnection->getPassword()}",
                 "--host={$this->sandboxConnection->getHost()}",
                 "--port={$this->sandboxConnection->getPort()}",
-                "--ssl",
+                "--ssl-mode=VERIFY_CA",
                 "--ssl-ca={$this->ssl->getPath()}",
                 "{$this->sandboxConnection->getDatabase()}",
             "<",

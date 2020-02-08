@@ -56,7 +56,7 @@ class Configuration
             if (isset($nodes[$item])) {
                 return $nodes[$item];
             } else {
-                return [];
+                return null;
             }
         }, $nodes);
     }

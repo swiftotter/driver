@@ -29,11 +29,13 @@ class YamlLoader
     ];
 
     protected $allowedFiles = [
+        'anonymize',
         'pipelines',
         'commands',
         'engines',
         'connections',
         'config',
+        'reduce',
         'environments'
     ];
 
@@ -78,7 +80,7 @@ class YamlLoader
             }, $files));
         }
 
-        return array_reverse($output);
+        return array_unique(array_reverse($output));
     }
 
     /**

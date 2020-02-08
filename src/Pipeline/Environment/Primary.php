@@ -32,6 +32,7 @@ class Primary implements EnvironmentInterface
     private $properties;
     private $files;
     private $ignoredTables;
+    private $emptyTables;
 
     /** @var Utilities $utilities */
     private $utilities;
@@ -68,39 +69,58 @@ class Primary implements EnvironmentInterface
         return $this->properties;
     }
 
-    public function addIgnoredTable($tableName)
+    public function addIgnoredTable($tableName): void
     {
         $this->ignoredTables[] = $tableName;
     }
 
-    public function getIgnoredTables()
+    public function addEmptyTable($tableName): void
+    {
+        $this->emptyTables[] = $tableName;
+    }
+
+    public function getIgnoredTables(): array
     {
         if (!$this->ignoredTables) {
-            if (isset($this->properties['ignored_tables'])) {
-                $this->ignoredTables = $this->properties['ignored_tables'];
-            } else {
-                $this->ignoredTables = [];
-            }
+            $this->ignoredTables = isset($this->properties['ignored_tables'])
+                ? $this->properties['ignored_tables']
+                : [];
         }
+
         return $this->ignoredTables;
     }
 
-    public function getSort()
+    public function getEmptyTables(): array
     {
-        if (isset($this->properties['sort'])) {
-            return (int)$this->properties['sort'];
-        } else {
-            return 1000;
+        if (!$this->emptyTables) {
+            if (isset($this->properties['empty_tables'])) {
+                $this->emptyTables = $this->properties['empty_tables'];
+            } else {
+                $this->emptyTables = [];
+            }
         }
+        return $this->emptyTables ?? [];
     }
 
-    public function getTransformations()
+    public function getSort(): int
     {
-        if (isset($this->properties['transformations'])) {
-            return $this->flattenTransformations($this->properties['transformations']);
-        } else {
-            return [];
-        }
+        return isset($this->properties['sort'])
+            ? (int)$this->properties['sort']
+            : 1000;
+    }
+
+    public function getTransformations(): array
+    {
+        return isset($this->properties['transformations'])
+            ? $this->flattenTransformations($this->properties['transformations'])
+            : [];
+    }
+
+    public function getAnonymizations(): array
+    {
+        return isset($this->properties['anonymize'])
+            ? $this->properties['anonymize']
+            : [];
     }
 
     private function flattenTransformations($input)
