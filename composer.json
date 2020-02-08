@@ -19,7 +19,7 @@
     },
     "bin": ["bin/driver"],
     "autoload": {
-        "psr-4": {"Driver\\": ""}
+        "psr-4": {"Driver\\": "src/"}
     },
     "authors": [
         {
