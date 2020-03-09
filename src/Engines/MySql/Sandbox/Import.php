@@ -90,7 +90,6 @@ class Import extends Command implements CommandInterface
                 "--password={$this->sandboxConnection->getPassword()}",
                 "--host={$this->sandboxConnection->getHost()}",
                 "--port={$this->sandboxConnection->getPort()}",
-                "--ssl-mode=VERIFY_CA",
                 "--ssl-ca={$this->ssl->getPath()}",
                 "{$this->sandboxConnection->getDatabase()}",
             "<",

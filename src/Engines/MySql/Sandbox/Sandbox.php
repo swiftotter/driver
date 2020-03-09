@@ -79,32 +79,38 @@ class Sandbox
 
         $this->initialized = true;
 
-        $client = $this->getRdsClient();
+        try {
+            $client = $this->getRdsClient();
 
-        $parameters = [
-            'DBName' => $this->getDBName(),
-            'DBInstanceIdentifier' => $this->getIdentifier(),
-            'AllocatedStorage' => 100,
-            'DBInstanceClass' => $this->configuration->getNode('connections/rds/instance-type'),
-            'Engine' => $this->getEngine(),
-            'MasterUsername' => $this->getUsername(),
-            'MasterUserPassword' => $this->getPassword(),
-            'VpcSecurityGroupIds' => [ $this->getSecurityGroup() ],
-            'BackupRetentionPeriod' => 0,
-            'StorageType' => $this->getStorageType()
-        ];
+            $parameters = [
+                'DBName' => $this->getDBName(),
+                'DBInstanceIdentifier' => $this->getIdentifier(),
+                'AllocatedStorage' => 100,
+                'DBInstanceClass' => $this->configuration->getNode('connections/rds/instance-type'),
+                'Engine' => $this->getEngine(),
+                'MasterUsername' => $this->getUsername(),
+                'MasterUserPassword' => $this->getPassword(),
+                'VpcSecurityGroupIds' => [$this->getSecurityGroup()],
+                'BackupRetentionPeriod' => 0,
+                'StorageType' => $this->getStorageType()
+            ];
 
-        if ($parameterGroupName = $this->getDbParameterGroupName()) {
-             $parameters['DBParameterGroupName'] = $parameterGroupName;
+            if ($parameterGroupName = $this->getDbParameterGroupName()) {
+                $parameters['DBParameterGroupName'] = $parameterGroupName;
+            }
+
+            $this->instance = $client->createDBInstance($parameters);
+
+            $this->logger->info("RDS instance is initializing: " . $this->getIdentifier());
+            $this->logger->info("Username: " . $this->getUsername());
+            $this->logger->info("Password: " . $this->getPassword());
+
+            return true;
+        } catch (\Exception $ex) {
+            $this->logger->info("RDS instance creation failed: " . $ex->getMessage(), [
+                "trace" => $ex->getTraceAsString()
+            ]);
         }
-
-        $this->instance = $client->createDBInstance($parameters);
-
-        $this->logger->info("RDS instance is initializing: " . $this->getIdentifier());
-        $this->logger->info("Username: " . $this->getUsername());
-        $this->logger->info("Password: " . $this->getPassword());
-
-        return true;
     }
 
     public function shutdown()

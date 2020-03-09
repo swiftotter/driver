@@ -74,15 +74,32 @@ class Configuration
                         unset($contents['pipelines']);
                     }
 
-                    $this->nodes = array_merge_recursive($this->nodes, $contents);
+                    $this->nodes = $this->recursiveMerge($this->nodes, $contents);
                     $this->nodes['pipelines'] = $this->mergePipelines($pipelines);
                 }
             } catch (ParseException $e) {
                 $this->files[$file] = [];
+                throw $e;
             }
         }
 
         return $this->files[$file];
+    }
+
+    private function recursiveMerge(array $array1, array $array2)
+    {
+        $merged = $array1;
+
+        foreach ($array2 as $key => $value) {
+            if (is_array($value) && isset($merged[$key]) && is_array($merged[$key]) && !is_int($key)) {
+                $merged[$key] = $this->recursiveMerge($merged[$key], $value);
+            } else if (is_int($key)) {
+                $merged[] = $value;
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+        return $merged;
     }
 
     /**

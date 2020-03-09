@@ -56,14 +56,17 @@ class Reduce extends Command implements CommandInterface
         }
 
         foreach ($this->configuration->getNode('reduce/tables') as $tableName => $details) {
-            try {
-                $column = $details['column'];
-                $statement = $details['statement'];
+            $column = $details['column'];
+            $statement = $details['statement'];
 
-                $this->sandbox->getConnection()->query(
-                    "DELETE FROM ${tableName} WHERE ${column} ${statement}"
-                );
+            $query = "DELETE FROM ${tableName} WHERE ${column} ${statement}";
+
+            try {
+                $this->sandbox->getConnection()->beginTransaction();
+                $this->sandbox->getConnection()->query($query);
+                $this->sandbox->getConnection()->commit();
             } catch (\Exception $ex) {
+                $this->logger->error('An error occurred when running this query: ' . $query);
                 $this->logger->error($ex->getMessage());
             }
         }

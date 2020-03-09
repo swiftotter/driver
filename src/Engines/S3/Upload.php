@@ -62,7 +62,7 @@ class Upload extends Command implements CommandInterface
 
             return $transport->withNewData('s3_url', $this->getObjectUrl($output));
         } catch (\Exception $ex) {
-            $this->logger->error('Failed putting object to S3.', [
+            $this->logger->error('Failed putting object to S3: ' . $ex->getMessage(), [
                 $ex->getMessage(),
                 $ex->getTraceAsString()
             ]);
