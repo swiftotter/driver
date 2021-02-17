@@ -27,18 +27,21 @@ use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Shutdown extends Command implements CommandInterface, ErrorInterface
 {
     private $configuration;
     private $sandbox;
     private $properties;
+    private $output;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox, array $properties = [])
+    public function __construct(Configuration $configuration, Sandbox $sandbox, ConsoleOutput $output, array $properties = [])
     {
         $this->configuration = $configuration;
         $this->sandbox = $sandbox;
         $this->properties = $properties;
+        $this->output = $output;
 
         return parent::__construct('mysql-sandbox-shutdown');
     }
@@ -61,7 +64,7 @@ class Shutdown extends Command implements CommandInterface, ErrorInterface
     private function apply(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $transport->getLogger()->notice("Shutting down RDS");
-
+        $this->output->writeln("<comment>Shutting down RDS</comment>");
         $this->sandbox->shutdown();
         return $transport->withStatus(new Status('sandbox_shutdown', 'success'));
     }

@@ -26,6 +26,7 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class MySql extends Command implements CommandInterface
 {
@@ -38,12 +39,15 @@ class MySql extends Command implements CommandInterface
     /** @var LocalConnectionLoader */
     private $connection;
 
-    public function __construct(LocalConnectionLoader $connection, LoggerInterface $logger, array $properties = [])
+    /** @var ConsoleOutput */
+    private $output;
+
+    public function __construct(LocalConnectionLoader $connection, LoggerInterface $logger, ConsoleOutput $output, array $properties = [])
     {
         $this->logger = $logger;
         $this->properties = $properties;
         $this->connection = $connection;
-
+        $this->output = $output;    
         parent::__construct(null);
     }
 
@@ -61,6 +65,7 @@ class MySql extends Command implements CommandInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $value = $this->connection->getConnection()->getAttribute(\PDO::ATTR_CONNECTION_STATUS);
+        $this->output->writeln('<info>Successfully connected: ' . $value . '</info>');
         $this->logger->notice('Successfully connected: ' . $value);
         return $transport->withStatus(new Status('connection', 'success'));
     }

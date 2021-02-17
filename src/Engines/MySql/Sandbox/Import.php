@@ -27,6 +27,7 @@ use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Import extends Command implements CommandInterface
 {
@@ -45,11 +46,15 @@ class Import extends Command implements CommandInterface
     /** @var LoggerInterface */
     private $logger;
 
+    /** @var ConsoleOutput */
+    private $output;
+
     public function __construct(
         LocalConnectionLoader $localConnection,
         Ssl $ssl,
         SandboxConnection $sandboxConnection,
         LoggerInterface $logger,
+        ConsoleOutput $output,
         array $properties = []
     ) {
         $this->localConnection = $localConnection;
@@ -57,7 +62,7 @@ class Import extends Command implements CommandInterface
         $this->ssl = $ssl;
         $this->properties = $properties;
         $this->logger = $logger;
-
+        $this->output = $output;
         return parent::__construct('mysql-sandbox-import');
     }
 
@@ -67,13 +72,16 @@ class Import extends Command implements CommandInterface
             $connection->authorizeIp();
         });
 
+        $this->output->writeln("<comment>Importing database into RDS. Please wait... It will take some time.</comment>");
         $this->logger->notice("Importing database into RDS");
         $results = system($this->assembleCommand($transport->getData('dump-file')));
 
         if ($results) {
             throw new \Exception('Import to RDS instance failed: ' . $results);
+            $this->output->writeln('<error>Import to RDS instance failed: ' . $results . '</error>');
         } else {
             $this->logger->notice("Import to RDS completed.");
+            $this->output->writeln('<info>Import to RDS completed.</info>');
             return $transport->withStatus(new Status('sandbox_init', 'success'));
         }
     }

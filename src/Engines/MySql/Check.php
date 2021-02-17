@@ -26,6 +26,7 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Check extends Command implements CommandInterface
 {
@@ -44,11 +45,15 @@ class Check extends Command implements CommandInterface
     /** @var array */
     private $properties;
 
+    /** @var ConsoleOutput */
+    private $output;
+
     const DB_SIZE_KEY = 'database_size';
 
     public function __construct(
         LocalConnectionLoader $connection,
         LoggerInterface $logger,
+        ConsoleOutput $output,
         array $properties = [],
         $databaseSize = null,
         $freeSpace = null
@@ -57,6 +62,7 @@ class Check extends Command implements CommandInterface
         $this->databaseSize = $databaseSize;
         $this->freeSpace = $freeSpace;
         $this->logger = $logger;
+        $this->output = $output;
         $this->properties = $properties;
 
         return parent::__construct('mysql-system-check');
@@ -69,10 +75,13 @@ class Check extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
+        /** @var OutputInterface $output */
         if ($this->getDatabaseSize() < $this->getDriveFreeSpace()) {
+            $this->output->writeln("<comment>Database size (" . $this->getDatabaseSize() . " MB) is less than the free space available on the PHP drive.</comment>");
             $this->logger->info("Database size is less than the free space available on the PHP drive.");
             return $transport->withNewData(self::DB_SIZE_KEY, $this->getDatabaseSize())->withStatus(new Status('check', 'success'));
         } else {
+            $this->output->writeln("<error>There is NOT enough free space to dump the database.</error>");
             throw new \Exception('There is NOT enough free space to dump the database.');
         }
     }

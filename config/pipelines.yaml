@@ -38,14 +38,14 @@ pipelines:
       sort: 400
       actions:
         - name: run-transformations
-          sort: 1000
+          sort: 100
         - name: export-data-from-sandbox
-          sort: 2000
+          sort: 200
         - name: upload-data-to-s3
-          sort: 3000
+          sort: 300
 
     - name: shutdown
-      sort: 600
+      sort: 500
       actions:
         - name: shutdown-sandbox
           sort: 100

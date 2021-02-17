@@ -27,6 +27,8 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class Export extends Command implements CommandInterface, CleanupInterface
 {
@@ -37,10 +39,11 @@ class Export extends Command implements CommandInterface, CleanupInterface
     private $configuration;
     private $properties;
     private $utilities;
+    private $output;
 
     private $files = [];
 
-    public function __construct(Connection $connection, Ssl $ssl, Random $random, Configuration $configuration, Utilities $utilities, array $properties = [])
+    public function __construct(Connection $connection, Ssl $ssl, Random $random, Configuration $configuration, Utilities $utilities, ConsoleOutput $output, array $properties = [])
     {
         $this->connection = $connection;
         $this->ssl = $ssl;
@@ -48,7 +51,7 @@ class Export extends Command implements CommandInterface, CleanupInterface
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->utilities = $utilities;
-
+        $this->output = $output;
         return parent::__construct('mysql-sandbox-export');
     }
 
@@ -64,6 +67,7 @@ class Export extends Command implements CommandInterface, CleanupInterface
         });
 
         $transport->getLogger()->notice("Exporting database from remote MySql RDS");
+        $this->output->writeln("<comment>Exporting database from remote MySql RDS. Please wait... It will take some time.</comment>");
 
         $environmentName = $environment->getName();
         $command = $this->assembleCommand($environmentName, $environment->getIgnoredTables());
@@ -73,6 +77,7 @@ class Export extends Command implements CommandInterface, CleanupInterface
         $results = system($command);
 
         if ($results) {
+            $this->output->writeln('<error>Export from RDS instance failed: ' . $results . '</error>');
             throw new \Exception('Export from RDS instance failed: ' . $results);
         } else {
             return $transport

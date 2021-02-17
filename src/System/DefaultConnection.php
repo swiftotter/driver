@@ -9,6 +9,7 @@ namespace Driver\System;
 
 use Driver\Engines\ConnectionInterface;
 use Driver\Engines\ConnectionTrait;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class DefaultConnection implements ConnectionInterface
 {
@@ -17,9 +18,13 @@ class DefaultConnection implements ConnectionInterface
     /** @var Configuration  */
     private $configuration;
 
-    public function __construct(Configuration $configuration)
+    /** @var ConsoleOutput */
+    private $output;
+
+    public function __construct(Configuration $configuration, ConsoleOutput $output)
     {
         $this->configuration = $configuration;
+        $this->output = $output;
     }
 
     public function isAvailable(): bool
@@ -78,6 +83,7 @@ class DefaultConnection implements ConnectionInterface
     {
         $value = $this->configuration->getNode("connections/mysql/{$key}");
         if (is_array($value) && $required) {
+            $this->output->writeln("<error>{$key} is not set. Please set it in a configuration file.</error>");
             throw new \Exception("{$key} is not set. Please set it in a configuration file.");
         }
 

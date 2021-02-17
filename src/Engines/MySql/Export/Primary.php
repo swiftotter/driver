@@ -29,6 +29,8 @@ use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class Primary extends Command implements CommandInterface, CleanupInterface
 {
@@ -49,6 +51,9 @@ class Primary extends Command implements CommandInterface, CleanupInterface
 
     /** @var Configuration */
     private $configuration;
+    
+    /** @var ConsoleOutput */
+    private $output;
 
     const DEFAULT_DUMP_PATH = '/tmp';
 
@@ -57,6 +62,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         Configuration $configuration,
         LoggerInterface $logger,
         Random $random,
+        ConsoleOutput $output,
         array $properties = []
     ) {
         $this->localConnection = $localConnection;
@@ -64,16 +70,23 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         $this->logger = $logger;
         $this->random = $random;
         $this->configuration = $configuration;
-
+        $this->output = $output;
         return parent::__construct('mysql-default-export');
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $transport->getLogger()->notice("Exporting database from local MySql");
+        $this->output->writeln("<comment>Exporting database from local MySql");
 
         $transport->getLogger()->debug(
             "Local connection string: " . str_replace(
+                $this->localConnection->getPassword(),
+                '',
+                $this->assembleCommand($environment)
+            )
+        );
+        $this->output->writeln("<comment>Local connection string: </comment>" . str_replace(
                 $this->localConnection->getPassword(),
                 '',
                 $this->assembleCommand($environment)
@@ -89,9 +102,11 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         $results = system($command);
 
         if ($results) {
+            $this->output->writeln('<error>Import to RDS instance failed: ' . $results . '</error>');
             throw new \Exception('Import to RDS instance failed: ' . $results);
         } else {
             $this->logger->notice("Database dump has completed.");
+            $this->output->writeln("<info>Database dump has completed.</info>");
             return $transport->withStatus(new Status('sandbox_init', 'success'))->withNewData('dump-file', $this->getDumpFile());
         }
     }

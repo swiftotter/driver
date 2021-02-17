@@ -26,19 +26,22 @@ use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class Init extends Command implements CommandInterface
 {
     private $configuration;
     private $sandbox;
     private $properties;
+    private $output;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox, $properties = [])
+    public function __construct(Configuration $configuration, Sandbox $sandbox, ConsoleOutput $output, $properties = [])
     {
         $this->configuration = $configuration;
         $this->sandbox = $sandbox;
         $this->properties = $properties;
-
+        $this->output = $output;
         return parent::__construct('mysql-sandbox-init');
     }
 
@@ -50,21 +53,34 @@ class Init extends Command implements CommandInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $transport->getLogger()->notice('Initializing sandbox.');
+        $this->output->writeln('<info>Initializing sandbox.</info>');
         $this->sandbox->init();
         $tries = 0;
-        $maxTries = 200;
+        $maxTries = 100;
+        ProgressBar::setFormatDefinition(
+            'minimal',
+            '<info>Checking if sandbox is active... </info><fg=white;bg=blue>Progress : %percent%%</>'
+        );
+        $progressBar = new ProgressBar($this->output, $maxTries);
+        $progressBar->setFormat('minimal');
 
         while(!($active = $this->sandbox->getInstanceActive()) && $tries < $maxTries) {
             $transport->getLogger()->notice('Checking if sandbox is active.');
             $tries++;
-            sleep(6);
+            sleep(10);
+            $progressBar->advance(5);
         }
 
+        $progressBar->finish();
+        $this->output->writeln('<info>...Completed!</info>');
+
         if (!$active && $tries === $maxTries) {
+            $this->output->writeln('<error>RDS instance was not able to be started.</error>');
             throw new \Exception('RDS instance was not able to be started.');
         }
 
         $transport->getLogger()->notice('Sandbox initialized.');
+        $this->output->writeln('<comment>Sandbox initialized.</comment>');
 
         return $transport->withStatus(new Status('sandbox_init', 'success'));
     }

@@ -28,6 +28,7 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Upload extends Command implements CommandInterface
 {
@@ -35,13 +36,16 @@ class Upload extends Command implements CommandInterface
     protected $properties;
     /** @var LoggerInterface */
     private $logger;
+    /** @var ConsoleOutput */
+    private $output;
 
-    public function __construct(Configuration $configuration, LoggerInterface $logger, array $properties = [])
+    public function __construct(Configuration $configuration, LoggerInterface $logger, ConsoleOutput $output, array $properties = [])
     {
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->logger = $logger;
-
+        $this->output = $output;
+        
         parent::__construct('s3-upload');
     }
 
@@ -49,7 +53,8 @@ class Upload extends Command implements CommandInterface
     {
         try {
             $transport->getLogger()->notice("Beginning file upload to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-
+            $this->output->writeln("<comment>Beginning file upload to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</comment>');
+            
             $client = $this->getS3Client();
             $output = $client->putObject([
                 'Bucket' => $this->getBucket(),
@@ -59,6 +64,7 @@ class Upload extends Command implements CommandInterface
             ]);
 
             $transport->getLogger()->notice("Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
+            $this->output->writeln("<comment>Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</comment>');
 
             return $transport->withNewData('s3_url', $this->getObjectUrl($output));
         } catch (\Exception $ex) {
@@ -66,6 +72,11 @@ class Upload extends Command implements CommandInterface
                 $ex->getMessage(),
                 $ex->getTraceAsString()
             ]);
+    
+            $this->output->writeln('<error>Failed putting object to S3: ' . $ex->getMessage(), [
+                $ex->getMessage(),
+                $ex->getTraceAsString()
+            ] . '</error>');
 
             return $transport->withStatus(new Status('s3-upload', $ex->getMessage(), true));
         }

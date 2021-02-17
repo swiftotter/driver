@@ -21,6 +21,7 @@ namespace Driver\Commands\Webhook;
 
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class Webhook implements WebhookInterface
 {

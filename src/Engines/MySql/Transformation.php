@@ -28,6 +28,7 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Transformation extends Command implements CommandInterface
 {
@@ -35,18 +36,21 @@ class Transformation extends Command implements CommandInterface
     private $properties;
     private $sandbox;
     private $logger;
+    private $output;
 
     public function __construct(
         Configuration $configuration,
         SandboxConnection $sandbox,
         Utilities $utilities,
         LoggerInterface $logger,
+        ConsoleOutput $output,
         array $properties = []
     ) {
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->sandbox = $sandbox;
         $this->logger = $logger;
+        $this->output = $output;
 
         parent::__construct('mysql-transformation');
     }
@@ -68,18 +72,23 @@ class Transformation extends Command implements CommandInterface
         array_walk($transformations, function ($query) use ($connection) {
             try {
                 $this->logger->info("Attempting: " . $query);
-
+                $this->output->writeln("<comment> Attempting: " . $query . '</comment>');
                 $connection->beginTransaction();
                 $connection->query($query);
                 $connection->commit();
 
                 $this->logger->info("Successfully executed: " . $query);
+                $this->output->writeln("<info>Successfully executed: " . $query . '</info>');
             } catch (\Exception $ex) {
                 $connection->rollBack();
                 $this->logger->error("Query transformation failed: " . $query, [
                     $ex->getMessage(),
                     $ex->getTraceAsString()
                 ]);
+                $this->output->writeln("<error>Query transformation failed: " . $query, [
+                    $ex->getMessage(),
+                    $ex->getTraceAsString()
+                ] . '</error>');
             }
         });
     }

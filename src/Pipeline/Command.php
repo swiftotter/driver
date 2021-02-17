@@ -27,6 +27,7 @@ use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command as ConsoleCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Driver\Pipeline\Environment\Manager as EnvironmentManager;
 
@@ -43,17 +44,19 @@ class Command extends ConsoleCommand implements CommandInterface
     /** @var array $properties */
     private $properties;
 
-    /**
-     * @var LoggerInterface $logger
-     */
+    /** @var LoggerInterface $logger */
     private $logger;
 
-    public function __construct(Master $pipeMaster, TransportFactory $transportFactory, LoggerInterface $logger, EnvironmentManager $environmentManager, array $properties = [])
+    /** @var ConsoleOutput */
+    private $output;
+
+    public function __construct(Master $pipeMaster, TransportFactory $transportFactory, LoggerInterface $logger, EnvironmentManager $environmentManager, ConsoleOutput $output, array $properties = [])
     {
         $this->transportFactory = $transportFactory;
         $this->pipeMaster = $pipeMaster;
         $this->logger = $logger;
         $this->environmentManager = $environmentManager;
+        $this->output = $output;
 
         parent::__construct(null);
     }
@@ -69,6 +72,7 @@ class Command extends ConsoleCommand implements CommandInterface
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $output->writeln("<comment>Executing Pipeline Command...</comment>");
         $this->logger->setParams($input, $output);
         $this->environmentManager->setRunFor($input->getArgument('env'));
 
@@ -81,6 +85,7 @@ class Command extends ConsoleCommand implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
+        $this->output->writeln("<error>The Pipe command cannot be included in a pipe. It is the mother of all pipes.</error>");
         throw new \Exception('The Pipe command cannot be included in a pipe. It is the mother of all pipes.');
     }
 
