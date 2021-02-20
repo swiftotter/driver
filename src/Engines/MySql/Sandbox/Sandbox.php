@@ -27,6 +27,7 @@ use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
 use Driver\System\RemoteIP;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Sandbox
 {
@@ -46,6 +47,7 @@ class Sandbox
     private $username;
     private $password;
     private $statuses;
+    private $output;
 
     public function __construct(
         Configuration $configuration,
@@ -53,14 +55,15 @@ class Sandbox
         LoggerInterface $logger,
         Random $random,
         AwsClientFactory $awsClientFactory,
+        ConsoleOutput $output,
         $disableInstantiation = true
     ) {
         $this->configuration = $configuration;
         $this->remoteIpFetcher = $remoteIpFetcher;
         $this->logger = $logger;
         $this->random = $random;
+        $this->output = $output;
         $this->awsClientFactory = $awsClientFactory;
-
         if (!$disableInstantiation) {
             $this->init();
         }
@@ -69,14 +72,15 @@ class Sandbox
     public function init()
     {
         $this->logger->info("Using RDS instance: " . $this->getIdentifier());
-
+        $this->output->writeln("<comment>Using RDS instance: " . $this->getIdentifier() . '</comment>');
         if ($this->initialized || $this->configuration->getNode('connections/rds/instance-name') || $this->getInstanceActive()) {
             $this->logger->info("Using RDS instance: " . $this->getIdentifier());
+            $this->output->writeln("<comment>Using RDS instance: " . $this->getIdentifier() . '</comment>');
             return false;
         }
 
         $this->logger->info("Creating RDS instance: " . $this->getIdentifier());
-
+        $this->output->writeln("<comment>Creating RDS instance: " . $this->getIdentifier() . '</comment>');
         $this->initialized = true;
 
         try {
@@ -104,12 +108,14 @@ class Sandbox
             $this->logger->info("RDS instance is initializing: " . $this->getIdentifier());
             $this->logger->info("Username: " . $this->getUsername());
             $this->logger->info("Password: " . $this->getPassword());
+            $this->output->writeln("<comment>RDS instance is initializing: " . $this->getIdentifier() . '</comment>');
 
             return true;
         } catch (\Exception $ex) {
             $this->logger->info("RDS instance creation failed: " . $ex->getMessage(), [
                 "trace" => $ex->getTraceAsString()
             ]);
+            $this->output->writeln("<error>RDS instance creation failed: " . $ex->getMessage() . "</error>");
         }
     }
 
@@ -117,6 +123,7 @@ class Sandbox
     {
         if ($this->configuration->getNode('connections/rds/instance-name')) {
             $this->logger->info("Using static RDS instance and will not shutdown: " . $this->getIdentifier());
+            $this->output->writeln("<comment>Using static RDS instance and will not shutdown: " . $this->getIdentifier() . '</comment>');
             return false;
         }
 
@@ -228,6 +235,7 @@ class Sandbox
         } catch (\Exception $ex) {
             if (stripos($ex->getMessage(), 'InvalidPermission.Duplicate') === false) {
                 throw $ex;
+                $this->output->writeln("Exception: " . $ex->getMessage());
             }
         }
     }

@@ -17,6 +17,7 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Anonymize extends Command implements CommandInterface
 {
@@ -35,17 +36,22 @@ class Anonymize extends Command implements CommandInterface
     /** @var Seed */
     private $seed;
 
+    /** @var ConsoleOutput */
+    private $output;
+
     public function __construct(
         Configuration $configuration,
         SandboxConnection $sandbox,
         Seed $seed,
         LoggerInterface $logger,
+        ConsoleOutput $output,
         array $properties = []
     ) {
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->sandbox = $sandbox;
         $this->logger = $logger;
+        $this->output = $output;
         $this->seed = $seed;
 
         parent::__construct('mysql-transformation-anonymize');
@@ -67,6 +73,7 @@ class Anonymize extends Command implements CommandInterface
         }
 
         $transport->getLogger()->notice("Beginning table anonymization from anonymize.yaml.");
+        $this->output->writeln("<comment>Beginning table anonymization from anonymize.yaml.</comment>");
 
         $this->seed->initialize();
 
@@ -77,6 +84,7 @@ class Anonymize extends Command implements CommandInterface
         $this->seed->destroy();
 
         $transport->getLogger()->notice("Database has been sanitized.");
+        $this->output->writeln("<info>Database has been sanitized.</info>");
 
         return $transport->withStatus(new Status('mysql-transformation-anonymize', 'success'));
     }

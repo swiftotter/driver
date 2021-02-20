@@ -28,6 +28,7 @@ use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\YamlFormatter;
 use Haystack\HArray;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class Primary implements SpanInterface
 {

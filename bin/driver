@@ -22,7 +22,6 @@ $searchPaths = [
 foreach ($searchPaths as $file) {
     if (file_exists($file)) {
         define('DRIVER_COMPOSER_INSTALL', $file);
-
         break;
     }
 }
