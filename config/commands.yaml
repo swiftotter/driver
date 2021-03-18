@@ -21,9 +21,13 @@ commands:
     class: \Driver\Engines\S3\Upload
   shutdown-sandbox:
     class: \Driver\Engines\MySql\Sandbox\Shutdown
+  download-data-from-s3:
+    class: \Driver\Engines\S3\Download
   call-post-webhook:
     class: \Driver\Commands\Webhook\PostCommand
   setup-environment:
     class: \Driver\Commands\Environment\Setup
   run-transformations:
     class: \Driver\Engines\MySql\Transformation
+  import-data-from-system-primary:
+    class: \Driver\Engines\MySql\Import\Primary
