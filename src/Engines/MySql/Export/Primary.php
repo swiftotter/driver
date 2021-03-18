@@ -77,7 +77,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         $transport->getLogger()->notice("Exporting database from local MySql");
-        $this->output->writeln("<comment>Exporting database from local MySql");
+        $this->output->writeln("<comment>Exporting database from local MySql</comment>");
 
         $transport->getLogger()->debug(
             "Local connection string: " . str_replace(
