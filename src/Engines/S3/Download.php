@@ -26,12 +26,15 @@ use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
+use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-class Upload extends Command implements CommandInterface
+class Download extends Command implements CommandInterface
 {
+    /** @var LocalConnectionLoader */
+    private $localConnection;
     protected $configuration;
     protected $properties;
     /** @var LoggerInterface */
@@ -39,46 +42,48 @@ class Upload extends Command implements CommandInterface
     /** @var ConsoleOutput */
     private $output;
 
-    public function __construct(Configuration $configuration, LoggerInterface $logger, ConsoleOutput $output, array $properties = [])
+    public function __construct(LocalConnectionLoader $localConnection, Configuration $configuration, LoggerInterface $logger, ConsoleOutput $output, array $properties = [])
     {
+        $this->localConnection = $localConnection;
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->logger = $logger;
         $this->output = $output;
 
-        parent::__construct('s3-upload');
+        parent::__construct('s3-download');
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         try {
-            $transport->getLogger()->notice("Beginning file upload to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-            $this->output->writeln("<comment>Beginning file upload to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</comment>');
-
+            $transport->getLogger()->notice("Beginning file download from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
+            $this->output->writeln("<comment>Beginning file download from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</comment>');
+            $date = date('Y-m-d');
             $client = $this->getS3Client();
-            $output = $client->putObject([
+            $output = $client->getObject([
                 'Bucket' => $this->getBucket(),
                 'Key' => $this->getDirectory() . $this->getFileName($environment),
                 'SourceFile' => $transport->getData($environment->getName() . '_completed_file'),
-                'ContentType' => 'application/gzip'
+                'ContentType' => 'application/gzip',
+                'SaveAs' => "var/downloaded/{$this->localConnection->getDatabase()}-".$date.'.sql'
             ]);
 
-            $transport->getLogger()->notice("Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-            $this->output->writeln("<info>Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</info>');
+            $transport->getLogger()->notice("Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
+            $this->output->writeln("<info>Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . ' to project var/downloaded directory</info>');
 
             return $transport->withNewData('s3_url', $this->getObjectUrl($output));
         } catch (\Exception $ex) {
-            $this->logger->error('Failed putting object to S3: ' . $ex->getMessage(), [
+            $this->logger->error('Failed getting object from S3: ' . $ex->getMessage(), [
                 $ex->getMessage(),
                 $ex->getTraceAsString()
             ]);
 
-            $this->output->writeln('<error>Failed putting object to S3: ' . $ex->getMessage(), [
+            $this->output->writeln('<error>Failed getting object from S3: ' . $ex->getMessage(), [
                 $ex->getMessage(),
                 $ex->getTraceAsString()
             ] . '</error>');
 
-            return $transport->withStatus(new Status('s3-upload', $ex->getMessage(), true));
+            return $transport->withStatus(new Status('s3-download', $ex->getMessage(), true));
         }
 
     }
