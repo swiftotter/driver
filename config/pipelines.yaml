@@ -62,8 +62,9 @@ pipelines:
         - name: download-data-from-s3
           sort: 100
 
+  import:
     - name: import-local
-      sort: 800
+      sort: 100
       actions:
         - name: import-data-from-system-primary
           sort: 100
