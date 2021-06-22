@@ -19,7 +19,7 @@ Driver resides on your production machine, preferrably with your website's codeb
 * Driver runs whatever actions you would like (configured globally or per environment).
 * Driver dumps the transformed data, zips it and pushes it up to S3.
 
-For a 3-5GB database, this process could take 2 hours or more. The downtime (associated with `mysqldump`'s table locking) is only a couple of minutes. It take a while to run, but it also uses very few resources and is a background process so you won't be waiting for it.
+For a 3-5GB database, this process could take an hour or two. This depends on how many environments you are creating and what type of RDS instance you are using. This causes no downtime to the frontend thanks to the `--single-transaction` flag on `mysqldump`. Yes, it does take a while to run, but there is little tono impact on the frontend.
 
 ## Quickstart
 
