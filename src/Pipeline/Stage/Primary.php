@@ -166,22 +166,4 @@ class Primary implements StageInterface
 
         return $transport;
     }
-
-//    private function formatList(array $list)
-//    {
-//        $output = array_reduce($list, function($commands, array $item) {
-//            array_walk($item, function($name, $id) use (&$commands) {
-//                while (isset($commands[$id])) {
-//                    $id++;
-//                }
-//                $commands[$id] = $name;
-//            });
-//
-//            return $commands;
-//        }, []);
-//
-//        ksort($output);
-//
-//        return $output;
-//    }
 }
