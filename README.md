@@ -307,3 +307,11 @@ environments:
 
 **Notes:**
 * The `{{table_name}}` is substituted for the `TABLE_NAME` reference above. Driver will look for a table that **ends** with `TABLE_NAME`. For example, if your `TABLE_NAME` is `core_config_data`, Driver will search for a table in the database that ends with `core_config_data`. Thus, `mage_core_config_data`, `sample_core_config_data` and `core_config_data` would all match.
+
+###
+#### Download and Import S3 uploaded database on STAGING/Local environment:
+
+The below command run the export/import pipeline which download the database into your project var/ directory, create new database in mysql, and import the downloaded database in it for your environment. 
+```
+./vendor/bin/driver run import-s3
+```

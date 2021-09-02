@@ -56,16 +56,17 @@ pipelines:
         - name: shutdown-sandbox
           sort: 100
 
+  import-s3:
     - name: export-s3-db-on-local
-      sort: 700
+      sort: 100
       actions:
         - name: download-data-from-s3
           sort: 100
 
     - name: import-local
-      sort: 800
+      sort: 200
       actions:
         - name: import-data-from-system-primary
           sort: 100
-
+        
   empty: []

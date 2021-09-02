@@ -76,8 +76,27 @@ class Primary extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $transport->getLogger()->notice("Import database from var/downloaded into local MySql started");
-        $this->output->writeln("<comment>Import database from var/downloaded into local MySql started</comment>");
+        $transport->getLogger()->notice("Import database from var/ into local MySql started");
+        $this->output->writeln("<comment>Import database from var/ into local MySql started</comment>");
+        $this->output->writeln("<comment>Initialized MySql Connection: </comment>");
+
+        $conn = mysqli_connect($this->localConnection->getHost(), $this->localConnection->getUser(), $this->localConnection->getPassword());
+        if (!$conn) {
+            $this->output->writeln('<error>Could not connect: ' . mysqli_connect_error() . '</error>');
+            throw new \Exception('Could not connect: ' . mysqli_connect_error());
+        }
+
+        $this->output->writeln("<comment>Creating Local Database: </comment>" .
+            $this->getDatabaseCommand($environment)
+        );
+
+        mysqli_query($conn, $this->getDatabaseCommand($environment));
+        if ($conn->error !== "" && (strpos($conn->error, "database exists") === false)) {
+            $this->output->writeln('<error>Database cannot be created: ' . $conn->error . '</error>');
+            throw new \Exception('Database cannot be created: ' . $conn->error);
+        }
+
+        mysqli_close($conn);
 
         $transport->getLogger()->debug(
             "Local connection string: " . str_replace(
@@ -95,13 +114,21 @@ class Primary extends Command implements CommandInterface
 
         $results = null;
         $command = $this->assembleCommand($environment);
-
         $results = system($command);
-
         if ($results) {
             $this->output->writeln('<error>Import to local MYSQL failed: ' . $results . '</error>');
             throw new \Exception('Import to local MYSQL failed: ' . $results);
+        } else {
+            $this->logger->notice("Import to local MYSQL completed.");
+            $this->output->writeln('<info>Import to local MYSQL completed.</info>');
+            return $transport->withStatus(new Status('db_import', 'success'));
         }
+    }
+
+    public function getDatabaseCommand(EnvironmentInterface $environment)
+    {
+        $date = date('Y-m-d');
+        return "CREATE DATABASE {$this->localConnection->getDatabase()}_".str_replace('-', '_', $date);
     }
 
     public function getProperties()
@@ -121,9 +148,9 @@ class Primary extends Command implements CommandInterface
             "mysql -u \"{$this->localConnection->getUser()}\"",
             "-h {$this->localConnection->getHost()}",
             "-p",
-            "{$this->localConnection->getDatabase()}-".$date,
+            "{$this->localConnection->getDatabase()}_" . str_replace('-', '_', $date),
             "<",
-            "var/downloaded/{$this->localConnection->getDatabase()}-".$date.".sql"
+            "var/{$this->localConnection->getDatabase()}_". str_replace('-', '_', $date) .".sql"
         ];
     }
 }

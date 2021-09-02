@@ -65,11 +65,11 @@ class Download extends Command implements CommandInterface
                 'Key' => $this->getDirectory() . $this->getFileName($environment),
                 'SourceFile' => $transport->getData($environment->getName() . '_completed_file'),
                 'ContentType' => 'application/gzip',
-                'SaveAs' => "var/downloaded/{$this->localConnection->getDatabase()}-".$date.'.sql'
+                'SaveAs' => "var/{$this->localConnection->getDatabase()}_" . str_replace('-', '_', $date) .'.sql'
             ]);
 
             $transport->getLogger()->notice("Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-            $this->output->writeln("<info>Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . ' to project var/downloaded directory</info>');
+            $this->output->writeln("<info>Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . ' to project var/ directory</info>');
 
             return $transport->withNewData('s3_url', $this->getObjectUrl($output));
         } catch (\Exception $ex) {
