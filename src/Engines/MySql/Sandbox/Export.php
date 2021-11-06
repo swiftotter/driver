@@ -32,13 +32,28 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Export extends Command implements CommandInterface, CleanupInterface
 {
+    /** @var Connection */
     private $connection;
+
+    /** @var Ssl */
     private $ssl;
+
+    /** @var Random */
     private $random;
+
+    /** @var string */
     private $filename;
+
+    /** @var Configuration */
     private $configuration;
+
+    /** @var array */
     private $properties;
+
+    /** @var Utilities */
     private $utilities;
+
+    /** @var ConsoleOutput */
     private $output;
 
     private $files = [];

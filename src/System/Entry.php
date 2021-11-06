@@ -39,7 +39,7 @@ class Entry
         $containerBuilder->addDefinitions((new DependencyConfig)->get());
         $container = $containerBuilder->build();
 
-        $application = $container->get('Driver\System\Application');
+        $application = $container->get(Application::class);
         $application->run();
     }
 

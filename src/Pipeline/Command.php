@@ -67,7 +67,8 @@ class Command extends ConsoleCommand implements CommandInterface
             ->setDescription('Executes the pipe line specified in the -p (--pipe-line) parameter.');
 
         $this->addArgument('pipe-line', InputArgument::OPTIONAL, 'The pipeline to execute (leave blank to run default pipeline).')
-            ->addArgument('env', InputArgument::OPTIONAL, 'The environment(s) for which to run Driver.');
+            ->addArgument('env', InputArgument::OPTIONAL, 'The environment(s) for which to run Driver.')
+            ->addArgument('debug', InputArgument::OPTIONAL, 'Enable debug mode');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

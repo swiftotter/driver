@@ -25,9 +25,16 @@ use Haystack\HArray;
 
 class Manager
 {
-    protected $runFor;
-    protected $factory;
-    protected $configuration;
+    const ALL_ENVIRONMENTS = 'all';
+
+    /** @var \ArrayIterator */
+    private $runFor;
+
+    /** @var Factory */
+    private $factory;
+
+    /** @var Configuration */
+    private $configuration;
 
     public function __construct(Factory $factory, Configuration $configuration)
     {
@@ -38,7 +45,7 @@ class Manager
 
     public function setRunFor($environments)
     {
-        if (strtolower($environments) === 'all' || !$environments) {
+        if (strtolower($environments) === self::ALL_ENVIRONMENTS || !$environments) {
             $environmentList = $this->getAllEnvironments();
         }
         else if (is_string($environments)) {

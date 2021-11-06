@@ -2,19 +2,3 @@ environments:
   default:
     sort: 1
     empty: true
-
-  staging:
-    sort: 2
-    transformations:
-      core_config_data:
-        - "UPDATE core_config_data SET value = 'staging-value' WHERE path = 'id';"
-    ignored_tables:
-    empty: true
-
-  local:
-    sort: 3
-    transformations:
-      core_config_data:
-        - "UPDATE core_config_data SET value = 'local-value' WHERE path = 'id';"
-      ignored_tables:
-    empty: true

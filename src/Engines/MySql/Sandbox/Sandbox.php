@@ -373,6 +373,10 @@ class Sandbox
             'service' => $type
         ];
 
+        if (empty($parameters['region'])) {
+            $this->output->writeln("<error>No region specified. Are you sure that config.d/connections.yaml exists?</error>");
+        }
+
         return $parameters;
     }
 }

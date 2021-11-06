@@ -32,10 +32,19 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Transformation extends Command implements CommandInterface
 {
+    /** @var Configuration */
     private $configuration;
+
+    /** @var array */
     private $properties;
+
+    /** @var SandboxConnection */
     private $sandbox;
+
+    /** @var LoggerInterface */
     private $logger;
+
+    /** @var ConsoleOutput */
     private $output;
 
     public function __construct(

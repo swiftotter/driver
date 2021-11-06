@@ -27,8 +27,13 @@ class Connection implements ConnectionInterface
 {
     use ConnectionTrait;
 
+    /** @var Configuration */
     private $configuration;
+
+    /** @var Sandbox */
     private $sandbox;
+
+    /** @var Ssl */
     private $ssl;
 
     public function __construct(Configuration $configuration, Sandbox $sandbox, Ssl $ssl)
