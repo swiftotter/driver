@@ -114,4 +114,9 @@ class LocalConnectionLoader implements ConnectionInterface
     {
         return $this->get()->getPassword();
     }
+
+    public function getPreserve(): array
+    {
+        return $this->get()->getPreserve();
+    }
 }

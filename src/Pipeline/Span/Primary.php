@@ -55,7 +55,7 @@ class Primary implements SpanInterface
 
         /** @var StageInterface $stage */
         foreach ($stages as $stage) {
-            $this->verifyTransport($stage($transport), $stage->getName());
+            $transport = $this->verifyTransport($stage($transport), $stage->getName());
         };
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
@@ -84,7 +84,13 @@ class Primary implements SpanInterface
             if ($stage->isRepeatable()) {
                 $output = $this->repeatForEnvironments($stage, $output, $this->environmentManager->getRunFor());
             } else {
-                $output = $this->repeatForEnvironments($stage, $output, $defaultEnvironment);
+                $output = $this->repeatForEnvironments(
+                    $stage,
+                    $output,
+                    $this->environmentManager->hasCustomRunList()
+                        ? $this->environmentManager->getRunFor()
+                        : $defaultEnvironment
+                );
             }
         });
 

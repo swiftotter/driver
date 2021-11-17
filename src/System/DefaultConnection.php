@@ -89,4 +89,9 @@ class DefaultConnection implements ConnectionInterface
 
         return $value;
     }
+
+    public function getPreserve(): array
+    {
+        return $this->getValue('preserve', false) ?: [];
+    }
 }

@@ -107,4 +107,9 @@ class Connection implements ConnectionInterface
     {
         return $this->sandbox->getPassword();
     }
+
+    public function getPreserve(): array
+    {
+        return [];
+    }
 }

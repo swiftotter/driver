@@ -23,6 +23,7 @@ use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
+use Driver\Pipeline\Environment\Manager as EnvironmentManager;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
@@ -33,17 +34,23 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Download extends Command implements CommandInterface
 {
-    /** @var LocalConnectionLoader */
-    private $localConnection;
-    protected $configuration;
-    protected $properties;
-    /** @var LoggerInterface */
-    private $logger;
-    /** @var ConsoleOutput */
-    private $output;
+    const DOWNLOAD_PATH_KEY = 'download_path';
 
-    public function __construct(LocalConnectionLoader $localConnection, Configuration $configuration, LoggerInterface $logger, ConsoleOutput $output, array $properties = [])
-    {
+    private LocalConnectionLoader $localConnection;
+    private Configuration $configuration;
+    private array $properties;
+    private LoggerInterface $logger;
+    private ConsoleOutput $output;
+    private EnvironmentManager $environmentManager;
+
+    public function __construct(
+        LocalConnectionLoader $localConnection,
+        Configuration $configuration,
+        LoggerInterface $logger,
+        ConsoleOutput $output,
+        EnvironmentManager $environmentManager,
+        array $properties = []
+    ) {
         $this->localConnection = $localConnection;
         $this->configuration = $configuration;
         $this->properties = $properties;
@@ -51,6 +58,7 @@ class Download extends Command implements CommandInterface
         $this->output = $output;
 
         parent::__construct('s3-download');
+        $this->environmentManager = $environmentManager;
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
@@ -60,18 +68,27 @@ class Download extends Command implements CommandInterface
             $this->output->writeln("<comment>Beginning file download from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</comment>');
             $date = date('Y-m-d');
             $client = $this->getS3Client();
+
+            $outputFile = "var/${date}" . $this->getFileName($environment);
+
             $output = $client->getObject([
                 'Bucket' => $this->getBucket(),
                 'Key' => $this->getDirectory() . $this->getFileName($environment),
                 'SourceFile' => $transport->getData($environment->getName() . '_completed_file'),
                 'ContentType' => 'application/gzip',
-                'SaveAs' => "var/{$this->localConnection->getDatabase()}_" . str_replace('-', '_', $date) .'.sql'
+                'SaveAs' => $outputFile
             ]);
 
             $transport->getLogger()->notice("Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
             $this->output->writeln("<info>Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . ' to project var/ directory</info>');
 
-            return $transport->withNewData('s3_url', $this->getObjectUrl($output));
+            if (strpos($this->getFileName($environment), ".gz") !== false) {
+                system("gunzip -f " . $outputFile);
+                $outputFile = str_replace(".gz", "", $outputFile);
+            }
+
+            return $transport->withNewData('s3_url', $this->getObjectUrl($output))
+                ->withNewData(self::DOWNLOAD_PATH_KEY, $outputFile);
         } catch (\Exception $ex) {
             $this->logger->error('Failed getting object from S3: ' . $ex->getMessage(), [
                 $ex->getMessage(),
@@ -85,7 +102,6 @@ class Download extends Command implements CommandInterface
 
             return $transport->withStatus(new Status('s3-download', $ex->getMessage(), true));
         }
-
     }
 
     public function getProperties()

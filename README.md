@@ -23,6 +23,11 @@ For a 3-5GB database, this process could take an hour or two. This depends on ho
 
 ## Quickstart
 
+Downloading a Driver-created file is quite simple:
+```bash
+./vendor/bin/driver run --environment=local [or whatever environment that's been configured] import-s3 
+```
+
 Installing Driver is easy:
 ```
 composer require swiftotter/driver
@@ -194,7 +199,7 @@ connections:
 
 ### Terminology
 
-* **Pipeline** (specified in `pipelines.yaml`): a series of stages. Representative of the work to take a production database and transform it. These are found under the `pipelines` node. You can execute a specific pipeline with the `--pipe-line` argument in the command line.
+* **Pipeline** (specified in `pipelines.yaml`): a series of stages. Representative of the work to take a production database and transform it. These are found under the `pipelines` node. You can execute a specific pipeline with the `--pipeline` argument in the command line.
 * **Stage**: groups of actions inside of a pipeline. Stages are run sequentially Right now, Driver does work this way, but actions could run in parallel. 
 * **Action**: Specific command to run.
 

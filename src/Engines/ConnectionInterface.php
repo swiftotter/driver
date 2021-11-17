@@ -38,4 +38,6 @@ interface ConnectionInterface
     public function getUser(): string;
 
     public function getPassword(): string;
+
+    public function getPreserve(): array;
 }

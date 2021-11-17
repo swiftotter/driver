@@ -27,14 +27,10 @@ class Manager
 {
     const ALL_ENVIRONMENTS = 'all';
 
-    /** @var \ArrayIterator */
-    private $runFor;
-
-    /** @var Factory */
-    private $factory;
-
-    /** @var Configuration */
-    private $configuration;
+    private \ArrayIterator $runFor;
+    private Factory $factory;
+    private Configuration $configuration;
+    private bool $hasCustomRunList = false;
 
     public function __construct(Factory $factory, Configuration $configuration)
     {
@@ -47,10 +43,10 @@ class Manager
     {
         if (strtolower($environments) === self::ALL_ENVIRONMENTS || !$environments) {
             $environmentList = $this->getAllEnvironments();
-        }
-        else if (is_string($environments)) {
+        } else if (is_string($environments)) {
             $environmentList = array_filter(explode(',', $environments));
             array_walk($environmentList, 'trim');
+            $this->hasCustomRunList = true;
         } else {
             $environmentList = $environments;
         }
@@ -91,5 +87,10 @@ class Manager
     public function getRunFor()
     {
         return $this->runFor;
+    }
+
+    public function hasCustomRunList(): bool
+    {
+        return $this->hasCustomRunList;
     }
 }

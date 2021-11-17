@@ -27,12 +27,17 @@ use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command as ConsoleCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Driver\Pipeline\Environment\Manager as EnvironmentManager;
 
 class Command extends ConsoleCommand implements CommandInterface
 {
+    const PIPELINE = 'pipeline';
+    const ENVIRONMENT = 'environment';
+    const DEBUG = 'debug';
+
     /** @var TransportFactory $transportFactory */
     private $transportFactory;
 
@@ -64,20 +69,20 @@ class Command extends ConsoleCommand implements CommandInterface
     protected function configure()
     {
         $this->setName('run')
-            ->setDescription('Executes the pipe line specified in the -p (--pipe-line) parameter.');
+            ->setDescription('Executes the pipe line specified in the -p (--pipeline) parameter.');
 
-        $this->addArgument('pipe-line', InputArgument::OPTIONAL, 'The pipeline to execute (leave blank to run default pipeline).')
-            ->addArgument('env', InputArgument::OPTIONAL, 'The environment(s) for which to run Driver.')
-            ->addArgument('debug', InputArgument::OPTIONAL, 'Enable debug mode');
+        $this->addArgument(self::PIPELINE, InputArgument::OPTIONAL, 'The pipeline to execute (leave blank to run default pipeline).')
+            ->addOption(self::ENVIRONMENT, 'env', InputOption::VALUE_OPTIONAL, 'The environment(s) for which to run Driver.')
+            ->addOption(self::DEBUG, 'd', InputOption::VALUE_OPTIONAL, 'Enable debug mode');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output->writeln("<comment>Executing Pipeline Command...</comment>");
         $this->logger->setParams($input, $output);
-        $this->environmentManager->setRunFor($input->getArgument('env'));
+        $this->environmentManager->setRunFor($input->getOption(self::ENVIRONMENT));
 
-        if ($pipeLine = $input->getArgument('pipe-line')) {
+        if ($pipeLine = $input->getArgument(self::PIPELINE)) {
             $this->pipeMaster->run($pipeLine);
         } else {
             $this->pipeMaster->runDefault();
