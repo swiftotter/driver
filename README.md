@@ -121,13 +121,22 @@ Select Create Your Own Policy (if you want to use the one below) and enter the f
         {
             "Effect": "Allow",
             "Action": [
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::swiftotter-s3-path/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
                 "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:RevokeSecurityGroupIngress",
                 "ec2:CreateSecurityGroup",
-                "s3:GetObject",
-                "s3:PutObject",
                 "rds:CreateDBInstance",
                 "rds:DeleteDBInstance",
-                "rds:DescribeDBInstances"
+                "rds:DescribeDBInstances",
+                "iam:CreateServiceLinkedRole"
             ],
             "Resource": [
                 "*"
