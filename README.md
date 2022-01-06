@@ -109,6 +109,14 @@ You will need to do two things in your AWS control panel:
 1. Create a new policy.
 2. Assign that policy to a new user.
 
+### User creation
+1. Select the username
+2. Select `Access key - Programmatic access`
+3. On Set Permissions, select Attach existing policies directly and then click Create Policy. Create the policy per Policy Creation below, then come back to the user creation, click Refresh
+4. Skip tags
+5. Create User
+6. Save the Access key ID and the Secret access key.
+
 ### Policy Creation
 
 Open your control panel and go to IAM. Click on the Policies tab on the sidebar. Choose to Create New Policy.
