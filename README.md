@@ -23,14 +23,19 @@ For a 3-5GB database, this process could take an hour or two. This depends on ho
 
 ## Quickstart
 
-Downloading a Driver-created file is quite simple:
+**Downloading a Driver-created file is quite simple:**
 ```bash
 ./vendor/bin/driver run --environment=local [or whatever environment that's been configured] import-s3 
 ```
 
-Installing Driver is easy:
+**Installing Driver is easy:**
 ```
 composer require swiftotter/driver
+```
+
+**Running driver is even easier:**
+```
+php vendor/bin/driver run
 ```
 
 Configuring Driver is easy. In the folder that contains your `vendor/` folder, create a folder called `config`.
