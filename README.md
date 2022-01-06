@@ -109,6 +109,9 @@ You will need to do two things in your AWS control panel:
 1. Create a new policy.
 2. Assign that policy to a new user.
 
+### S3 bucket creation
+* Create the bucket and **make sure public access is disabled.**
+
 ### User creation
 1. Select the username
 2. Select `Access key - Programmatic access`
