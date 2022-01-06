@@ -25,8 +25,9 @@ For a 3-5GB database, this process could take an hour or two. This depends on ho
 
 **Downloading a Driver-created file is quite simple:**
 ```bash
-./vendor/bin/driver run --environment=local [or whatever environment that's been configured] import-s3 
+./vendor/bin/driver run --environment=local import-s3 
 ```
+Change `local` out to be whatever environment was configured.
 
 **Installing Driver is easy:**
 ```
