@@ -19,22 +19,17 @@
 
 namespace Driver\Engines\MySql\Sandbox;
 
-use Driver\Engines\ConnectionInterface;
+use Driver\Engines\RemoteConnectionInterface;
 use Driver\Engines\ConnectionTrait;
 use Driver\System\Configuration;
 
-class Connection implements ConnectionInterface
+class Connection implements RemoteConnectionInterface
 {
     use ConnectionTrait;
 
-    /** @var Configuration */
-    private $configuration;
-
-    /** @var Sandbox */
-    private $sandbox;
-
-    /** @var Ssl */
-    private $ssl;
+    private Configuration $configuration;
+    private Sandbox $sandbox;
+    private Ssl $ssl;
 
     public function __construct(Configuration $configuration, Sandbox $sandbox, Ssl $ssl)
     {
@@ -43,7 +38,12 @@ class Connection implements ConnectionInterface
         $this->ssl = $ssl;
     }
 
-    public function test($onFailure)
+    public function useSsl(): bool
+    {
+        return true;
+    }
+
+    public function test($onFailure): void
     {
         try {
             $this->getConnection();
@@ -64,7 +64,7 @@ class Connection implements ConnectionInterface
         }
     }
 
-    public function authorizeIp()
+    public function authorizeIp(): void
     {
         $this->sandbox->authorizeIp();
     }

@@ -18,43 +18,84 @@ pipelines:
         - name: start-sandbox
           sort: 300
 
-    - name: import
-      sort: 200
-      actions:
-        - name: export-data-from-system-primary
-          sort: 100
-        - name: import-data-into-sandbox
-          sort: 200
+#    - name: import
+#      sort: 200
+#      actions:
+#        - name: export-data-from-system-primary
+#          sort: 100
+#        - name: import-data-into-sandbox
+#          sort: 200
 
-    - name: global-commands
-      sort: 300
-      actions:
-        - name: reduce
-          sort: 100
-        - name: anonymize
-          sort: 200
+#    - name: global-commands
+#      sort: 300
+#      actions:
+#        - name: reduce
+#          sort: 100
+#        - name: anonymize
+#          sort: 200
 
     - name: repeat-commands
       sort: 400
       actions:
         - name: run-transformations
           sort: 100
-
-    - name: export-upload-data
-      sort: 500
-      actions:
         - name: connect
-          sort: 100
-        - name: export-data-from-sandbox
           sort: 200
-        - name: upload-data-to-s3
+        - name: export-data-from-sandbox
           sort: 300
+        - name: upload-data-to-s3
+          sort: 400
 
     - name: shutdown
       sort: 600
       actions:
         - name: shutdown-sandbox
           sort: 100
+
+  tag: # pipeline span, usually default is the only one
+    - name: setup # pipeline stage
+      sort: 100
+      actions:
+          - name: connect
+            sort: 100
+          - name: check-filesystem
+            sort: 200
+          - name: start-sandbox
+            sort: 300
+
+    - name: import
+      sort: 200
+      actions:
+          - name: export-data-from-system-primary
+            sort: 100
+          - name: import-data-into-sandbox
+            sort: 200
+
+    - name: global-commands
+      sort: 300
+      actions:
+          - name: reduce
+            sort: 100
+          - name: anonymize
+            sort: 200
+
+    - name: repeat-commands
+      sort: 400
+      actions:
+          - name: run-transformations
+            sort: 100
+          - name: connect
+            sort: 200
+          - name: export-data-from-sandbox
+            sort: 300
+          - name: upload-data-to-s3
+            sort: 400
+
+    - name: shutdown
+      sort: 500
+      actions:
+          - name: shutdown-sandbox
+            sort: 100
 
   import-s3:
     - name: export-s3-db-on-local
@@ -68,5 +109,5 @@ pipelines:
       actions:
         - name: import-data-from-system-primary
           sort: 100
-        
+
   empty: []

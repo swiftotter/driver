@@ -25,23 +25,32 @@ use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
+use Driver\System\DebugMode;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Helper\ProgressBar;
 
 class Init extends Command implements CommandInterface
 {
-    private $configuration;
-    private $sandbox;
-    private $properties;
-    private $output;
+    private Configuration $configuration;
+    private Sandbox $sandbox;
+    private array $properties = [];
+    private ConsoleOutput $output;
+    private DebugMode $debugMode;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox, ConsoleOutput $output, $properties = [])
-    {
+    public function __construct(
+        Configuration $configuration,
+        Sandbox $sandbox,
+        ConsoleOutput $output,
+        DebugMode $debugMode,
+        $properties = []
+    ) {
         $this->configuration = $configuration;
         $this->sandbox = $sandbox;
         $this->properties = $properties;
         $this->output = $output;
+        $this->debugMode = $debugMode;
+
         return parent::__construct('mysql-sandbox-init');
     }
 
@@ -52,6 +61,11 @@ class Init extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
+        if ($this->debugMode->get()) {
+            $transport->getLogger()->notice('No sandbox initialization due to debug mode enabled.');
+            return $transport->withStatus(new Status('sandbox_init', 'success'));
+        }
+
         $transport->getLogger()->notice('Initializing sandbox.');
         $this->output->writeln('<info>Initializing sandbox.</info>');
         $this->sandbox->init();

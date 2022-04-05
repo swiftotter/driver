@@ -31,9 +31,9 @@ interface TransportInterface
     public function __construct($pipeline, $statuses = [], $data = [], EnvironmentInterface $environment, LoggerInterface $log = null);
 
     /**
-     * @return array
+     * @return string
      */
-    public function getPipeline();
+    public function getPipeline(): string;
 
     /**
      * @return array

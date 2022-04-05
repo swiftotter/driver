@@ -20,45 +20,38 @@
 namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
+use Driver\Engines\RemoteConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
+use Driver\System\DebugMode;
 use Symfony\Component\Console\Command\Command;
-use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
+use Driver\Engines\MySql\Sandbox\Connection as remoteConnection;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Import extends Command implements CommandInterface
 {
-    /** @var LocalConnectionLoader */
-    private $localConnection;
-
-    /** @var Connection */
-    private $sandboxConnection;
-
-    /** @var Ssl */
-    private $ssl;
-
-    /** @var array */
-    private $properties;
-
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var ConsoleOutput */
-    private $output;
+    private LocalConnectionLoader $localConnection;
+    private RemoteConnectionInterface $remoteConnection;
+    private Ssl $ssl;
+    private array $properties = [];
+    private LoggerInterface $logger;
+    private ConsoleOutput $output;
+    private DebugMode $debugMode;
 
     public function __construct(
         LocalConnectionLoader $localConnection,
         Ssl $ssl,
-        SandboxConnection $sandboxConnection,
+        RemoteConnectionInterface $connection,
         LoggerInterface $logger,
         ConsoleOutput $output,
+        DebugMode $debugMode,
         array $properties = []
     ) {
         $this->localConnection = $localConnection;
-        $this->sandboxConnection = $sandboxConnection;
+        $this->remoteConnection = $connection;
         $this->ssl = $ssl;
         $this->properties = $properties;
         $this->logger = $logger;
@@ -68,7 +61,7 @@ class Import extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $this->sandboxConnection->test(function(SandboxConnection $connection) {
+        $this->remoteConnection->test(function(remoteConnection $connection) {
             $connection->authorizeIp();
         });
 
@@ -94,12 +87,12 @@ class Import extends Command implements CommandInterface
     public function assembleCommand($path)
     {
         $command = implode(' ', [
-            "mysql --user={$this->sandboxConnection->getUser()}",
-                "--password={$this->sandboxConnection->getPassword()}",
-                "--host={$this->sandboxConnection->getHost()}",
-                "--port={$this->sandboxConnection->getPort()}",
-                "--ssl-ca={$this->ssl->getPath()}",
-                "{$this->sandboxConnection->getDatabase()}",
+            "mysql --user={$this->remoteConnection->getUser()}",
+                "--password={$this->remoteConnection->getPassword()}",
+                "--host={$this->remoteConnection->getHost()}",
+                "--port={$this->remoteConnection->getPort()}",
+                $this->remoteConnection->useSsl() ? "--ssl-ca={$this->ssl->getPath()}" : "",
+                "{$this->remoteConnection->getDatabase()}",
             "<",
             $path
         ]);

@@ -9,8 +9,9 @@ namespace Driver\System;
 
 use DI\Container;
 use Driver\Engines\ConnectionInterface;
+use Driver\Engines\LocalConnectionInterface;
 
-class LocalConnectionLoader implements ConnectionInterface
+class LocalConnectionLoader implements LocalConnectionInterface
 {
     /** @var Configuration */
     private $configuration;

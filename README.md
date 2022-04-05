@@ -23,20 +23,14 @@ For a 3-5GB database, this process could take an hour or two. This depends on ho
 
 ## Quickstart
 
-**Downloading a Driver-created file is quite simple:**
+Downloading a Driver-created file is quite simple:
 ```bash
-./vendor/bin/driver run --environment=local import-s3 
+./vendor/bin/driver run --environment=local [or whatever environment that's been configured] import-s3 
 ```
-Change `local` out to be whatever environment was configured.
 
-**Installing Driver is easy:**
+Installing Driver is easy:
 ```
 composer require swiftotter/driver
-```
-
-**Running driver is even easier:**
-```
-php vendor/bin/driver run
 ```
 
 Configuring Driver is easy. In the folder that contains your `vendor/` folder, create a folder called `config`.
@@ -77,6 +71,17 @@ It should run! Be prepared for it to take some time (on the order of hours).
 ./vendor/bin/driver run
 ```
 
+You can run a specific pipeline. If you use the `default` pipeline, then you don't have to specify the pipeline. Included is a `tag` pipeline to generate one database snapshot.
+```bash
+./vendor/bin/driver run tag
+                         /\ environment name
+```
+
+To tag an export with an issue number (or whatever is desired):
+```bash
+./vendor/bin/driver run tag --tag=DEV-1234
+```
+
 ## Connection Information
 
 Connection information goes into a folder named `config` or `config.d`. The files that are recognized
@@ -115,17 +120,6 @@ You will need to do two things in your AWS control panel:
 1. Create a new policy.
 2. Assign that policy to a new user.
 
-### S3 bucket creation
-* Create the bucket and **make sure public access is disabled.**
-
-### User creation
-1. Select the username
-2. Select `Access key - Programmatic access`
-3. On Set Permissions, select Attach existing policies directly and then click Create Policy. Create the policy per Policy Creation below, then come back to the user creation, click Refresh
-4. Skip tags
-5. Create User
-6. Save the Access key ID and the Secret access key.
-
 ### Policy Creation
 
 Open your control panel and go to IAM. Click on the Policies tab on the sidebar. Choose to Create New Policy.
@@ -138,22 +132,13 @@ Select Create Your Own Policy (if you want to use the one below) and enter the f
         {
             "Effect": "Allow",
             "Action": [
-                "s3:PutObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::swiftotter-s3-path/*"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
                 "ec2:AuthorizeSecurityGroupIngress",
-                "ec2:RevokeSecurityGroupIngress",
                 "ec2:CreateSecurityGroup",
+                "s3:GetObject",
+                "s3:PutObject",
                 "rds:CreateDBInstance",
                 "rds:DeleteDBInstance",
-                "rds:DescribeDBInstances",
-                "iam:CreateServiceLinkedRole"
+                "rds:DescribeDBInstances"
             ],
             "Resource": [
                 "*"

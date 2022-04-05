@@ -58,7 +58,7 @@ class Primary implements TransportInterface
         });
     }
 
-    public function getPipeline()
+    public function getPipeline(): string
     {
         return $this->pipeline;
     }
