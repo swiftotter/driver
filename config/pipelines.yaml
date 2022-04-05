@@ -18,21 +18,21 @@ pipelines:
         - name: start-sandbox
           sort: 300
 
-#    - name: import
-#      sort: 200
-#      actions:
-#        - name: export-data-from-system-primary
-#          sort: 100
-#        - name: import-data-into-sandbox
-#          sort: 200
+    - name: import
+      sort: 200
+      actions:
+        - name: export-data-from-system-primary
+          sort: 100
+        - name: import-data-into-sandbox
+          sort: 200
 
-#    - name: global-commands
-#      sort: 300
-#      actions:
-#        - name: reduce
-#          sort: 100
-#        - name: anonymize
-#          sort: 200
+    - name: global-commands
+      sort: 300
+      actions:
+        - name: reduce
+          sort: 100
+        - name: anonymize
+          sort: 200
 
     - name: repeat-commands
       sort: 400
