@@ -28,7 +28,6 @@ use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\DebugMode;
 use Symfony\Component\Console\Command\Command;
-use Driver\Engines\MySql\Sandbox\Connection as remoteConnection;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Import extends Command implements CommandInterface
@@ -61,7 +60,7 @@ class Import extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $this->remoteConnection->test(function(remoteConnection $connection) {
+        $this->remoteConnection->test(function(RemoteConnectionInterface $connection) {
             $connection->authorizeIp();
         });
 
