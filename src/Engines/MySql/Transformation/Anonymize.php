@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Driver\Engines\MySql\Transformation;
 
 use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
+use Driver\Engines\RemoteConnectionInterface;
 use Driver\Engines\MySql\Sandbox\Utilities;
 use Driver\Engines\MySql\Transformation\Anonymize\Seed;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -21,27 +21,16 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Anonymize extends Command implements CommandInterface
 {
-    /** @var Configuration */
-    private $configuration;
-
-    /** @var SandboxConnection */
-    private $sandbox;
-
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var array */
-    private $properties;
-
-    /** @var Seed */
-    private $seed;
-
-    /** @var ConsoleOutput */
-    private $output;
+    private Configuration $configuration;
+    private RemoteConnectionInterface $connection;
+    private LoggerInterface $logger;
+    private array $properties = [];
+    private Seed $seed;
+    private ConsoleOutput $output;
 
     public function __construct(
         Configuration $configuration,
-        SandboxConnection $sandbox,
+        RemoteConnectionInterface $connection,
         Seed $seed,
         LoggerInterface $logger,
         ConsoleOutput $output,
@@ -49,7 +38,7 @@ class Anonymize extends Command implements CommandInterface
     ) {
         $this->configuration = $configuration;
         $this->properties = $properties;
-        $this->sandbox = $sandbox;
+        $this->connection = $connection;
         $this->logger = $logger;
         $this->output = $output;
         $this->seed = $seed;
@@ -91,7 +80,7 @@ class Anonymize extends Command implements CommandInterface
 
     private function anonymize(string $table, array $columns)
     {
-        $connection = $this->sandbox->getConnection();
+        $connection = $this->connection->getConnection();
 
         if (isset($columns['truncate']) && $columns['truncate'] === true) {
             try {

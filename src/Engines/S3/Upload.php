@@ -27,24 +27,31 @@ use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
+use Driver\System\S3FilenameFormatter;
+use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Upload extends Command implements CommandInterface
 {
-    protected $configuration;
-    protected $properties;
-    /** @var LoggerInterface */
-    private $logger;
-    /** @var ConsoleOutput */
-    private $output;
+    protected Configuration $configuration;
+    protected array $properties;
+    private LoggerInterface $logger;
+    private ConsoleOutput $output;
+    private S3FilenameFormatter $s3FilenameFormatter;
 
-    public function __construct(Configuration $configuration, LoggerInterface $logger, ConsoleOutput $output, array $properties = [])
-    {
+    public function __construct(
+        Configuration $configuration,
+        LoggerInterface $logger,
+        ConsoleOutput $output,
+        S3FilenameFormatter $s3FilenameFormatter,
+        array $properties = []
+    ) {
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->logger = $logger;
         $this->output = $output;
+        $this->s3FilenameFormatter = $s3FilenameFormatter;
 
         parent::__construct('s3-upload');
     }
@@ -52,35 +59,44 @@ class Upload extends Command implements CommandInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         try {
-            $transport->getLogger()->notice("Beginning file upload to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-            $this->output->writeln("<comment>Beginning file upload to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</comment>');
+            $filename = $this->s3FilenameFormatter->execute($environment);
+
+            $transport->getLogger()->notice(
+                sprintf("Beginning file upload to: s3://%s/%s", $this->getBucket(), $filename)
+            );
+
+            $this->output->writeln(
+                sprintf("<comment>Beginning file upload to: s3://%s/%s</comment>", $this->getBucket(), $filename)
+            );
 
             $client = $this->getS3Client();
             $output = $client->putObject([
                 'Bucket' => $this->getBucket(),
-                'Key' => $this->getDirectory() . $this->getFileName($environment),
+                'Key' => $this->getDirectory() . $filename,
                 'SourceFile' => $transport->getData($environment->getName() . '_completed_file'),
                 'ContentType' => 'application/gzip'
             ]);
 
-            $transport->getLogger()->notice("Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-            $this->output->writeln("<info>Uploaded file to: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</info>');
+            $transport->getLogger()->notice(sprintf("Uploaded file to: s3://%s/%s", $this->getBucket(), $filename));
+            $this->output->writeln(sprintf("<info>Uploaded file to: s3://%s/%s</info>", $this->getBucket(), $filename));
 
             return $transport->withNewData('s3_url', $this->getObjectUrl($output));
         } catch (\Exception $ex) {
             $this->logger->error('Failed putting object to S3: ' . $ex->getMessage(), [
                 $ex->getMessage(),
-                $ex->getTraceAsString()
+                $ex->getTraceAsString(),
+                $filename
             ]);
 
-            $this->output->writeln('<error>Failed putting object to S3: ' . $ex->getMessage(), [
+            $this->output->writeln(sprintf(
+                '<error>Failed putting object to S3: %s\n%s\n%s</error>',
                 $ex->getMessage(),
-                $ex->getTraceAsString()
-            ] . '</error>');
+                $ex->getTraceAsString(),
+                $filename
+            ));
 
             return $transport->withStatus(new Status('s3-upload', $ex->getMessage(), true));
         }
-
     }
 
     public function getProperties()
@@ -91,14 +107,6 @@ class Upload extends Command implements CommandInterface
     protected function getObjectUrl(\Aws\Result $data)
     {
         return $data->get('ObjectURL');
-    }
-
-    private function getFileName(EnvironmentInterface $environment)
-    {
-        $replace = str_replace('{{environment}}', '-' . $environment->getName(), $this->getFileKey());
-        $replace = str_replace('{{date}}', date('YmdHis'), $replace);
-
-        return $replace;
     }
 
     private function getFileKey()

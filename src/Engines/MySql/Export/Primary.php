@@ -21,6 +21,7 @@ namespace Driver\Engines\MySql\Export;
 
 use Driver\Commands\CleanupInterface;
 use Driver\Commands\CommandInterface;
+use Driver\Engines\LocalConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
@@ -34,31 +35,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Primary extends Command implements CommandInterface, CleanupInterface
 {
-    /** @var LocalConnectionLoader */
-    private $localConnection;
-
-    /** @var array */
-    private $properties;
-
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var Random */
-    private $random;
-
-    /** @var ?string */
-    private $path;
-
-    /** @var Configuration */
-    private $configuration;
-    
-    /** @var ConsoleOutput */
-    private $output;
+    private LocalConnectionInterface $localConnection;
+    private array $properties = [];
+    private LoggerInterface $logger;
+    private Random $random;
+    private ?string $path = null;
+    private Configuration $configuration;
+    private ConsoleOutput $output;
 
     const DEFAULT_DUMP_PATH = '/tmp';
 
     public function __construct(
-        LocalConnectionLoader $localConnection,
+        LocalConnectionInterface $localConnection,
         Configuration $configuration,
         LoggerInterface $logger,
         Random $random,

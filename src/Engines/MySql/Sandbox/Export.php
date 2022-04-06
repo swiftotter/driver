@@ -21,45 +21,40 @@ namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CleanupInterface;
 use Driver\Commands\CommandInterface;
+use Driver\Engines\RemoteConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Random;
+use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Export extends Command implements CommandInterface, CleanupInterface
 {
-    /** @var Connection */
-    private $connection;
-
-    /** @var Ssl */
-    private $ssl;
-
-    /** @var Random */
-    private $random;
-
-    /** @var string */
-    private $filename;
-
-    /** @var Configuration */
-    private $configuration;
-
-    /** @var array */
-    private $properties;
-
-    /** @var Utilities */
-    private $utilities;
-
-    /** @var ConsoleOutput */
-    private $output;
+    private RemoteConnectionInterface $connection;
+    private Ssl $ssl;
+    private Random $random;
+    private ?string $filename = null;
+    private Configuration $configuration;
+    private array $properties = [];
+    private Utilities $utilities;
+    private ConsoleOutput $output;
+    private Tag $tag;
 
     private $files = [];
 
-    public function __construct(Connection $connection, Ssl $ssl, Random $random, Configuration $configuration, Utilities $utilities, ConsoleOutput $output, array $properties = [])
-    {
+    public function __construct(
+        RemoteConnectionInterface $connection,
+        Ssl $ssl,
+        Random $random,
+        Configuration $configuration,
+        Utilities $utilities,
+        ConsoleOutput $output,
+        array $properties = []
+    ) {
         $this->connection = $connection;
         $this->ssl = $ssl;
         $this->random = $random;
@@ -67,6 +62,7 @@ class Export extends Command implements CommandInterface, CleanupInterface
         $this->properties = $properties;
         $this->utilities = $utilities;
         $this->output = $output;
+
         return parent::__construct('mysql-sandbox-export');
     }
 
@@ -159,18 +155,19 @@ class Export extends Command implements CommandInterface, CleanupInterface
 
     private function getFilename($environmentName)
     {
-        if (!$this->filename) {
-            $path = $this->configuration->getNode('connections/rds/dump-path');
-            if (!$path) {
-                $path ='/tmp';
-            }
-            do {
-                $file = $path . '/driver_tmp_' . $environmentName . '_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
-            } while (file_exists($file));
-
-            $this->filename = $file;
+        if ($this->filename) {
+            return $this->filename;
         }
 
+        $path = $this->configuration->getNode('connections/rds/dump-path');
+        if (!$path) {
+            $path ='/tmp';
+        }
+        do {
+            $file = $path . '/driver_tmp_' . $environmentName . '_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
+        } while (file_exists($file));
+
+        $this->filename = $file;
         return $this->filename;
     }
 }

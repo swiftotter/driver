@@ -24,6 +24,7 @@ use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Factory as TransportFactory;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Logs\LoggerInterface;
+use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command as ConsoleCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -37,31 +38,31 @@ class Command extends ConsoleCommand implements CommandInterface
     const PIPELINE = 'pipeline';
     const ENVIRONMENT = 'environment';
     const DEBUG = 'debug';
+    const TAG = 'tag';
 
-    /** @var TransportFactory $transportFactory */
-    private $transportFactory;
+    private TransportFactory $transportFactory;
+    private Master $pipeMaster;
+    private EnvironmentManager$environmentManager;
+    private array $properties;
+    private LoggerInterface $logger;
+    private ConsoleOutput $output;
+    private Tag $tag;
 
-    private $pipeMaster;
-
-    /** @var EnvironmentManager $environmentManager */
-    private $environmentManager;
-
-    /** @var array $properties */
-    private $properties;
-
-    /** @var LoggerInterface $logger */
-    private $logger;
-
-    /** @var ConsoleOutput */
-    private $output;
-
-    public function __construct(Master $pipeMaster, TransportFactory $transportFactory, LoggerInterface $logger, EnvironmentManager $environmentManager, ConsoleOutput $output, array $properties = [])
-    {
+    public function __construct(
+        Master $pipeMaster,
+        TransportFactory $transportFactory,
+        LoggerInterface $logger,
+        EnvironmentManager $environmentManager,
+        ConsoleOutput $output,
+        Tag $tag,
+        array $properties = []
+    ) {
         $this->transportFactory = $transportFactory;
         $this->pipeMaster = $pipeMaster;
         $this->logger = $logger;
         $this->environmentManager = $environmentManager;
         $this->output = $output;
+        $this->tag = $tag;
 
         parent::__construct(null);
     }
@@ -73,6 +74,7 @@ class Command extends ConsoleCommand implements CommandInterface
 
         $this->addArgument(self::PIPELINE, InputArgument::OPTIONAL, 'The pipeline to execute (leave blank to run default pipeline).')
             ->addOption(self::ENVIRONMENT, 'env', InputOption::VALUE_OPTIONAL, 'The environment(s) for which to run Driver.')
+            ->addOption(self::TAG, 'tag', InputOption::VALUE_OPTIONAL, 'A tag for the output file.')
             ->addOption(self::DEBUG, 'd', InputOption::VALUE_OPTIONAL, 'Enable debug mode');
     }
 
@@ -81,6 +83,7 @@ class Command extends ConsoleCommand implements CommandInterface
         $output->writeln("<comment>Executing Pipeline Command...</comment>");
         $this->logger->setParams($input, $output);
         $this->environmentManager->setRunFor($input->getOption(self::ENVIRONMENT));
+        $this->tag->setTag($input->getOption(self::TAG));
 
         if ($pipeLine = $input->getArgument(self::PIPELINE)) {
             $this->pipeMaster->run($pipeLine);

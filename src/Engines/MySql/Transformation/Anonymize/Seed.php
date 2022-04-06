@@ -7,22 +7,19 @@ declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Transformation\Anonymize;
 
-use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
+use Driver\Engines\RemoteConnectionInterface;
 use Driver\System\Configuration;
 
 class Seed
 {
     const FAKE_USER_TABLE = 'fake_users';
 
-    /** @var SandboxConnection */
-    private $sandbox;
+    private RemoteConnectionInterface $connection;
+    private Configuration $configuration;
 
-    /** @var Configuration */
-    private $configuration;
-
-    public function __construct(Configuration $configuration, SandboxConnection $sandbox)
+    public function __construct(Configuration $configuration, RemoteConnectionInterface $connection)
     {
-        $this->sandbox = $sandbox;
+        $this->connection = $connection;
         $this->configuration = $configuration;
     }
 
@@ -43,7 +40,7 @@ class Seed
             $query = "INSERT INTO ${table} (${columns}) VALUES(${placeholders})";
             $params = array_combine($bind, array_values($seed));
 
-            $this->sandbox->getConnection()->prepare($query)->execute($params);
+            $this->connection->getConnection()->prepare($query)->execute($params);
         }
     }
 
@@ -54,14 +51,14 @@ class Seed
 
     private function clean()
     {
-        $this->sandbox->getConnection()->query('DROP TABLE IF EXISTS ' . self::FAKE_USER_TABLE);
+        $this->connection->getConnection()->query('DROP TABLE IF EXISTS ' . self::FAKE_USER_TABLE);
     }
 
     private function createTable()
     {
         $table = self::FAKE_USER_TABLE;
 
-        $this->sandbox->getConnection()->query(<<<TABLE
+        $this->connection->getConnection()->query(<<<TABLE
 CREATE TABLE ${table} (
     firstname VARCHAR(200),
     lastname VARCHAR(200),

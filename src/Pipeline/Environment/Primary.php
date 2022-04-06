@@ -49,6 +49,11 @@ class Primary implements EnvironmentInterface
         $this->files[$type] = $path;
     }
 
+    public function getOnlyForPipeline(): array
+    {
+        return $this->properties['only_for_pipeline'] ?? [];
+    }
+
     public function getFiles()
     {
         return $this->files;

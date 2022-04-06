@@ -36,7 +36,7 @@ class Entry
         self::configureDebug();
 
         $containerBuilder = new ContainerBuilder;
-        $containerBuilder->addDefinitions((new DependencyConfig)->get());
+        $containerBuilder->addDefinitions((new DependencyConfig(self::isDebug()))->get());
         $container = $containerBuilder->build();
 
         $application = $container->get(Application::class);

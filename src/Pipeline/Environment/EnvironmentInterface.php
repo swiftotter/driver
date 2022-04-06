@@ -30,6 +30,11 @@ interface EnvironmentInterface
     /**
      * @return array
      */
+    public function getOnlyForPipeline(): array;
+
+    /**
+     * @return array
+     */
     public function getFiles();
 
     /**

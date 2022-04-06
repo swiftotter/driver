@@ -26,22 +26,30 @@ use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
+use Driver\System\DebugMode;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Shutdown extends Command implements CommandInterface, ErrorInterface
 {
-    private $configuration;
-    private $sandbox;
-    private $properties;
-    private $output;
+    private Configuration $configuration;
+    private Sandbox $sandbox;
+    private array $properties = [];
+    private ConsoleOutput $output;
+    private DebugMode $debugMode;
 
-    public function __construct(Configuration $configuration, Sandbox $sandbox, ConsoleOutput $output, array $properties = [])
-    {
+    public function __construct(
+        Configuration $configuration,
+        Sandbox $sandbox,
+        ConsoleOutput $output,
+        DebugMode $debugMode,
+        array $properties = []
+    ) {
         $this->configuration = $configuration;
         $this->sandbox = $sandbox;
         $this->properties = $properties;
         $this->output = $output;
+        $this->debugMode = $debugMode;
 
         return parent::__construct('mysql-sandbox-shutdown');
     }
@@ -53,6 +61,10 @@ class Shutdown extends Command implements CommandInterface, ErrorInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
+        if ($this->debugMode->get()) {
+            $transport->getLogger()->notice('No sandbox shutdown due to debug mode enabled.');
+        }
+
         return $this->apply($transport, $environment);
     }
 

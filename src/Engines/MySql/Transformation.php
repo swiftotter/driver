@@ -20,8 +20,8 @@
 namespace Driver\Engines\MySql;
 
 use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Sandbox\Connection as SandboxConnection;
 use Driver\Engines\MySql\Sandbox\Utilities;
+use Driver\Engines\RemoteConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
@@ -32,24 +32,15 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Transformation extends Command implements CommandInterface
 {
-    /** @var Configuration */
-    private $configuration;
-
-    /** @var array */
-    private $properties;
-
-    /** @var SandboxConnection */
-    private $sandbox;
-
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var ConsoleOutput */
-    private $output;
+    private Configuration $configuration;
+    private array $properties = [];
+    private RemoteConnectionInterface $connection;
+    private LoggerInterface $logger;
+    private ConsoleOutput $output;
 
     public function __construct(
         Configuration $configuration,
-        SandboxConnection $sandbox,
+        RemoteConnectionInterface $connection,
         Utilities $utilities,
         LoggerInterface $logger,
         ConsoleOutput $output,
@@ -57,7 +48,7 @@ class Transformation extends Command implements CommandInterface
     ) {
         $this->configuration = $configuration;
         $this->properties = $properties;
-        $this->sandbox = $sandbox;
+        $this->connection = $connection;
         $this->logger = $logger;
         $this->output = $output;
 
@@ -66,8 +57,12 @@ class Transformation extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $this->applyTransformationsTo($this->sandbox->getConnection(), $environment->getTransformations());
+        if (count($environment->getOnlyForPipeline())
+            && !in_array($transport->getPipeline(), $environment->getOnlyForPipeline())) {
+            return $transport->withStatus(new Status('mysql-transformation', 'stale'));
+        }
 
+        $this->applyTransformationsTo($this->connection->getConnection(), $environment->getTransformations());
         return $transport->withStatus(new Status('mysql-transformation', 'success'));
     }
 

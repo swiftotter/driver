@@ -29,6 +29,8 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
+use Driver\System\S3FilenameFormatter;
+use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -42,6 +44,7 @@ class Download extends Command implements CommandInterface
     private LoggerInterface $logger;
     private ConsoleOutput $output;
     private EnvironmentManager $environmentManager;
+    private S3FilenameFormatter $s3FilenameFormatter;
 
     public function __construct(
         LocalConnectionLoader $localConnection,
@@ -49,6 +52,7 @@ class Download extends Command implements CommandInterface
         LoggerInterface $logger,
         ConsoleOutput $output,
         EnvironmentManager $environmentManager,
+        S3FilenameFormatter $s3FilenameFormatter,
         array $properties = []
     ) {
         $this->localConnection = $localConnection;
@@ -56,31 +60,43 @@ class Download extends Command implements CommandInterface
         $this->properties = $properties;
         $this->logger = $logger;
         $this->output = $output;
+        $this->environmentManager = $environmentManager;
+        $this->s3FilenameFormatter = $s3FilenameFormatter;
 
         parent::__construct('s3-download');
-        $this->environmentManager = $environmentManager;
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         try {
-            $transport->getLogger()->notice("Beginning file download from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-            $this->output->writeln("<comment>Beginning file download from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . '</comment>');
+            $filename = $this->s3FilenameFormatter->execute($environment);
+
+            $transport->getLogger()->notice(
+                sprintf("Beginning file download from: s3://%s/%s", $this->getBucket(), $filename)
+            );
+            $this->output->writeln(
+                sprintf("<comment>Beginning file download from: s3://%s/%s</comment>", $this->getBucket(), $filename)
+            
+            );
             $date = date('Y-m-d');
             $client = $this->getS3Client();
 
-            $outputFile = "var/${date}" . $this->getFileName($environment);
+            $outputFile = "var/${date}" . $filename;
 
             $output = $client->getObject([
                 'Bucket' => $this->getBucket(),
-                'Key' => $this->getDirectory() . $this->getFileName($environment),
+                'Key' => $this->getDirectory() . $filename,
                 'SourceFile' => $transport->getData($environment->getName() . '_completed_file'),
                 'ContentType' => 'application/gzip',
                 'SaveAs' => $outputFile
             ]);
 
-            $transport->getLogger()->notice("Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment));
-            $this->output->writeln("<info>Downloaded file from: s3://" . $this->getBucket() . "/" . $this->getFileName($environment) . ' to project var/ directory</info>');
+            $transport->getLogger()->notice(
+                sprintf("Downloaded file from: s3://%s/%s", $this->getBucket(), $this->getFileName($environment))
+            );
+            $this->output->writeln(
+                sprintf("<info>Downloaded file from: s3://%s/%s to project var/ directory</info>", $this->getBucket(), $this->getFileName($environment))
+            );
 
             if (strpos($this->getFileName($environment), ".gz") !== false) {
                 system("gunzip -f " . $outputFile);
