@@ -9,7 +9,7 @@
         "symfony/console": ">=2.6",
         "symfony/event-dispatcher": ">=2.5",
         "ericpoe/haystack": "^1.0",
-        "guzzlehttp/guzzle": "^7.3",
+        "guzzlehttp/guzzle": "^6.5 || ^7.3",
         "psr/log": "^1.0"
     },
     "require-dev": {
