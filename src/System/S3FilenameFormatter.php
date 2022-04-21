@@ -18,14 +18,14 @@ class S3FilenameFormatter
         $this->tag = $tag;
     }
 
-    public function execute(EnvironmentInterface $environment)
+    public function execute(EnvironmentInterface $environment, ?string $fileKey)
     {
         $environment = '-' . $environment->getName();
         if ($this->tag->getTag()) {
             $environment .= '-' . $this->tag->getTag();
         }
 
-        $replace = str_replace('{{environment}}', $environment, $this->getFileKey());
+        $replace = str_replace('{{environment}}', $environment, $fileKey);
         $replace = str_replace('{{date}}', date('YmdHis'), $replace);
 
         return $replace;

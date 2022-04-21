@@ -19,7 +19,6 @@
 
 namespace Driver\Engines\S3;
 
-use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -30,7 +29,6 @@ use Driver\System\Configuration;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\S3FilenameFormatter;
-use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -69,14 +67,14 @@ class Download extends Command implements CommandInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         try {
-            $filename = $this->s3FilenameFormatter->execute($environment);
+            $filename = $this->s3FilenameFormatter->execute($environment, $this->getFileKey());
 
             $transport->getLogger()->notice(
                 sprintf("Beginning file download from: s3://%s/%s", $this->getBucket(), $filename)
             );
             $this->output->writeln(
                 sprintf("<comment>Beginning file download from: s3://%s/%s</comment>", $this->getBucket(), $filename)
-            
+
             );
             $date = date('Y-m-d');
             $client = $this->getS3Client();
@@ -106,15 +104,12 @@ class Download extends Command implements CommandInterface
             return $transport->withNewData('s3_url', $this->getObjectUrl($output))
                 ->withNewData(self::DOWNLOAD_PATH_KEY, $outputFile);
         } catch (\Exception $ex) {
+            $this->output->section();
+            $this->output->writeln('<info>Failed getting object from S3: ' . $ex->getTraceAsString(). '</info>');
             $this->logger->error('Failed getting object from S3: ' . $ex->getMessage(), [
                 $ex->getMessage(),
                 $ex->getTraceAsString()
             ]);
-
-            $this->output->writeln('<error>Failed getting object from S3: ' . $ex->getMessage(), [
-                $ex->getMessage(),
-                $ex->getTraceAsString()
-            ] . '</error>');
 
             return $transport->withStatus(new Status('s3-download', $ex->getMessage(), true));
         }
@@ -138,12 +133,12 @@ class Download extends Command implements CommandInterface
         return $replace;
     }
 
-    private function getFileKey()
+    private function getFileKey(): string
     {
         if ($this->compressOutput()) {
-            return $this->configuration->getNode('connections/s3/compressed-file-key');
+            return $this->configuration->getNodeString('connections/s3/compressed-file-key');
         } else {
-            return $this->configuration->getNode('connections/s3/uncompressed-file-key');
+            return $this->configuration->getNodeString('connections/s3/uncompressed-file-key');
         }
     }
 
@@ -152,9 +147,9 @@ class Download extends Command implements CommandInterface
         return (bool)$this->configuration->getNode('configuration/compress-output') === true;
     }
 
-    private function getBucket()
+    private function getBucket(): string
     {
-        return $this->configuration->getNode('connections/s3/bucket');
+        return $this->configuration->getNodeString('connections/s3/bucket');
     }
 
     private function getDirectory()

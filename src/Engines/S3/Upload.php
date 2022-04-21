@@ -19,7 +19,6 @@
 
 namespace Driver\Engines\S3;
 
-use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -28,7 +27,6 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\S3FilenameFormatter;
-use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -59,7 +57,7 @@ class Upload extends Command implements CommandInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
         try {
-            $filename = $this->s3FilenameFormatter->execute($environment);
+            $filename = $this->s3FilenameFormatter->execute($environment, $this->getFileKey());
 
             $transport->getLogger()->notice(
                 sprintf("Beginning file upload to: s3://%s/%s", $this->getBucket(), $filename)
@@ -109,23 +107,25 @@ class Upload extends Command implements CommandInterface
         return $data->get('ObjectURL');
     }
 
-    private function getFileKey()
+    private function getFileKey(): string
     {
         if ($this->compressOutput()) {
-            return $this->configuration->getNode('connections/s3/compressed-file-key');
+            $fileKey = $this->configuration->getNodeString('connections/s3/compressed-file-key');
         } else {
-            return $this->configuration->getNode('connections/s3/uncompressed-file-key');
+            $fileKey = $this->configuration->getNodeString('connections/s3/uncompressed-file-key');
         }
+
+        return $fileKey;
     }
 
-    private function compressOutput()
+    private function compressOutput(): bool
     {
         return (bool)$this->configuration->getNode('configuration/compress-output') === true;
     }
 
-    private function getBucket()
+    private function getBucket(): string
     {
-        return $this->configuration->getNode('connections/s3/bucket');
+        return $this->configuration->getNodeString('connections/s3/bucket');
     }
 
     private function getDirectory()

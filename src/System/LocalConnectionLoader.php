@@ -93,7 +93,7 @@ class LocalConnectionLoader implements LocalConnectionInterface
 
     public function getHost(): string
     {
-        return $this->get()->getHost();
+        return $this->get()->getHost() ?? 'localhost';
     }
 
     public function getPort(): string
