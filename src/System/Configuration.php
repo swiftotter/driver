@@ -61,6 +61,13 @@ class Configuration
         }, $nodes);
     }
 
+    public function getNodeString($node): string
+    {
+        $value = $this->getNode($node);
+
+        return is_string($value) ? $value : '';
+    }
+
     protected function loadConfigurationFor($file)
     {
         if (!isset($this->files[$file])) {

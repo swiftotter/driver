@@ -20,15 +20,14 @@
 namespace Driver\Engines\MySql\Sandbox;
 
 use Driver\Commands\CommandInterface;
-use Driver\Engines\MySql\Sandbox\Sandbox;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\DebugMode;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Init extends Command implements CommandInterface
 {
@@ -68,7 +67,18 @@ class Init extends Command implements CommandInterface
 
         $transport->getLogger()->notice('Initializing sandbox.');
         $this->output->writeln('<info>Initializing sandbox.</info>');
+
+        try {
+            pcntl_signal(SIGINT, [$this->sandbox, 'shutdown']);
+        } catch (\Exception $exception) {
+            $this->output->writeln('<error>Failed to shutdown RDS. Login to AWS and manually shutdown.</error>');
+            throw new \Exception('Failed to shutdown RDS. Login to AWS and manually shutdown.');
+        }
+
         $this->sandbox->init();
+
+        $this->output->writeln('');
+
         $tries = 0;
         $maxTries = 100;
         ProgressBar::setFormatDefinition(
@@ -82,11 +92,12 @@ class Init extends Command implements CommandInterface
             $transport->getLogger()->notice('Checking if sandbox is active.');
             $tries++;
             sleep(10);
-            $progressBar->advance(5);
+            $progressBar->advance();
         }
 
         $progressBar->finish();
-        $this->output->writeln('<info>...Completed!</info>');
+        $this->output->writeln('');
+        $this->output->writeln('<info>Completed!</info>');
 
         if (!$active && $tries === $maxTries) {
             $this->output->writeln('<error>RDS instance was not able to be started.</error>');

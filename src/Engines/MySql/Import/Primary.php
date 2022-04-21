@@ -19,7 +19,6 @@
 
 namespace Driver\Engines\MySql\Import;
 
-use Driver\Commands\CleanupInterface;
 use Driver\Commands\CommandInterface;
 use Driver\Engines\S3\Download;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -31,7 +30,6 @@ use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
 
 class Primary extends Command implements CommandInterface
 {
@@ -79,13 +77,21 @@ class Primary extends Command implements CommandInterface
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
-        $transport->getLogger()->notice("Import database from var/ into local MySql started");
-        $this->output->writeln("<comment>Import database from var/ into local MySql started</comment>");
-        $this->output->writeln("<comment>Initialized MySql Connection: </comment>");
+        $transport->getLogger()->notice("Import database from var/ into local MySQL started");
+        $this->output->writeln("<comment>Import database from var/ into local MySQL started</comment>");
+        $this->output->writeln("<comment>Preparing MySQL Connection using Magento (app/etc/env.php)</comment>");
 
         $conn = mysqli_connect($this->localConnection->getHost(), $this->localConnection->getUser(), $this->localConnection->getPassword());
+
         if (!$conn) {
             $this->output->writeln('<error>Could not connect: ' . mysqli_connect_error() . '</error>');
+            $this->output->write([
+                '<info> Connected with:',
+                'Host:' . $this->localConnection->getHost(),
+                'User:' . $this->localConnection->getUser(),
+                'Password:' . preg_replace('/.*/i', '*', $this->localConnection->getPassword()),
+                '</info>'
+            ]);
             throw new \Exception('Could not connect: ' . mysqli_connect_error());
         }
 

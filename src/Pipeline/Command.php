@@ -21,6 +21,7 @@ namespace Driver\Pipeline;
 
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
+use Driver\Pipeline\Environment\Manager as EnvironmentManager;
 use Driver\Pipeline\Transport\Factory as TransportFactory;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Logs\LoggerInterface;
@@ -31,7 +32,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Driver\Pipeline\Environment\Manager as EnvironmentManager;
 
 class Command extends ConsoleCommand implements CommandInterface
 {
@@ -90,6 +90,11 @@ class Command extends ConsoleCommand implements CommandInterface
         } else {
             $this->pipeMaster->runDefault();
         }
+    }
+
+    public function handleSignal(int $signal)
+    {
+
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
