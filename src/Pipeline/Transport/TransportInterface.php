@@ -28,7 +28,13 @@ interface TransportInterface
     const STATUS_SUCCESS = 2;
     const STATUS_PENDING = 3;
 
-    public function __construct($pipeline, $statuses = [], $data = [], EnvironmentInterface $environment, LoggerInterface $log = null);
+    public function __construct(
+        $pipeline,
+        $statuses = [],
+        $data = [],
+        EnvironmentInterface $environment,
+        LoggerInterface $log = null
+    );
 
     /**
      * @return string
