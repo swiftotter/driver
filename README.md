@@ -322,6 +322,41 @@ environments:
         - table_2
 ```
 
+### Anonymizing Data
+
+Tables can be anonyimized by creating `anonymize.yaml` in `config/`. The following type of anonymization entities are available in order to provide realistic data and types:
+
+* `email`
+* `company`
+* `firstname`
+* `lastname`
+* `full_name`
+* `general`
+* `phone`
+* `postcode`
+* `street`
+* `address`
+* `region_id`
+* `region`
+* `country_id`
+* `phone`
+* `ip`
+* `empty`
+
+**Example File**
+```
+anonymize:
+    tables:
+        quote:
+            customer_email:
+                type: email
+            customer_name:
+                type: full_name
+            remote_ip:
+                type: ip
+```
+
+
 **Notes:**
 * The `{{table_name}}` is substituted for the `TABLE_NAME` reference above. Driver will look for a table that **ends** with `TABLE_NAME`. For example, if your `TABLE_NAME` is `core_config_data`, Driver will search for a table in the database that ends with `core_config_data`. Thus, `mage_core_config_data`, `sample_core_config_data` and `core_config_data` would all match.
 
