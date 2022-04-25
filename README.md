@@ -336,6 +336,7 @@ Tables can be anonyimized by creating `anonymize.yaml` in `config/`. The followi
 * `postcode`
 * `street`
 * `address`
+* `city`
 * `region_id`
 * `region`
 * `country_id`
