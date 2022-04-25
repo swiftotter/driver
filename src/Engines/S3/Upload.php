@@ -28,7 +28,10 @@ use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\S3FilenameFormatter;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\ConsoleEvents;
+use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Upload extends Command implements CommandInterface
 {
@@ -37,12 +40,15 @@ class Upload extends Command implements CommandInterface
     private LoggerInterface $logger;
     private ConsoleOutput $output;
     private S3FilenameFormatter $s3FilenameFormatter;
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcher */
+    private EventDispatcher $eventDispatcher;
 
     public function __construct(
         Configuration $configuration,
         LoggerInterface $logger,
         ConsoleOutput $output,
         S3FilenameFormatter $s3FilenameFormatter,
+        EventDispatcher $eventDispatcher,
         array $properties = []
     ) {
         $this->configuration = $configuration;
@@ -52,10 +58,15 @@ class Upload extends Command implements CommandInterface
         $this->s3FilenameFormatter = $s3FilenameFormatter;
 
         parent::__construct('s3-upload');
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
+        $this->eventDispatcher->addListener(ConsoleEvents::TERMINATE, function (ConsoleCommandEvent $event) {
+            $this->output->writeln('Cancel registered!');
+        });
+
         try {
             $filename = $this->s3FilenameFormatter->execute($environment, $this->getFileKey());
 

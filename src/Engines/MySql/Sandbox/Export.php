@@ -30,7 +30,6 @@ use Driver\System\Random;
 use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
 
 class Export extends Command implements CommandInterface, CleanupInterface
 {
@@ -78,7 +77,7 @@ class Export extends Command implements CommandInterface, CleanupInterface
         });
 
         $transport->getLogger()->notice("Exporting database from remote MySql RDS");
-        $this->output->writeln("<comment>Exporting database from remote MySql RDS. Please wait... It will take some time.</comment>");
+        $this->output->writeln("<comment>Exporting database from remote MySql RDS. Please wait... this will take a long time.</comment>");
 
         $environmentName = $environment->getName();
         $command = $this->assembleCommand($environmentName, $environment->getIgnoredTables());

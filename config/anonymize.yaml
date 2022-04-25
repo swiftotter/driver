@@ -21,6 +21,7 @@ anonymize:
       country_id: US
       region_id: 57
       phone: 202-555-0156
+      company: Superior Products
       ip: 181.226.219.191
 
     - firstname: Tina
@@ -32,6 +33,7 @@ anonymize:
       country_id: US
       region_id: 47
       phone: 202-555-0184
+      company: SwipeWire
       ip: 78.223.172.48
 
     - firstname: Dillan
@@ -43,6 +45,7 @@ anonymize:
       country_id: US
       region_id: 12
       phone: 202-555-0135
+      company: SecureSmarter
       ip: 203.54.176.154
 
     - firstname: Dominik
@@ -54,6 +57,7 @@ anonymize:
       country_id: US
       region_id: 63
       phone: 202-555-0115
+      company: Dwellsmith
       ip: 51.113.119.34
 
     - firstname: Reece
@@ -65,6 +69,7 @@ anonymize:
       region_id: 43
       country_id: US
       phone: 202-555-0190
+      company: SalePush
       ip: 85.127.2.228
 
     - firstname: Susan
@@ -76,6 +81,7 @@ anonymize:
       country_id: US
       region_id: 12
       phone: (244) 949-1729
+      company: Cloudrevel
       ip: 147.199.158.244
 
     - firstname: Ahmed
@@ -87,11 +93,11 @@ anonymize:
       country_id: US
       region_id: 47
       phone: 907-555-0187
+      company: Crowdstage, Inc.
       ip: 152.56.2.51
 
     - firstname: Lexi-Mae
       lastname: Barton
-      company: Acme Brands, Inc.
       street: 3180 Dancing Dove Lane
       city: New York
       postcode: 10004
@@ -99,6 +105,7 @@ anonymize:
       country_id: US
       region_id: 43
       phone: 907-555-0192
+      company: Acme Brands, Inc.
       ip: 53.243.127.225
 
     - firstname: Cassia
@@ -110,11 +117,11 @@ anonymize:
       country_id: US
       region_id: 49
       phone: 404-555-0175
+      company: QuickSpace
       ip: 174.146.43.47
 
     - firstname: Robert
       lastname: Kramer
-      company: Data, Inc.
       street: 1367 Lowndes Hill Park Road
       city: Sherman Oaks
       postcode: 91403
@@ -122,6 +129,7 @@ anonymize:
       country_id: US
       region_id: 62
       phone: 404-555-0162
+      company: Rentoor, inc.
       ip: 173.8.26.43
 
     - firstname: Mercedes
@@ -133,6 +141,7 @@ anonymize:
       country_id: US
       region_id: 23
       phone: 307-555-0141
+      company: Jumpsync Products, Inc.
       ip: 68.65.218.25
 
     - firstname: Paula
@@ -144,6 +153,7 @@ anonymize:
       country_id: US
       region_id: 27
       phone: 307-555-0126
+      company: VisionSwipe, Inc.
       ip: 50.151.191.15
 
     - firstname: Beltane
@@ -155,6 +165,7 @@ anonymize:
       country_id: US
       region_id: 31
       phone: 307-555-0127
+      company: Shipplier Supplies, Inc.
       ip: 87.172.86.188
 
     - firstname: Leilani
@@ -166,6 +177,7 @@ anonymize:
       country_id: US
       region_id: 12
       phone: 515-555-0164
+      company: TechTack LLC
       ip: 213.56.195.24
 
     - firstname: Rufus
@@ -177,6 +189,7 @@ anonymize:
       country_id: US
       region_id: 23
       phone: 515-555-0142
+      company: Digimail For You, LLC
       ip: 124.9.254.185
 
     - firstname: Carole
@@ -188,6 +201,7 @@ anonymize:
       country_id: US
       region_id: 63
       phone: 515-555-0102
+      company: Kaboom Fireworks
       ip: 194.59.122.241
 
     - firstname: Jaylen
@@ -199,6 +213,7 @@ anonymize:
       region_id: 24
       country_id: US
       phone: 860-555-0172
+      company: Semicolon Bookstore
       ip: 68.162.14.52
 
     - firstname: Alfie-Jay
@@ -210,6 +225,7 @@ anonymize:
       region_id: 12
       country_id: US
       phone: 860-555-0178
+      company: Bent Out of Shape Jewelry
       ip: 25.19.163.174
 
     - firstname: Jokubas
@@ -230,6 +246,7 @@ anonymize:
       city: VILLENEUVE-SUR-LOT
       postcode: 47300
       country_id: FR
+      company: 9Yards Media
       phone: 05.48.01.14.91
       ip: 38.28.94.247
 
@@ -239,6 +256,7 @@ anonymize:
       city: Le Bouscat
       postcode: 33110
       country_id: FR
+      company: Titan Alarm Group
       phone: 05.45.43.97.63
       ip: 87.122.192.251
 
@@ -249,6 +267,7 @@ anonymize:
       postcode: 57158
       country_id: FR
       phone: 03.31.34.92.91
+      company: Pacific Alarm Group
       ip: 171.120.59.109
 
     - firstname: Eloïse
@@ -258,6 +277,7 @@ anonymize:
       postcode: 6351
       country_id: NL
       phone: 06-58223374
+      company: Saga Builders
       ip: 249.230.160.198
 
     - firstname: Mirza
@@ -267,4 +287,5 @@ anonymize:
       postcode: 9461
       country_id: NL
       phone: 06-40996488
+      company: Drama Studio
       ip: 49.87.75.212

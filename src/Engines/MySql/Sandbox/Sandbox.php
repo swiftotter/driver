@@ -19,15 +19,13 @@
 
 namespace Driver\Engines\MySql\Sandbox;
 
-use Aws\AwsClient;
-use Aws\Ec2\Ec2Client;
-use Aws\Rds\RdsClient;
 use Driver\System\AwsClientFactory;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
 use Driver\System\RemoteIP;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Sandbox
 {
@@ -48,6 +46,8 @@ class Sandbox
     private $password;
     private $statuses;
     private $output;
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcher */
+    private EventDispatcher $eventDispatcher;
 
     public function __construct(
         Configuration $configuration,
@@ -56,6 +56,7 @@ class Sandbox
         Random $random,
         AwsClientFactory $awsClientFactory,
         ConsoleOutput $output,
+        EventDispatcher $eventDispatcher,
         $disableInstantiation = true
     ) {
         $this->configuration = $configuration;
@@ -67,20 +68,22 @@ class Sandbox
         if (!$disableInstantiation) {
             $this->init();
         }
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function init()
     {
         $this->logger->info("Using RDS instance: " . $this->getIdentifier());
         $this->output->writeln("<comment>Using RDS instance: " . $this->getIdentifier() . '</comment>');
+
         if ($this->initialized || $this->configuration->getNode('connections/rds/instance-name') || $this->getInstanceActive()) {
             $this->logger->info("Using RDS instance: " . $this->getIdentifier());
             $this->output->writeln("<comment>Using RDS instance: " . $this->getIdentifier() . '</comment>');
             return false;
         }
 
-        $this->logger->info("Creating RDS instance: " . $this->getIdentifier());
-        $this->output->writeln("<comment>Creating RDS instance: " . $this->getIdentifier() . '</comment>');
+        $this->logger->info("Preparing to create RDS instance: " . $this->getIdentifier());
+        $this->output->writeln("<comment>Preparing to create RDS instance: " . $this->getIdentifier() . '</comment>');
         $this->initialized = true;
 
         try {
@@ -112,10 +115,11 @@ class Sandbox
 
             return true;
         } catch (\Exception $ex) {
-            $this->logger->info("RDS instance creation failed: " . $ex->getMessage(), [
+            $this->logger->info("On snap. RDS instance creation failed: " . $ex->getMessage(), [
                 "trace" => $ex->getTraceAsString()
             ]);
-            $this->output->writeln("<error>RDS instance creation failed: " . $ex->getMessage() . "</error>");
+            $this->output->writeln("<error>On snap. RDS instance creation failed: " . $ex->getMessage() . "</error>");
+            throw new \Exception("<error>RDS instance creation failed: " . $ex->getMessage() . "</error>");
         }
     }
 
@@ -374,7 +378,7 @@ class Sandbox
         ];
 
         if (empty($parameters['region'])) {
-            $this->output->writeln("<error>No region specified. Are you sure that config.d/connections.yaml exists?</error>");
+            $this->output->writeln('<fg=blue>No region specified. Are you sure that config.d/connections.yaml exists?</>');
         }
 
         return $parameters;

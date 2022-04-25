@@ -19,7 +19,6 @@
 
 namespace Driver\Pipeline\Environment;
 
-use Driver\Commands\Environment\Setup;
 use Driver\System\Configuration;
 use Haystack\HArray;
 
@@ -54,7 +53,7 @@ class Manager
         $this->runFor = new \ArrayIterator($this->mapNamesToEnvironments($environmentList));
     }
 
-    private function getAllEnvironments()
+    public function getAllEnvironments()
     {
         $output = (new HArray($this->configuration->getNode('environments')))
             ->filter(function($value) {

@@ -22,7 +22,6 @@ namespace Driver\Pipeline;
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Environment\Manager as EnvironmentManager;
-use Driver\Pipeline\Transport\Factory as TransportFactory;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Tag;
@@ -32,6 +31,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
+use Symfony\Component\Console\Question\Question;
 
 class Command extends ConsoleCommand implements CommandInterface
 {
@@ -39,43 +40,40 @@ class Command extends ConsoleCommand implements CommandInterface
     const ENVIRONMENT = 'environment';
     const DEBUG = 'debug';
     const TAG = 'tag';
+    const CI = 'ci';
 
-    private TransportFactory $transportFactory;
     private Master $pipeMaster;
-    private EnvironmentManager$environmentManager;
-    private array $properties;
+    private EnvironmentManager $environmentManager;
     private LoggerInterface $logger;
     private ConsoleOutput $output;
     private Tag $tag;
 
     public function __construct(
         Master $pipeMaster,
-        TransportFactory $transportFactory,
         LoggerInterface $logger,
         EnvironmentManager $environmentManager,
         ConsoleOutput $output,
-        Tag $tag,
-        array $properties = []
+        Tag $tag
     ) {
-        $this->transportFactory = $transportFactory;
         $this->pipeMaster = $pipeMaster;
         $this->logger = $logger;
         $this->environmentManager = $environmentManager;
         $this->output = $output;
         $this->tag = $tag;
 
-        parent::__construct(null);
+        parent::__construct();
     }
 
     protected function configure()
     {
         $this->setName('run')
-            ->setDescription('Executes the pipe line specified in the -p (--pipeline) parameter.');
+            ->setDescription('This tool runs handles databases; importing and exporting. It is based on pipelines which are defined in YAML configuration. Specify which pipeline to run as an argument.');
 
-        $this->addArgument(self::PIPELINE, InputArgument::OPTIONAL, 'The pipeline to execute (leave blank to run default pipeline).')
+        $this->addArgument(self::PIPELINE, InputArgument::OPTIONAL, 'The pipeline to execute.')
             ->addOption(self::ENVIRONMENT, 'env', InputOption::VALUE_OPTIONAL, 'The environment(s) for which to run Driver.')
             ->addOption(self::TAG, 'tag', InputOption::VALUE_OPTIONAL, 'A tag for the output file.')
-            ->addOption(self::DEBUG, 'd', InputOption::VALUE_OPTIONAL, 'Enable debug mode');
+            ->addOption(self::DEBUG, 'd', InputOption::VALUE_OPTIONAL, 'Enable debug mode')
+            ->addOption(self::CI, 'ci', InputOption::VALUE_OPTIONAL, 'Run without asking questions');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -88,14 +86,46 @@ class Command extends ConsoleCommand implements CommandInterface
         if ($pipeLine = $input->getArgument(self::PIPELINE)) {
             $this->pipeMaster->run($pipeLine);
         } else {
-            $this->pipeMaster->runDefault();
+            if (!$input->hasOption(self::CI)) {
+                $helper = $this->getHelper('question');
+                $pipelineQuestion = new Question(
+                    '<question> What pipeline do you want to execute? </question> [type enter for default]: ',
+                    Master::DEFAULT_NODE
+                );
+
+                $pipeLine = $helper->ask($input, $output, $pipelineQuestion);
+
+                $this->askAboutEnv($input, $output);
+
+            } else {
+                $pipeLine = Master::DEFAULT_NODE;
+            }
+
+            $output->writeln('Running pipeline: <info>'. $pipeLine . '</info>');
+
+            $this->pipeMaster->run($pipeLine);
         }
     }
 
-    public function handleSignal(int $signal)
+    private function askAboutEnv($input, $output)
     {
+        $helper = $this->getHelper('question');
 
+        if (!$input->getOption(self::ENVIRONMENT)) {
+            $envQuestion = new ChoiceQuestion(
+                '<question> What environment do you want to execute? </question>',
+                $this->environmentManager->getAllEnvironments(),
+                'local'
+            );
+
+            $env = $helper->ask($input, $output, $envQuestion);
+            $output->writeln('Using: <info>'. $env . '</info> environment');
+
+            $input->setOption(self::ENVIRONMENT, $env);
+            $this->environmentManager->setRunFor($env);
+        }
     }
+
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment)
     {
