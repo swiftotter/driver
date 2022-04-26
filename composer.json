@@ -26,5 +26,8 @@
             "name": "Joseph Maxwell",
             "email": "joseph@swiftotter.com"
         }
-    ]
+    ],
+    "config": {
+        "sort-packages": true
+    }
 }
