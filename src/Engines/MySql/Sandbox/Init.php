@@ -1,4 +1,5 @@
 <?php
+declare(ticks = 1);
 /**
  * SwiftOtter_Base is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,13 +68,9 @@ class Init extends Command implements CommandInterface
 
         $transport->getLogger()->notice('Initializing sandbox.');
         $this->output->writeln('<info>Initializing sandbox.</info>');
-
-        try {
-            pcntl_signal(SIGINT, [$this->sandbox, 'shutdown']);
-        } catch (\Exception $exception) {
-            $this->output->writeln('<error>Failed to shutdown RDS. Login to AWS and manually shutdown.</error>');
-            throw new \Exception('Failed to shutdown RDS. Login to AWS and manually shutdown.');
-        }
+        pcntl_signal(SIGTERM, [$this, "signalHandler"]);
+        pcntl_signal(SIGINT, [$this, "signalHandler"]);
+        $this->output->writeln('<info>You can exit this with Ctrl + C.</info>');
 
         $this->sandbox->init();
 
@@ -109,4 +106,20 @@ class Init extends Command implements CommandInterface
 
         return $transport->withStatus(new Status('sandbox_init', 'success'));
     }
+
+    public function signalHandler($signal)
+    {
+        if ($signal !== SIGINT && $signal !== SIGKILL) {
+            return;
+        }
+        $this->output->write('<info>Cancelling! Shutting down RDS instance...</info>');
+        $result = $this->sandbox->shutdown();
+
+        if ($result) {
+            $this->output->write('Successfully shut down RDS instance.');
+        } else {
+            $this->output->write('Failed to shut down RDS instance. Please login to AWS and kill the instance.');
+        }
+    }
+
 }

@@ -20,7 +20,9 @@
 namespace Driver\System;
 
 use DI\Container;
-use \Symfony\Component\Console\Application as ConsoleApplication;
+use Symfony\Component\Console\Application as ConsoleApplication;
+use Symfony\Component\Console\Event\ConsoleSignalEvent;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class Application
@@ -34,14 +36,21 @@ class Application
     protected $configuration;
     protected $container;
 
+    private EventDispatcher $eventDispatcher;
+
     const RUN_MODE_NORMAL = 'normal';
     const RUN_MODE_TEST = 'test';
 
-    public function __construct(ConsoleApplication $console, Configuration $configuration, Container $container)
-    {
+    public function __construct(
+        ConsoleApplication $console,
+        Configuration $configuration,
+        Container $container,
+        EventDispatcher $eventDispatcher
+    ) {
         $this->console = $console;
         $this->configuration = $configuration;
         $this->container = $container;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function run($mode = self::RUN_MODE_NORMAL)

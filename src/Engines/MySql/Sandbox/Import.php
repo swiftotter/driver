@@ -24,9 +24,9 @@ use Driver\Engines\RemoteConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
+use Driver\System\DebugMode;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
-use Driver\System\DebugMode;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -64,7 +64,7 @@ class Import extends Command implements CommandInterface
             $connection->authorizeIp();
         });
 
-        $this->output->writeln("<comment>Importing database into RDS. Please wait... It will take some time.</comment>");
+        $this->output->writeln("<comment>Importing database into RDS. Please wait... This will take a long time.</comment>");
         $this->logger->notice("Importing database into RDS");
         $results = system($this->assembleCommand($transport->getData('dump-file')));
 
