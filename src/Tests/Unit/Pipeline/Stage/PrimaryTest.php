@@ -31,9 +31,12 @@ class PrimaryTest extends \PHPUnit_Framework_TestCase
     public function testInvokeReturnsTransport()
     {
         $pipelineName = Master::DEFAULT_NODE;
-        $configuration = new Configuration(new Configuration\YamlLoader());
+        $configuration = new Configuration(new Configuration\FileCollector(), new Configuration\FileLoader());
         $set = DI::getContainer()->make(Primary::class, ['actions' => $configuration->getNode('pipelines/' . $pipelineName)]);
 
-        $this->assertTrue(is_a($set(new Transport($pipelineName, [], [], new \Driver\System\Logs\Primary()), true), TransportInterface::class));
+        $this->assertTrue(is_a(
+            $set(new Transport($pipelineName, [], [], null, new \Driver\System\Logs\Primary()), true),
+            TransportInterface::class
+        ));
     }
 }
