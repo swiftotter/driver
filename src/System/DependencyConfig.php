@@ -38,7 +38,7 @@ class DependencyConfig
 {
     private bool $isDebug;
 
-    public function __construct(bool $isDebug)
+    public function __construct(bool $isDebug = false)
     {
         $this->isDebug = $isDebug;
     }
