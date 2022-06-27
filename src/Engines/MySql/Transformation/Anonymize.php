@@ -121,16 +121,12 @@ class Anonymize extends Command implements CommandInterface
 
     /**
      * Many thanks to this method for inspiration:
-     * https://github.com/DivanteLtd/anonymizer/blob/master/lib/anonymizer/model/database/column.rb+
-     *
-     * @param string $table
-     * @param string $columnName
-     * @param $description
-     * @return string
+     * https://github.com/DivanteLtd/anonymizer/blob/master/lib/anonymizer/model/database/column.rb
      */
-    private function queryEmail($type, $columnName): string
+    private function queryEmail(string $type, string $columnName): string
     {
-        return "CONCAT((SELECT CONCAT(MD5(FLOOR((NOW() + RAND()) * (RAND() * RAND() / RAND()) + RAND())))), \"@\", SUBSTRING({$columnName}, LOCATE('@', {$columnName}) + 1))";
+        $salt = $this->seed->getSalt();
+        return "CONCAT(SELECT MD5(CONCAT(\"${$salt}\", ${columnName})), \"@\", SUBSTRING({$columnName}, LOCATE('@', {$columnName}) + 1))";
     }
 
     private function queryFullName(): string
@@ -140,14 +136,16 @@ class Anonymize extends Command implements CommandInterface
         return "(SELECT CONCAT_WS(' ', ${table}.firstname, ${table}.lastname) FROM ${table} ORDER BY RAND() LIMIT 1)";
     }
 
-    private function queryGeneral($type): string
+    private function queryGeneral($type, $columnName): string
     {
         if ($type === "general") {
             return "(SELECT MD5(FLOOR((NOW() + RAND()) * (RAND() * RAND() / RAND()) + RAND())))";
         }
 
         $table = Seed::FAKE_USER_TABLE;
-        return "(SELECT ${table}.${type} FROM ${table} ORDER BY RAND() LIMIT 1)";
+        $salt = $this->seed->getSalt();
+        $count = $this->seed->getCount();
+        return "(SELECT ${table}.${type} FROM ${table} WHERE id = (SELECT 1 + MOD(ORD(MD5(CONCAT(\"${salt}\", ${columnName}))), ${count})))";
     }
 
     private function queryAddress(): string
