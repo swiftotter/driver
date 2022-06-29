@@ -14,6 +14,7 @@ use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
+use Exception;
 use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -84,7 +85,14 @@ class UpdateValues extends Command implements CommandInterface
         if (!$query) {
             return;
         }
-        $this->connection->getConnection()->query($query);
+        $connection = $this->connection->getConnection();
+        try {
+            $connection->beginTransaction();
+            $connection->query($query);
+            $connection->commit();
+        } catch (Exception $ex) {
+            $connection->rollBack();
+        }
     }
 
     /**
@@ -103,7 +111,7 @@ class UpdateValues extends Command implements CommandInterface
         $joins = [];
         foreach ($data['joins'] as $joinData) {
             foreach (['table', 'alias', 'on'] as $key) {
-                if (empty($joinData['joins'][$key]) || !is_string($joinData['joins'][$key])) {
+                if (empty($joinData[$key]) || !is_string($joinData[$key])) {
                     throw new InvalidArgumentException(
                         sprintf('Join option "%s" must be a non-empty string.', $key)
                     );
@@ -128,15 +136,15 @@ class UpdateValues extends Command implements CommandInterface
         }
 
         $values = [];
-        foreach ($data['values'] as $joinData) {
+        foreach ($data['values'] as $valueData) {
             foreach (['field', 'value'] as $key) {
-                if (empty($joinData['values'][$key]) || !is_string($joinData['values'][$key])) {
+                if (empty($valueData[$key]) || !is_string($valueData[$key])) {
                     throw new InvalidArgumentException(
                         sprintf('Value option "%s" must be a non-empty string.', $key)
                     );
                 }
             }
-            $values[] = new Join($joinData['table'], $joinData['alias'], $joinData['on']);
+            $values[] = new Value($valueData['field'], $valueData['value']);
         }
         return $values;
     }

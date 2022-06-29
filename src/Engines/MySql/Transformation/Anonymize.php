@@ -94,7 +94,7 @@ class Anonymize extends Command implements CommandInterface
         foreach ($columns as $columnName => $description) {
             try {
                 $method = $this->getTypeMethod($description);
-                $select = $this->$method($description['type'] ?? 'general', $columnName);
+                $select = $this->$method($description['type'] ?? 'general', $columnName, $table);
 
                 $query = "UPDATE `${table}` SET `${columnName}` = ${select} WHERE `${table}`.`${columnName}` IS NOT NULL;";
 
@@ -126,7 +126,7 @@ class Anonymize extends Command implements CommandInterface
     private function queryEmail(string $type, string $columnName): string
     {
         $salt = $this->seed->getSalt();
-        return "CONCAT(SELECT MD5(CONCAT(\"${$salt}\", ${columnName})), \"@\", SUBSTRING({$columnName}, LOCATE('@', {$columnName}) + 1))";
+        return "CONCAT(MD5(CONCAT(\"${salt}\", ${columnName})), \"@\", SUBSTRING({$columnName}, LOCATE('@', {$columnName}) + 1))";
     }
 
     private function queryFullName(): string
@@ -136,7 +136,7 @@ class Anonymize extends Command implements CommandInterface
         return "(SELECT CONCAT_WS(' ', ${table}.firstname, ${table}.lastname) FROM ${table} ORDER BY RAND() LIMIT 1)";
     }
 
-    private function queryGeneral($type, $columnName): string
+    private function queryGeneral(string $type, string $columnName, string $mainTable): string
     {
         if ($type === "general") {
             return "(SELECT MD5(FLOOR((NOW() + RAND()) * (RAND() * RAND() / RAND()) + RAND())))";
@@ -145,7 +145,7 @@ class Anonymize extends Command implements CommandInterface
         $table = Seed::FAKE_USER_TABLE;
         $salt = $this->seed->getSalt();
         $count = $this->seed->getCount();
-        return "(SELECT ${table}.${type} FROM ${table} WHERE id = (SELECT 1 + MOD(ORD(MD5(CONCAT(\"${salt}\", ${columnName}))), ${count})))";
+        return "(SELECT ${table}.${type} FROM ${table} WHERE ${table}.id = (SELECT 1 + MOD(ORD(MD5(CONCAT(\"${salt}\", ${mainTable}.${columnName}))), ${count})) LIMIT 1)";
     }
 
     private function queryAddress(): string

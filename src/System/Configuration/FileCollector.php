@@ -26,7 +26,8 @@ class FileCollector
         'connections',
         'config',
         'reduce',
-        'environments'
+        'environments',
+        'update_values'
     ];
 
     /**
