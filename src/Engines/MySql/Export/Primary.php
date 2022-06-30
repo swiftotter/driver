@@ -125,7 +125,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
             [
                 "--no-data",
                 $tables,
-                "| sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/'",
+                "| sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g'",
                 ">>",
                 $this->getDumpFile()
             ]
@@ -139,7 +139,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
             [
                 $this->assembleEmptyTables($environment),
                 $this->assembleIgnoredTables($environment),
-                "| sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/'",
+                "| sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g'",
                 ">",
                 $this->getDumpFile()
             ]
