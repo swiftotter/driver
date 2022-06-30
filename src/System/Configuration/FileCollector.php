@@ -15,8 +15,7 @@ class FileCollector
 {
     private const FILE_EXTENSION = '.yaml';
     private const ALLOWED_FOLDERS = [
-        'config',
-        'config.d'
+        '.driver'
     ];
     private const ALLOWED_FILES = [
         'anonymize',
