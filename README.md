@@ -34,7 +34,7 @@ Installing Driver is easy:
 composer require swiftotter/driver
 ```
 
-Configuring Driver is easy. In the folder that contains your `vendor/` folder, create a folder called `driver`.
+Configuring Driver is easy. In the folder that contains your `vendor/` folder, create a folder called `.driver`.
 First, you need to create an Amazon AWS account. We will be using RDS to perform the data manipulations. It is
 recommended to create a new IAM user with appropriate permissions to access EC2, RDS and S3 (exact permissions
 will be coming).
@@ -85,7 +85,7 @@ To tag an export with an issue number (or whatever is desired):
 
 ## Connection Information
 
-Connection information goes into a folder named `driver`. The files that are recognized
+Connection information goes into a folder named `.driver`. The files that are recognized
 inside these folders are:
 * `pipelines.yaml`
 * `commands.yaml`
@@ -103,7 +103,7 @@ stored in `/var/www/`. Your vendor directory is `/var/www/vendor/` and, of cours
 `/var/www/vendor/swiftotter/driver`. As such, Driver will look in the following locations for configuration
 files:
 
-* `/var/www/driver/`
+* `/var/www/.driver/`
 * `/var/www/vendor/*/*/.driver/`
 
 You can symlink any file you want here. Keep in mind that these files do contain sensitive information and
@@ -243,7 +243,7 @@ pipelines:
 
 ### Creating a new pipeline
 
-The following is taken from `driver/pipelines.yaml`. You can put this code in any of the `yaml` files that Driver reads. Just ensure that the
+The following is taken from `.driver/pipelines.yaml`. You can put this code in any of the `yaml` files that Driver reads. Just ensure that the
 `pipelines` root node has no space in front of it (exactly as shown below).
 
 ```yaml
@@ -322,7 +322,7 @@ environments:
 
 ### Anonymizing Data
 
-Tables can be anonyimized by creating `anonymize.yaml` in `driver/`. The following type of anonymization entities are available in order to provide realistic data and types:
+Tables can be anonyimized by creating `anonymize.yaml` in `.driver/`. The following type of anonymization entities are available in order to provide realistic data and types:
 
 * `email`
 * `company`

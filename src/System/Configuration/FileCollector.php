@@ -15,7 +15,6 @@ class FileCollector
 {
     private const FILE_EXTENSION = '.yaml';
     private const ALLOWED_FOLDERS = [
-        'driver',
         '.driver'
     ];
     private const ALLOWED_FILES = [

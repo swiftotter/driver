@@ -3,6 +3,6 @@
 .phpstorm.meta.php
 composer.lock
 /vagrant/
-/driver/
+/.driver/
 .DS_Store
 sample/
