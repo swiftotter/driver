@@ -8,9 +8,9 @@ use PDO;
 
 trait ConnectionTrait
 {
-    private ?PersistentPDO $connection = null;
+    private ?ReconnectingPDO $connection = null;
 
-    public function getConnection(): PersistentPDO
+    public function getConnection(): ReconnectingPDO
     {
         if (!$this->connection) {
             $options = [
@@ -19,7 +19,7 @@ trait ConnectionTrait
                 PDO::ATTR_EMULATE_PREPARES => false
             ];
 
-            $this->connection = new PersistentPDO($this->getDSN(), $this->getUser(), $this->getPassword(), $options);
+            $this->connection = new ReconnectingPDO($this->getDSN(), $this->getUser(), $this->getPassword(), $options);
         }
 
         return $this->connection;

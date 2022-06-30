@@ -34,7 +34,7 @@ use PDOStatement;
  * @method array|false pgsqlGetNotify(int $fetchMode = 0, int $timeoutMilliseconds = 0)
  * @method int pgsqlGetPid()
  */
-class PersistentPDO
+class ReconnectingPDO
 {
     private const MYSQL_GENERAL_ERROR_CODE = 'HY000';
     private const SERVER_HAS_GONE_AWAY_ERROR_CODE = 2006;

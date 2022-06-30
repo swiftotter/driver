@@ -21,7 +21,7 @@ namespace Driver\Engines\MySql;
 
 use Driver\Commands\CommandInterface;
 use Driver\Engines\MySql\Sandbox\Utilities;
-use Driver\Engines\PersistentPDO;
+use Driver\Engines\ReconnectingPDO;
 use Driver\Engines\RemoteConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
@@ -72,7 +72,7 @@ class Transformation extends Command implements CommandInterface
         return $this->properties;
     }
 
-    private function applyTransformationsTo(PersistentPDO $connection, $transformations)
+    private function applyTransformationsTo(ReconnectingPDO $connection, $transformations)
     {
         array_walk($transformations, function ($query) use ($connection) {
             try {
