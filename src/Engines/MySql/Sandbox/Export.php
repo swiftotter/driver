@@ -116,7 +116,7 @@ class Export extends Command implements CommandInterface, CleanupInterface
         ], $this->getIgnoredTables($ignoredTables)));
 
         $command .= " {$this->connection->getDatabase()} ";
-        $command .= "| sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/' ";
+        $command .= "| sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' ";
 
         if ($this->compressOutput()) {
             $command .= ' ' . implode(' ', [
