@@ -10,6 +10,7 @@ namespace Driver\System;
 use DI\Container;
 use Driver\Engines\ConnectionInterface;
 use Driver\Engines\LocalConnectionInterface;
+use Driver\Engines\ReconnectingPDO;
 
 class LocalConnectionLoader implements LocalConnectionInterface
 {
@@ -35,7 +36,7 @@ class LocalConnectionLoader implements LocalConnectionInterface
         $this->container = $container;
     }
 
-    public function getConnection(): \PDO
+    public function getConnection(): ReconnectingPDO
     {
         return $this->get()->getConnection();
     }
