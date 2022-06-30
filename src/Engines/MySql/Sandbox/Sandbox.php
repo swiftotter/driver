@@ -378,7 +378,7 @@ class Sandbox
         ];
 
         if (empty($parameters['region'])) {
-            $this->output->writeln('<fg=blue>No region specified. Are you sure that config.d/connections.yaml exists?</>');
+            $this->output->writeln('<fg=blue>No region specified. Are you sure that .driver/connections.yaml exists?</>');
         }
 
         return $parameters;

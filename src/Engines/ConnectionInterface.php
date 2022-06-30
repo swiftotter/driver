@@ -23,7 +23,7 @@ interface ConnectionInterface
 {
     public function isAvailable(): bool;
 
-    public function getConnection(): PersistentPDO;
+    public function getConnection(): ReconnectingPDO;
 
     public function getDSN(): string;
 
