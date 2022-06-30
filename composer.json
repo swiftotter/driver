@@ -3,6 +3,7 @@
     "description": "A database production to sandbox utility to sanitize data.",
     "type": "library",
     "require": {
+        "ext-pdo": "*",
         "php-di/php-di": "^6.0",
         "aws/aws-sdk-php": "^3.19",
         "symfony/yaml": ">=2.3",
