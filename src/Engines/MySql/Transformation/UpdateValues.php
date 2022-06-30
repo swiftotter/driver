@@ -13,7 +13,6 @@ use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
-use Driver\System\Logs\LoggerInterface;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
@@ -26,7 +25,6 @@ class UpdateValues extends Command implements CommandInterface
 {
     private Configuration $configuration;
     private RemoteConnectionInterface $connection;
-    private LoggerInterface $logger;
     private ConsoleOutput $output;
     private QueryBuilder $queryBuilder;
     private array $properties = [];
@@ -34,14 +32,12 @@ class UpdateValues extends Command implements CommandInterface
     public function __construct(
         Configuration $configuration,
         RemoteConnectionInterface $connection,
-        LoggerInterface $logger,
         ConsoleOutput $output,
         QueryBuilder $queryBuilder,
         array $properties = []
     ) {
         $this->configuration = $configuration;
         $this->connection = $connection;
-        $this->logger = $logger;
         $this->output = $output;
         $this->queryBuilder = $queryBuilder;
         $this->properties = $properties;
@@ -51,11 +47,7 @@ class UpdateValues extends Command implements CommandInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $config = $this->configuration->getNode('update-values');
-        if (isset($config['disabled']) && $config['disabled'] === true) {
-            return $transport->withStatus(new Status('mysql-transformation-update-values', 'success'));
-        }
-
-        if (!isset($config['tables'])) {
+        if ((isset($config['disabled']) && $config['disabled'] === true) || !isset($config['tables'])) {
             return $transport->withStatus(new Status('mysql-transformation-update-values', 'success'));
         }
 
@@ -87,11 +79,9 @@ class UpdateValues extends Command implements CommandInterface
         }
         $connection = $this->connection->getConnection();
         try {
-            $connection->beginTransaction();
             $connection->query($query);
-            $connection->commit();
         } catch (Exception $ex) {
-            $connection->rollBack();
+            // Do nothing
         }
     }
 

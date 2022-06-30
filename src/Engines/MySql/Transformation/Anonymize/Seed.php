@@ -83,10 +83,7 @@ CREATE TABLE ${table} (
     company VARCHAR(200),
     street VARCHAR(200),
     city VARCHAR(200),
-    region VARCHAR(200),
-    region_id VARCHAR(10),
     postcode VARCHAR(200),
-    country_id VARCHAR(2),
     phone VARCHAR(200),
     ip VARCHAR(200)
 );
