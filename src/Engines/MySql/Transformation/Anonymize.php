@@ -1,29 +1,26 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 2/7/20
- * @website https://swiftotter.com
- **/
 
 namespace Driver\Engines\MySql\Transformation;
 
 use Driver\Commands\CommandInterface;
 use Driver\Engines\RemoteConnectionInterface;
-use Driver\Engines\MySql\Sandbox\Utilities;
 use Driver\Engines\MySql\Transformation\Anonymize\Seed;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
-use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
+
+use function method_exists;
+use function ucfirst;
 
 class Anonymize extends Command implements CommandInterface
 {
     private Configuration $configuration;
     private RemoteConnectionInterface $connection;
-    private LoggerInterface $logger;
     private array $properties = [];
     private Seed $seed;
     private ConsoleOutput $output;
@@ -32,32 +29,25 @@ class Anonymize extends Command implements CommandInterface
         Configuration $configuration,
         RemoteConnectionInterface $connection,
         Seed $seed,
-        LoggerInterface $logger,
         ConsoleOutput $output,
         array $properties = []
     ) {
         $this->configuration = $configuration;
         $this->properties = $properties;
         $this->connection = $connection;
-        $this->logger = $logger;
         $this->output = $output;
         $this->seed = $seed;
 
         parent::__construct('mysql-transformation-anonymize');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $config = $this->configuration->getNode('anonymize');
-        if (isset($config['disabled']) && $config['disabled'] === true) {
-            return $transport->withStatus(new Status('mysql-transformation-anonymize', 'success'));
-        }
-
-        if (!isset($config['tables'])) {
-            return $transport->withStatus(new Status('mysql-transformation-anonymize', 'success'));
-        }
-
-        if (!isset($config['seed'])) {
+        if ((isset($config['disabled']) && $config['disabled'] === true)
+            || !isset($config['tables'])
+            || !isset($config['seed'])
+        ) {
             return $transport->withStatus(new Status('mysql-transformation-anonymize', 'success'));
         }
 
@@ -78,7 +68,12 @@ class Anonymize extends Command implements CommandInterface
         return $transport->withStatus(new Status('mysql-transformation-anonymize', 'success'));
     }
 
-    private function anonymize(string $table, array $columns)
+    public function getProperties(): array
+    {
+        return $this->properties;
+    }
+
+    private function anonymize(string $table, array $columns): void
     {
         $connection = $this->connection->getConnection();
 
@@ -90,71 +85,43 @@ class Anonymize extends Command implements CommandInterface
             } catch (\Exception $ex) {}
         }
 
-
         foreach ($columns as $columnName => $description) {
             try {
                 $method = $this->getTypeMethod($description);
-                $select = $this->$method($description['type'] ?? 'general', $columnName);
+                $select = $this->$method($description['type'] ?? 'general', $columnName, $table);
 
-                $query = "UPDATE `${table}` SET `${columnName}` = ${select} WHERE `${table}`.`${columnName}` IS NOT NULL;";
+                $query = "UPDATE `${table}` SET `${columnName}` = "
+                    . "${select} WHERE `${table}`.`${columnName}` IS NOT NULL;";
 
-                $connection->beginTransaction();
                 $connection->query($query);
-                $connection->commit();
             } catch (\Exception $ex) {
-                $connection->rollBack();
+                // Do nothing
             }
         }
     }
 
-    /*
-     * email
-     * firstname
-     * lastname
-     * full_name
-     * general
-     * phone
-     * postcode
-     * street
-     * address
-     */
-
     /**
      * Many thanks to this method for inspiration:
-     * https://github.com/DivanteLtd/anonymizer/blob/master/lib/anonymizer/model/database/column.rb+
-     *
-     * @param string $table
-     * @param string $columnName
-     * @param $description
-     * @return string
+     * https://github.com/DivanteLtd/anonymizer/blob/master/lib/anonymizer/model/database/column.rb
      */
-    private function queryEmail($type, $columnName): string
+    private function queryEmail(string $type, string $columnName): string
     {
-        return "CONCAT((SELECT CONCAT(MD5(FLOOR((NOW() + RAND()) * (RAND() * RAND() / RAND()) + RAND())))), \"@\", SUBSTRING({$columnName}, LOCATE('@', {$columnName}) + 1))";
+        $salt = $this->seed->getSalt();
+        return "CONCAT(MD5(CONCAT(\"${salt}\", ${columnName})), \"@\", SUBSTRING({$columnName}, "
+            . "LOCATE('@', {$columnName}) + 1))";
     }
 
-    private function queryFullName(): string
-    {
-        $table = Seed::FAKE_USER_TABLE;
-
-        return "(SELECT CONCAT_WS(' ', ${table}.firstname, ${table}.lastname) FROM ${table} ORDER BY RAND() LIMIT 1)";
-    }
-
-    private function queryGeneral($type): string
+    private function queryGeneral(string $type, string $columnName, string $mainTable): string
     {
         if ($type === "general") {
             return "(SELECT MD5(FLOOR((NOW() + RAND()) * (RAND() * RAND() / RAND()) + RAND())))";
         }
 
         $table = Seed::FAKE_USER_TABLE;
-        return "(SELECT ${table}.${type} FROM ${table} ORDER BY RAND() LIMIT 1)";
-    }
-
-    private function queryAddress(): string
-    {
-        $table = Seed::FAKE_USER_TABLE;
-        return "(SELECT CONCAT(${table}.street, ', ', ${table}.city, ', ', ${table}.region, ' ', " .
-            "${table}.postcode, ', ', ${table}.country_id) FROM ${table} ORDER BY RAND() LIMIT 1)";
+        $salt = $this->seed->getSalt();
+        $count = $this->seed->getCount();
+        return "(SELECT ${table}.${type} FROM ${table} WHERE ${table}.id = "
+            . "(SELECT 1 + MOD(ORD(MD5(CONCAT(\"${salt}\", ${mainTable}.${columnName}))), ${count})) LIMIT 1)";
     }
 
     private function queryEmpty(): string
@@ -162,16 +129,7 @@ class Anonymize extends Command implements CommandInterface
         return '""';
     }
 
-    public function getProperties()
-    {
-        return $this->properties;
-    }
-
-    /**
-     * @param $description
-     * @return string
-     */
-    private function getTypeMethod($description): string
+    private function getTypeMethod(array $description): string
     {
         $type = $description['type'] ?? 'general';
         if ($type === "full_name") {

@@ -87,11 +87,15 @@ To tag an export with an issue number (or whatever is desired):
 
 Connection information goes into a folder named `.driver`. The files that are recognized
 inside these folders are:
-* `pipelines.yaml`
+* `anonymize.yaml`
 * `commands.yaml`
-* `engines.yaml`
-* `connections.yaml`
 * `config.yaml`
+* `connections.yaml`
+* `engines.yaml`
+* `environments.yaml`
+* `pipelines.yaml`
+* `reduce.yaml`
+* `update_values.yaml`
 
 The filenames of these files serve no purpose other than a namespace. The delineation of the configuration
 happens inside each file. For example, in `pipelines.yaml`, there is a `pipelines` node as the root element.
@@ -322,24 +326,19 @@ environments:
 
 ### Anonymizing Data
 
-Tables can be anonyimized by creating `anonymize.yaml` in `.driver/`. The following type of anonymization entities are available in order to provide realistic data and types:
+Tables can be anonymized by creating `anonymize.yaml` in `.driver/`. The following type of anonymization entities
+are available in order to provide realistic data and types:
 
 * `email`
 * `company`
 * `firstname`
 * `lastname`
-* `full_name`
-* `general`
 * `phone`
 * `postcode`
 * `street`
-* `address`
 * `city`
-* `region_id`
-* `region`
-* `country_id`
-* `phone`
 * `ip`
+* `general`
 * `empty`
 
 **Example File**
@@ -349,8 +348,6 @@ anonymize:
         quote:
             customer_email:
                 type: email
-            customer_name:
-                type: full_name
             remote_ip:
                 type: ip
 ```
