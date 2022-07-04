@@ -23,6 +23,8 @@ use function is_string;
 
 class UpdateValues extends Command implements CommandInterface
 {
+    const COMMAND_NAME = 'mysql-transformation-update-values';
+
     private Configuration $configuration;
     private RemoteConnectionInterface $connection;
     private ConsoleOutput $output;
@@ -41,14 +43,14 @@ class UpdateValues extends Command implements CommandInterface
         $this->output = $output;
         $this->queryBuilder = $queryBuilder;
         $this->properties = $properties;
-        parent::__construct('mysql-transformation-update-values');
+        parent::__construct(self::COMMAND_NAME);
     }
 
     public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $config = $this->configuration->getNode('update-values');
         if ((isset($config['disabled']) && $config['disabled'] === true) || !isset($config['tables'])) {
-            return $transport->withStatus(new Status('mysql-transformation-update-values', 'success'));
+            return $transport->withStatus(new Status(self::COMMAND_NAME, 'success'));
         }
 
         $transport->getLogger()->notice("Beginning table updates from update-values.yaml.");
@@ -61,7 +63,7 @@ class UpdateValues extends Command implements CommandInterface
         $transport->getLogger()->notice("Database has been updated.");
         $this->output->writeln("<info>Database has been updated.</info>");
 
-        return $transport->withStatus(new Status('mysql-transformation-update-values', 'success'));
+        return $transport->withStatus(new Status(self::COMMAND_NAME, 'success'));
     }
 
     public function getProperties(): array
