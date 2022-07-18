@@ -120,8 +120,11 @@ class Anonymize extends Command implements CommandInterface
         $table = Seed::FAKE_USER_TABLE;
         $salt = $this->seed->getSalt();
         $count = $this->seed->getCount();
-        return "(SELECT ${table}.${type} FROM ${table} WHERE ${table}.id = "
-            . "(SELECT 1 + MOD(ORD(MD5(CONCAT(\"${salt}\", ${mainTable}.${columnName}))), ${count})) LIMIT 1)";
+        return "(SELECT ${table}.${type} FROM ${table} WHERE ${table}.id = (SELECT 1 + MOD("
+            . "ORD(SUBSTRING(MD5(CONCAT(\"${salt}\", ${mainTable}.${columnName})), 1, 1)) + "
+            . "ORD(SUBSTRING(MD5(CONCAT(\"${salt}\", ${mainTable}.${columnName})), 2, 1)) + "
+            . "ORD(SUBSTRING(MD5(CONCAT(\"${salt}\", ${mainTable}.${columnName})), 3, 1)) * "
+            . "ORD(SUBSTRING(MD5(CONCAT(\"${salt}\", ${mainTable}.${columnName})), 4, 1)), ${count})) LIMIT 1)";
     }
 
     private function queryEmpty(): string
