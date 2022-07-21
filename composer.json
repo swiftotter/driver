@@ -1,8 +1,10 @@
 {
     "name": "swiftotter/driver",
-    "description": "A database production to sandbox utility to sanitize data.",
+    "description": "A database task-runner that helps you to turn production database into a staging/development database sandbox",
+    "license": "Apache-2.0",
     "type": "library",
     "require": {
+        "php": "^7.4|^8.0",
         "ext-pdo": "*",
         "php-di/php-di": "^6.0",
         "aws/aws-sdk-php": "^3.19",
@@ -24,7 +26,7 @@
     },
     "authors": [
         {
-            "name": "Joseph Maxwell",
+            "name": "SwiftOtter, Inc.",
             "email": "joseph@swiftotter.com"
         }
     ],
