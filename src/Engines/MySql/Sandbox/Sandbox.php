@@ -29,6 +29,9 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Sandbox
 {
+    const DEFAULT_ENGINE = 'MySQL';
+    const DEFAULT_ENGINE_VERSION = '8.0.28';
+
     private $configuration;
     private $instance;
     private $initialized;
@@ -36,16 +39,15 @@ class Sandbox
     private $logger;
     private $random;
     private $awsClientFactory;
-
     private $securityGroupId;
     private $securityGroupName;
-
     private $dbName;
     private $identifier;
     private $username;
     private $password;
     private $statuses;
     private $output;
+
     /** @var \Symfony\Component\EventDispatcher\EventDispatcher */
     private EventDispatcher $eventDispatcher;
 
@@ -95,6 +97,7 @@ class Sandbox
                 'AllocatedStorage' => 100,
                 'DBInstanceClass' => $this->configuration->getNode('connections/rds/instance-type'),
                 'Engine' => $this->getEngine(),
+                'EngineVersion' => $this->getEngineVersion(),
                 'MasterUsername' => $this->getUsername(),
                 'MasterUserPassword' => $this->getPassword(),
                 'VpcSecurityGroupIds' => [$this->getSecurityGroup()],
@@ -286,15 +289,14 @@ class Sandbox
         return $storageType;
     }
 
-    private function getEngine()
+    private function getEngine(): string
     {
-        $engine = $this->configuration->getNode('connections/rds/engine');
+        return $this->configuration->getNode('connections/rds/engine') ?? self::DEFAULT_ENGINE;
+    }
 
-        if (!$engine) {
-            $engine = 'MySQL';
-        }
-
-        return $engine;
+    private function getEngineVersion(): string
+    {
+        return $this->configuration->getNode('connections/rds/engine-version') ?? self::DEFAULT_ENGINE_VERSION;
     }
 
     public function getSecurityGroupName()

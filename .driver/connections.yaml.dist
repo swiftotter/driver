@@ -32,6 +32,7 @@ connections:
     ## BEGIN NEW RDS INSTANCE:
     instance-type: # defaults to db.t3.medium, other options can be found at https://aws.amazon.com/rds/instance-types/
     engine: # defaults to MySQL
+    engine-version: # defaults to 8.0.28
     storage-type: # defaults to gp2
     ## END NEW RDS INSTANCE
     ## BEGIN EXISTING RDS INSTANCE:

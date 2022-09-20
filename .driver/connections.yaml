@@ -2,6 +2,7 @@ connections:
   rds:
     instance-type: db.t3.medium
     engine: MySQL
+    engine-version: 8.0.28
     storage-type: gp2
 
 # TODO: fix merging so that the other keys overwrite this.

@@ -18,6 +18,8 @@ connections:
     key: SDF83K0N3IDSL29ZMEIH
     secret: "kF9kwnf,mo3fFoaow+3mda/439a,Dlwommw9021m"
     region: us-east-2
+    engine: MySQL
+    engine-version: 5.7.38
   ec2:
     key: SDF83K0N3IDSL29ZMEIH
     secret: "kF9kwnf,mo3fFoaow+3mda/439a,Dlwommw9021m"
