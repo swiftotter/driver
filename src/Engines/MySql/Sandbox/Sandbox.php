@@ -97,13 +97,17 @@ class Sandbox
                 'AllocatedStorage' => 100,
                 'DBInstanceClass' => $this->configuration->getNode('connections/rds/instance-type'),
                 'Engine' => $this->getEngine(),
-                'EngineVersion' => $this->getEngineVersion(),
                 'MasterUsername' => $this->getUsername(),
                 'MasterUserPassword' => $this->getPassword(),
                 'VpcSecurityGroupIds' => [$this->getSecurityGroup()],
                 'BackupRetentionPeriod' => 0,
                 'StorageType' => $this->getStorageType()
             ];
+
+            $engineVersion = $this->getEngineVersion();
+            if ($engineVersion) {
+                $parameters['EngineVersion'] = $engineVersion;
+            }
 
             if ($parameterGroupName = $this->getDbParameterGroupName()) {
                 $parameters['DBParameterGroupName'] = $parameterGroupName;
