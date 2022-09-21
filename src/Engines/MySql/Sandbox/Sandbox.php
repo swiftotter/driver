@@ -29,6 +29,8 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Sandbox
 {
+    const DEFAULT_ENGINE = 'MySQL';
+
     private $configuration;
     private $instance;
     private $initialized;
@@ -36,16 +38,15 @@ class Sandbox
     private $logger;
     private $random;
     private $awsClientFactory;
-
     private $securityGroupId;
     private $securityGroupName;
-
     private $dbName;
     private $identifier;
     private $username;
     private $password;
     private $statuses;
     private $output;
+
     /** @var \Symfony\Component\EventDispatcher\EventDispatcher */
     private EventDispatcher $eventDispatcher;
 
@@ -101,6 +102,11 @@ class Sandbox
                 'BackupRetentionPeriod' => 0,
                 'StorageType' => $this->getStorageType()
             ];
+
+            $engineVersion = $this->getEngineVersion();
+            if ($engineVersion) {
+                $parameters['EngineVersion'] = $engineVersion;
+            }
 
             if ($parameterGroupName = $this->getDbParameterGroupName()) {
                 $parameters['DBParameterGroupName'] = $parameterGroupName;
@@ -286,15 +292,14 @@ class Sandbox
         return $storageType;
     }
 
-    private function getEngine()
+    private function getEngine(): string
     {
-        $engine = $this->configuration->getNode('connections/rds/engine');
+        return $this->configuration->getNode('connections/rds/engine') ?? self::DEFAULT_ENGINE;
+    }
 
-        if (!$engine) {
-            $engine = 'MySQL';
-        }
-
-        return $engine;
+    private function getEngineVersion(): ?string
+    {
+        return $this->configuration->getNode('connections/rds/engine-version');
     }
 
     public function getSecurityGroupName()
