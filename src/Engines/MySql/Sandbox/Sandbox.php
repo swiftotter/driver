@@ -30,7 +30,6 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 class Sandbox
 {
     const DEFAULT_ENGINE = 'MySQL';
-    const DEFAULT_ENGINE_VERSION = '8.0.28';
 
     private $configuration;
     private $instance;
@@ -298,9 +297,9 @@ class Sandbox
         return $this->configuration->getNode('connections/rds/engine') ?? self::DEFAULT_ENGINE;
     }
 
-    private function getEngineVersion(): string
+    private function getEngineVersion(): ?string
     {
-        return $this->configuration->getNode('connections/rds/engine-version') ?? self::DEFAULT_ENGINE_VERSION;
+        return $this->configuration->getNode('connections/rds/engine-version');
     }
 
     public function getSecurityGroupName()
