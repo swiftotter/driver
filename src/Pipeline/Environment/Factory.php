@@ -1,48 +1,32 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/29/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Pipeline\Environment;
 
 use DI\Container;
 use Driver\Engines\MySql\Sandbox\Utilities;
-use Driver\Pipeline\Master;
+use Driver\Pipeline\Exception\PipeLineNotFound;
 use Driver\System\Configuration;
-use Driver\System\Factory\FactoryInterface;
 
 class Factory
 {
-    const DEFAULT_ENV = 'default';
+    private const DEFAULT_ENV = 'default';
 
-    private $configuration;
-    private $container;
-    private $type;
-    private $utilities;
+    private Configuration $configuration;
+    private Container $container;
+    private Utilities $utilities;
+    private string $type;
 
-    public function __construct(Configuration $configuration, Container $container, Utilities $utilities, $type)
+    public function __construct(Configuration $configuration, Container $container, Utilities $utilities, string $type)
     {
         $this->configuration = $configuration;
         $this->container = $container;
-        $this->type = $type;
         $this->utilities = $utilities;
+        $this->type = $type;
     }
 
-    public function createDefault()
+    public function createDefault(): EnvironmentInterface
     {
         return $this->container->make($this->type, [
             'name' => self::DEFAULT_ENV,
@@ -50,11 +34,7 @@ class Factory
         ]);
     }
 
-    /**
-     * @param $name
-     * @return EnvironmentInterface
-     */
-    public function create($name)
+    public function create(string $name): EnvironmentInterface
     {
         return $this->container->make($this->type, [
             'name' => $name,
@@ -63,17 +43,18 @@ class Factory
         ]);
     }
 
-    protected function environmentExists($name)
-    {
-        return is_array($this->configuration->getNode("environments/{$name}"));
-    }
-
-    protected function getEnvironmentProperties($name)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    private function getEnvironmentProperties(string $name): array
     {
         if ($this->environmentExists($name)) {
             return $this->configuration->getNode("environments/{$name}");
         } else {
-            throw new \Driver\Pipeline\Exception\PipeLineNotFound();
+            throw new PipeLineNotFound();
         }
+    }
+
+    private function environmentExists(string $name): bool
+    {
+        return is_array($this->configuration->getNode("environments/{$name}"));
     }
 }

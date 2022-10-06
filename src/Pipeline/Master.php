@@ -11,7 +11,7 @@ use Driver\System\Configuration;
 
 class Master
 {
-    const DEFAULT_NODE = 'build';
+    public const DEFAULT_NODE = 'build';
 
     private Configuration $configuration;
     private PipeLineSpanFactory $pipeLineFactory;
@@ -27,11 +27,12 @@ class Master
         $this->transportFactory = $transportFactory;
     }
 
-    public function run(string $set): void
+    public function run(string $set): TransportInterface
     {
         $pipeline = $this->pipeLineFactory->create($set);
         $transport = $pipeline($this->createTransport($set));
         $pipeline->cleanup($transport);
+        return $transport;
     }
 
     protected function createTransport(string $set): TransportInterface

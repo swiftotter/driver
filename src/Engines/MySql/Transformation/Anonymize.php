@@ -21,10 +21,12 @@ class Anonymize extends Command implements CommandInterface
 {
     private Configuration $configuration;
     private RemoteConnectionInterface $connection;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private Seed $seed;
     private ConsoleOutput $output;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         Configuration $configuration,
         RemoteConnectionInterface $connection,
@@ -44,7 +46,8 @@ class Anonymize extends Command implements CommandInterface
     public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $config = $this->configuration->getNode('anonymize');
-        if ((isset($config['disabled']) && $config['disabled'] === true)
+        if (
+            (isset($config['disabled']) && $config['disabled'] === true)
             || !isset($config['tables'])
             || !isset($config['seed'])
         ) {
@@ -68,11 +71,15 @@ class Anonymize extends Command implements CommandInterface
         return $transport->withStatus(new Status('mysql-transformation-anonymize', 'success'));
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
     public function getProperties(): array
     {
         return $this->properties;
     }
 
+    /**
+     * @param array<string, array<string, string>> $columns
+     */
     private function anonymize(string $table, array $columns): void
     {
         $connection = $this->connection->getConnection();
@@ -82,7 +89,9 @@ class Anonymize extends Command implements CommandInterface
                 $connection->query("SET foreign_key_checks = 0;");
                 $connection->query("TRUNCATE ${table};");
                 $connection->query("SET foreign_key_checks = 1;");
-            } catch (\Exception $ex) {}
+            } catch (\Exception $ex) {
+                // Do nothing
+            }
         }
 
         foreach ($columns as $columnName => $description) {
@@ -132,6 +141,9 @@ class Anonymize extends Command implements CommandInterface
         return '""';
     }
 
+    /**
+     * @param array<string, string> $description
+     */
     private function getTypeMethod(array $description): string
     {
         $type = $description['type'] ?? 'general';

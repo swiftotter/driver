@@ -1,9 +1,6 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 4/4/22
- * @website https://swiftotter.com
- **/
 
 namespace Driver\System;
 

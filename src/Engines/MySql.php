@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/19/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines;
 
@@ -30,39 +15,33 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class MySql extends Command implements CommandInterface
 {
-    /** @var LoggerInterface */
-    private $logger;
+    private LocalConnectionLoader $connection;
+    private LoggerInterface $logger;
+    private ConsoleOutput $output;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
 
-    /** @var array */
-    private $properties;
-
-    /** @var LocalConnectionLoader */
-    private $connection;
-
-    /** @var ConsoleOutput */
-    private $output;
-
-    public function __construct(LocalConnectionLoader $connection, LoggerInterface $logger, ConsoleOutput $output, array $properties = [])
-    {
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    public function __construct(
+        LocalConnectionLoader $connection,
+        LoggerInterface $logger,
+        ConsoleOutput $output,
+        array $properties = []
+    ) {
         $this->logger = $logger;
         $this->properties = $properties;
         $this->connection = $connection;
-        $this->output = $output;    
-        parent::__construct(null);
+        $this->output = $output;
+        parent::__construct();
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    protected function configure()
-    {
-        $this->setName('mysql-connect')
-            ->setDescription('Connects to MySQL.');
-    }
-
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $value = $this->connection->getConnection()->getAttribute(\PDO::ATTR_CONNECTION_STATUS);
         $this->output->writeln('<info>Successfully connected: ' . $value . '</info>');

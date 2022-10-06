@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Sandbox;
 
@@ -24,7 +9,6 @@ use Driver\Engines\RemoteConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
-use Driver\System\DebugMode;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -35,18 +19,18 @@ class Import extends Command implements CommandInterface
     private LocalConnectionLoader $localConnection;
     private RemoteConnectionInterface $remoteConnection;
     private Ssl $ssl;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private LoggerInterface $logger;
     private ConsoleOutput $output;
-    private DebugMode $debugMode;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         LocalConnectionLoader $localConnection,
         Ssl $ssl,
         RemoteConnectionInterface $connection,
         LoggerInterface $logger,
         ConsoleOutput $output,
-        DebugMode $debugMode,
         array $properties = []
     ) {
         $this->localConnection = $localConnection;
@@ -58,19 +42,22 @@ class Import extends Command implements CommandInterface
         return parent::__construct('mysql-sandbox-import');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
-        $this->remoteConnection->test(function(RemoteConnectionInterface $connection) {
+        $this->remoteConnection->test(function (RemoteConnectionInterface $connection): void {
             $connection->authorizeIp();
         });
 
-        $this->output->writeln("<comment>Importing database into RDS. Please wait... This will take a long time.</comment>");
+        $this->output->writeln(
+            "<comment>Importing database into RDS. Please wait... This will take a long time.</comment>"
+        );
         $this->logger->notice("Importing database into RDS");
-        $results = system($this->assembleCommand($transport->getData('dump-file')));
+        $resultCode = 0;
+        system($this->assembleCommand($transport->getData('dump-file')), $resultCode);
 
-        if ($results) {
-            throw new \Exception('Import to RDS instance failed: ' . $results);
-            $this->output->writeln('<error>Import to RDS instance failed: ' . $results . '</error>');
+        if ($resultCode !== 0) {
+            $this->output->writeln('<error>Import to RDS instance failed.</error>');
+            throw new \Exception('Import to RDS instance failed.');
         } else {
             $this->logger->notice("Import to RDS completed.");
             $this->output->writeln('<info>Import to RDS completed.</info>');
@@ -78,12 +65,13 @@ class Import extends Command implements CommandInterface
         }
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function assembleCommand($path)
+    public function assembleCommand(string $path): string
     {
         $command = implode(' ', [
             "mysql --user={$this->remoteConnection->getUser()}",
@@ -96,7 +84,12 @@ class Import extends Command implements CommandInterface
             $path
         ]);
 
-        if (stripos($this->localConnection->getConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION), 'maria') !== false) {
+        if (
+            stripos(
+                $this->localConnection->getConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION),
+                'maria'
+            ) !== false
+        ) {
             $command = str_replace('--ssl-mode=VERIFY_CA', '--ssl', $command);
         }
 

@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<ruleset name="SwiftOtter.Driver">
+    <file>src</file>
+    <rule ref="PSR12"/>
+    <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint">
+        <severity>7</severity>
+        <type>warning</type>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.PropertyTypeHint">
+        <severity>7</severity>
+        <type>warning</type>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHint">
+        <severity>7</severity>
+        <type>warning</type>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.UselessConstantTypeHint">
+        <severity>7</severity>
+        <type>warning</type>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
+        <severity>7</severity>
+        <type>warning</type>
+        <properties>
+            <property name="newlinesCountBetweenOpenTagAndDeclare" value="2"/>
+            <property name="newlinesCountAfterDeclare" value="2"/>
+            <property name="spacesCountAroundEqualsSign" value="0"/>
+        </properties>
+    </rule>
+    <rule ref="Squiz.NamingConventions.ValidVariableName">
+        <severity>7</severity>
+        <type>warning</type>
+        <exclude name="Squiz.NamingConventions.ValidVariableName.PrivateNoUnderscore" />
+    </rule>
+    <rule ref="Squiz.NamingConventions.ValidFunctionName">
+        <severity>7</severity>
+        <type>warning</type>
+        <exclude name="Squiz.NamingConventions.ValidFunctionName.PrivateNoUnderscore" />
+    </rule>
+</ruleset>

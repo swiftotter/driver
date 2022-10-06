@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/17/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql;
 
@@ -34,15 +19,16 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 class Transformation extends Command implements CommandInterface
 {
     private Configuration $configuration;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private RemoteConnectionInterface $connection;
     private LoggerInterface $logger;
     private ConsoleOutput $output;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         Configuration $configuration,
         RemoteConnectionInterface $connection,
-        Utilities $utilities,
         LoggerInterface $logger,
         ConsoleOutput $output,
         array $properties = []
@@ -56,10 +42,12 @@ class Transformation extends Command implements CommandInterface
         parent::__construct('mysql-transformation');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
-        if (count($environment->getOnlyForPipeline())
-            && !in_array($transport->getPipeline(), $environment->getOnlyForPipeline())) {
+        if (
+            count($environment->getOnlyForPipeline())
+            && !in_array($transport->getPipeline(), $environment->getOnlyForPipeline())
+        ) {
             return $transport->withStatus(new Status('mysql-transformation', 'stale'));
         }
 
@@ -67,14 +55,18 @@ class Transformation extends Command implements CommandInterface
         return $transport->withStatus(new Status('mysql-transformation', 'success'));
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    private function applyTransformationsTo(ReconnectingPDO $connection, $transformations)
+    /**
+     * @param string[] $transformations
+     */
+    private function applyTransformationsTo(ReconnectingPDO $connection, array $transformations): void
     {
-        array_walk($transformations, function ($query) use ($connection) {
+        array_walk($transformations, function ($query) use ($connection): void {
             try {
                 $this->logger->info("Attempting: " . $query);
                 $this->output->writeln("<comment> Attempting: " . $query . '</comment>');

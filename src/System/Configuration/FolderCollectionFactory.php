@@ -18,7 +18,7 @@ use function strpos;
 
 class FolderCollectionFactory
 {
-    const VENDOR_DIRECTORY = 'vendor';
+    private const VENDOR_DIRECTORY = 'vendor';
 
     /**
      * @param string[] $allowedFolders

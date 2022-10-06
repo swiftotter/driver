@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/19/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Sandbox;
 
@@ -34,10 +19,12 @@ class Shutdown extends Command implements CommandInterface, ErrorInterface
 {
     private Configuration $configuration;
     private Sandbox $sandbox;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private ConsoleOutput $output;
     private DebugMode $debugMode;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         Configuration $configuration,
         Sandbox $sandbox,
@@ -54,26 +41,30 @@ class Shutdown extends Command implements CommandInterface, ErrorInterface
         return parent::__construct('mysql-sandbox-shutdown');
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         if ($this->debugMode->get()) {
             $transport->getLogger()->notice('No sandbox shutdown due to debug mode enabled.');
+            return $transport->withStatus(
+                new Status('sandbox_shutdown', 'No sandbox shutdown due to debug mode enabled.')
+            );
         }
 
         return $this->apply($transport, $environment);
     }
 
-    public function error(TransportInterface $transport, EnvironmentInterface $environment)
+    public function error(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         return $this->apply($transport, $environment);
     }
 
-    private function apply(TransportInterface $transport, EnvironmentInterface $environment)
+    private function apply(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $transport->getLogger()->notice("Shutting down RDS");
         $this->output->writeln("<comment>Shutting down RDS</comment>");

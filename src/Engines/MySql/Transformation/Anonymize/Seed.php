@@ -1,9 +1,6 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 2/8/20
- * @website https://swiftotter.com
- **/
 
 namespace Driver\Engines\MySql\Transformation\Anonymize;
 
@@ -14,7 +11,7 @@ use function uniqid;
 
 class Seed
 {
-    const FAKE_USER_TABLE = 'fake_users';
+    public const FAKE_USER_TABLE = 'fake_users';
 
     private RemoteConnectionInterface $connection;
     private Configuration $configuration;
@@ -50,7 +47,7 @@ class Seed
         }
     }
 
-    public function destroy()
+    public function destroy(): void
     {
         $this->clean();
     }
@@ -65,13 +62,13 @@ class Seed
         return $this->count;
     }
 
-    private function clean()
+    private function clean(): void
     {
         $this->connection->getConnection()->query('DROP TABLE IF EXISTS ' . self::FAKE_USER_TABLE);
         $this->count = 0;
     }
 
-    private function createTable()
+    private function createTable(): void
     {
         $table = self::FAKE_USER_TABLE;
 

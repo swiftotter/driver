@@ -23,14 +23,16 @@ use function is_string;
 
 class UpdateValues extends Command implements CommandInterface
 {
-    const COMMAND_NAME = 'mysql-transformation-update-values';
+    private const COMMAND_NAME = 'mysql-transformation-update-values';
 
     private Configuration $configuration;
     private RemoteConnectionInterface $connection;
     private ConsoleOutput $output;
     private QueryBuilder $queryBuilder;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         Configuration $configuration,
         RemoteConnectionInterface $connection,
@@ -66,11 +68,15 @@ class UpdateValues extends Command implements CommandInterface
         return $transport->withStatus(new Status(self::COMMAND_NAME, 'success'));
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
     public function getProperties(): array
     {
         return $this->properties;
     }
 
+    /**
+     * @param array<string, array<string, string>> $data
+     */
     private function update(string $table, array $data): void
     {
         $joins = $this->buildJoins($data);
@@ -88,6 +94,7 @@ class UpdateValues extends Command implements CommandInterface
     }
 
     /**
+     * @param array<string, array<string, string>> $data
      * @return Join[]
      */
     private function buildJoins(array $data): array
@@ -115,6 +122,7 @@ class UpdateValues extends Command implements CommandInterface
     }
 
     /**
+     * @param array<string, array<string, string>> $data
      * @return Value[]
      */
     private function buildValues(array $data): array

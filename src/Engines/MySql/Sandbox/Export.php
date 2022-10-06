@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Sandbox;
 
@@ -27,7 +12,6 @@ use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Random;
-use Driver\System\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -38,13 +22,14 @@ class Export extends Command implements CommandInterface, CleanupInterface
     private Random $random;
     private ?string $filename = null;
     private Configuration $configuration;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private Utilities $utilities;
     private ConsoleOutput $output;
-    private Tag $tag;
+    /** @var string[] */
+    private array $files = [];
 
-    private $files = [];
-
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         RemoteConnectionInterface $connection,
         Ssl $ssl,
@@ -65,19 +50,22 @@ class Export extends Command implements CommandInterface, CleanupInterface
         return parent::__construct('mysql-sandbox-export');
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
-        $this->connection->test(function(Connection $connection) {
+        $this->connection->test(function (Connection $connection): void {
             $connection->authorizeIp();
         });
 
         $transport->getLogger()->notice("Exporting database from remote MySql RDS");
-        $this->output->writeln("<comment>Exporting database from remote MySql RDS. Please wait... this will take a long time.</comment>");
+        $this->output->writeln(
+            "<comment>Exporting database from remote MySql RDS. Please wait... this will take a long time.</comment>"
+        );
 
         $environmentName = $environment->getName();
         $command = $this->assembleCommand($environmentName, $environment->getIgnoredTables());
@@ -97,16 +85,20 @@ class Export extends Command implements CommandInterface, CleanupInterface
         }
     }
 
-    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment)
+    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
-        array_walk($this->files, function($fileName) {
+        array_walk($this->files, function ($fileName): void {
             if ($fileName && file_exists($fileName)) {
                 @unlink($fileName);
             }
         });
+        return $transport;
     }
 
-    private function assembleCommand($environmentName, $ignoredTables)
+    /**
+     * @param string[] $ignoredTables
+     */
+    private function assembleCommand(string $environmentName, array $ignoredTables): string
     {
         $command = implode(' ', array_merge([
             "mysqldump --user={$this->connection->getUser()}",
@@ -133,27 +125,27 @@ class Export extends Command implements CommandInterface, CleanupInterface
         return $command;
     }
 
-    private function getIgnoredTables($ignoredTables)
+    /**
+     * @param string[] $ignoredTables
+     * @return string[]
+     */
+    private function getIgnoredTables(array $ignoredTables): array
     {
-        if (!is_array($ignoredTables)) {
-            $ignoredTables = [];
-        }
-
-        $tableNames = array_filter(array_map(function($oldTableName) {
+        $tableNames = array_filter(array_map(function ($oldTableName) {
             return $this->utilities->tableName($oldTableName);
         }, $ignoredTables));
 
-        return array_map(function($tableName) {
-            return "--ignore-table=".$this->connection->getDatabase().".".$tableName;
+        return array_map(function ($tableName) {
+            return "--ignore-table=" . $this->connection->getDatabase() . "." . $tableName;
         }, $tableNames);
     }
 
-    private function compressOutput()
+    private function compressOutput(): bool
     {
         return (bool)$this->configuration->getNode('configuration/compress-output') === true;
     }
 
-    private function getFilename($environmentName)
+    private function getFilename(string $environmentName): string
     {
         if ($this->filename) {
             return $this->filename;
@@ -161,10 +153,11 @@ class Export extends Command implements CommandInterface, CleanupInterface
 
         $path = $this->configuration->getNode('connections/rds/dump-path');
         if (!$path) {
-            $path ='/tmp';
+            $path = '/tmp';
         }
         do {
-            $file = $path . '/driver_tmp_' . $environmentName . '_' . $this->random->getRandomString(10) . ($this->compressOutput() ? '.gz' : '.sql');
+            $file = $path . '/driver_tmp_' . $environmentName . '_' . $this->random->getRandomString(10)
+                . ($this->compressOutput() ? '.gz' : '.sql');
         } while (file_exists($file));
 
         $this->filename = $file;

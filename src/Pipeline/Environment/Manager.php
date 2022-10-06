@@ -1,32 +1,21 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/10/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Pipeline\Environment;
 
+use ArrayIterator;
 use Driver\System\Configuration;
-use Haystack\HArray;
+
+use function array_filter;
+use function array_keys;
+use function array_map;
 
 class Manager
 {
-    const ALL_ENVIRONMENTS = 'all';
+    private const ALL_ENVIRONMENTS = 'all';
 
-    private \ArrayIterator $runFor;
+    private ArrayIterator $runFor;
     private Factory $factory;
     private Configuration $configuration;
     private bool $hasCustomRunList = false;
@@ -35,14 +24,18 @@ class Manager
     {
         $this->factory = $factory;
         $this->configuration = $configuration;
-        $this->runFor = new \ArrayIterator([]);
+        $this->runFor = new ArrayIterator([]);
     }
 
-    public function setRunFor($environments)
+    /**
+     * @param string[]|string $environments
+     */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
+    public function setRunFor($environments): void
     {
-        if (strtolower($environments) === self::ALL_ENVIRONMENTS || !$environments) {
+        if (!$environments || strtolower($environments) === self::ALL_ENVIRONMENTS) {
             $environmentList = $this->getAllEnvironments();
-        } else if (is_string($environments)) {
+        } elseif (is_string($environments)) {
             $environmentList = array_filter(explode(',', $environments));
             array_walk($environmentList, 'trim');
             $this->hasCustomRunList = true;
@@ -50,26 +43,30 @@ class Manager
             $environmentList = $environments;
         }
 
-        $this->runFor = new \ArrayIterator($this->mapNamesToEnvironments($environmentList));
+        $this->runFor = new ArrayIterator($this->mapNamesToEnvironments($environmentList));
     }
 
-    public function getAllEnvironments()
+    /**
+     * @return string[]
+     */
+    public function getAllEnvironments(): array
     {
-        $output = (new HArray($this->configuration->getNode('environments')))
-            ->filter(function($value) {
-                return !isset($value['empty']) || $value['empty'] == false;
-        })->toArray();
-
-        return array_keys($output);
+        return array_keys(array_filter($this->configuration->getNode('environments'), function ($value) {
+            return !isset($value['empty']) || $value['empty'] == false;
+        }));
     }
 
-    private function mapNamesToEnvironments(array $environments)
+    /**
+     * @param string[] $environments
+     * @return EnvironmentInterface[]
+     */
+    private function mapNamesToEnvironments(array $environments): array
     {
-        $mapped = (new HArray($environments))->map(function($name) {
+        $mapped = array_map(function ($name) {
             return $this->factory->create($name);
-        })->toArray();
+        }, $environments);
 
-        usort($mapped, function(EnvironmentInterface $a, EnvironmentInterface $b) {
+        usort($mapped, function (EnvironmentInterface $a, EnvironmentInterface $b) {
             if ($a->getSort() == $b->getSort()) {
                 return 0;
             }
@@ -80,10 +77,7 @@ class Manager
         return $mapped;
     }
 
-    /**
-     * @return \ArrayIterator
-     */
-    public function getRunFor()
+    public function getRunFor(): ArrayIterator
     {
         return $this->runFor;
     }

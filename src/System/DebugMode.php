@@ -1,15 +1,12 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 4/1/22
- * @website https://swiftotter.com
- **/
 
 namespace Driver\System;
 
 class DebugMode
 {
-    private $debugMode;
+    private bool $debugMode;
 
     public function __construct(bool $debugMode = false)
     {
