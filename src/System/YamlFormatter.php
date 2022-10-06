@@ -13,12 +13,7 @@ class YamlFormatter
             if (isset($item['name'])) {
                 $name = $item['name'];
                 unset($item['name']);
-
-                if (isset($commands[$name])) {
-                    $commands[$name] = array_merge_recursive($commands[$name], $item);
-                } else {
-                    $commands[$name] = $item;
-                }
+                $commands[$name] = isset($commands[$name]) ? array_merge_recursive($commands[$name], $item) : $item;
             }
 
             return $commands;

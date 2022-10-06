@@ -120,11 +120,7 @@ class Primary implements SpanInterface
     private function mapToStageObjects(array $stages): array
     {
         return array_filter(array_map(function ($stage, $name) {
-            if (isset($stage['actions'])) {
-                return $this->stageFactory->create($stage['actions'], $name);
-            } else {
-                return null;
-            }
+            return isset($stage['actions']) ? $this->stageFactory->create($stage['actions'], $name) : null;
         }, array_values($stages), array_keys($stages)));
     }
 
