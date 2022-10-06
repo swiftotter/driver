@@ -1,59 +1,55 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/8/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Pipeline\Transport;
 
-use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\System\Logs\LoggerInterface;
+use Driver\System\Logs\Primary as PrimaryLogger;
+
+use function array_merge;
 
 class Primary implements TransportInterface
 {
-    private $data;
-    private $statuses;
-    private $pipeline;
-    private $logger;
-    private $environment;
+    private string $pipeline;
+    private LoggerInterface $logger;
+    /** @var Status[] */
+    private array $statuses;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $data;
 
+    /**
+     * @param Status[] $statuses
+     */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
-        $pipeline,
-        $statuses = [],
-        $data = [],
-        EnvironmentInterface $environment = null,
-        LoggerInterface $logger = null
+        string $pipeline,
+        ?LoggerInterface $logger = null,
+        array $statuses = [],
+        array $data = []
     ) {
         $this->pipeline = $pipeline;
+        $this->logger = $logger ?? new PrimaryLogger();
         $this->statuses = $statuses;
         $this->data = $data;
-        $this->logger = $logger;
-        $this->environment = $environment;
     }
 
-    public function getErrors()
+    /**
+     * @return Status[]
+     */
+    public function getErrors(): array
     {
-        return array_filter($this->statuses, function(Status $status) {
+        return array_filter($this->statuses, function (Status $status) {
             return $status->isError();
         });
     }
 
-    public function getErrorsByNode($node)
+    /**
+     * @return Status[]
+     */
+    public function getErrorsByNode(string $node): array
     {
-        return array_filter($this->statuses, function(Status $status) use ($node) {
+        return array_filter($this->statuses, function (Status $status) use ($node) {
             return $status->isError() && $status->getNode() === $node;
         });
     }
@@ -63,39 +59,58 @@ class Primary implements TransportInterface
         return $this->pipeline;
     }
 
-    public function withStatus(Status $status)
+    public function withStatus(Status $status): self
     {
-        return new self($this->pipeline, array_merge($this->statuses, [ $status ]), $this->data, $this->environment, $this->logger);
+        return new self(
+            $this->pipeline,
+            $this->logger,
+            array_merge($this->statuses, [$status]),
+            $this->data
+        );
     }
 
-    public function getStatuses()
+    /**
+     * @return Status[]
+     */
+    public function getStatuses(): array
     {
         return $this->statuses;
     }
 
-    public function getStatusesByNode($node)
+    /**
+     * @return Status[]
+     */
+    public function getStatusesByNode(string $node): array
     {
-        return array_filter($this->statuses, function(Status $status) use ($node) {
+        return array_filter($this->statuses, function (Status $status) use ($node) {
             return $status->getNode() === $node;
         });
     }
 
-    public function withNewData($key, $value)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint
+    public function withNewData(string $key, $value): self
     {
-        return new self($this->pipeline, $this->statuses, array_merge($this->data, [$key => $value]), $this->environment, $this->logger);
+        return new self(
+            $this->pipeline,
+            $this->logger,
+            $this->statuses,
+            array_merge($this->data, [$key => $value])
+        );
     }
 
-    public function getAllData()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getAllData(): array
     {
         return $this->data;
     }
 
-    public function getData($key)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getData(string $key)
     {
-        return isset($this->data[$key]) ? $this->data[$key] : false;
+        return $this->data[$key] ?? false;
     }
 
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }

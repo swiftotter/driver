@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/10/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Commands\Environment;
 
@@ -26,22 +11,25 @@ use Symfony\Component\Console\Command\Command;
 
 class Setup extends Command implements CommandInterface
 {
-    private $properties;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
 
-    public function __construct($properties = [])
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    public function __construct(array $properties = [])
     {
         $this->properties = $properties;
         parent::__construct('environment-configuration');
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
+        // @todo Check this!
         return $transport->withEnvironment($environment);
     }
-
 }

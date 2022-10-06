@@ -23,7 +23,9 @@ class Configuration
 {
     private FileCollector $fileCollector;
     private FileLoader $loader;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint
     private array $nodes = ['pipelines' => []];
+    /** @var array<string, string> */
     private array $files = [];
 
     public function __construct(FileCollector $fileCollector, FileLoader $fileLoader)
@@ -32,6 +34,7 @@ class Configuration
         $this->loader = $fileLoader;
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
     public function getNodes(): array
     {
         if (!count($this->files)) {
@@ -43,27 +46,25 @@ class Configuration
         return $this->nodes;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getNode($node)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getNode(string $node)
     {
         $path = explode('/', $node);
         $nodes = $this->getNodes();
 
-        return array_reduce($path, function($nodes, $item) {
+        return array_reduce($path, function ($nodes, $item) {
             return $nodes[$item] ?? null;
         }, $nodes);
     }
 
-    public function getNodeString($node): string
+    public function getNodeString(string $node): string
     {
         $value = $this->getNode($node);
 
         return is_string($value) ? $value : '';
     }
 
-    private function loadConfigurationFor($file): void
+    private function loadConfigurationFor(string $file): void
     {
         if (!isset($this->files[$file])) {
             try {
@@ -86,6 +87,7 @@ class Configuration
         }
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
     private function recursiveMerge(array $array1, array $array2): array
     {
         $merged = $array1;
@@ -93,7 +95,7 @@ class Configuration
         foreach ($array2 as $key => $value) {
             if (is_array($value) && isset($merged[$key]) && is_array($merged[$key]) && !is_int($key)) {
                 $merged[$key] = $this->recursiveMerge($merged[$key], $value);
-            } else if (is_int($key)) {
+            } elseif (is_int($key)) {
                 $merged[] = $value;
             } else {
                 $merged[$key] = $value;
@@ -105,6 +107,7 @@ class Configuration
     /**
      * Special handling for pipelines as they don't exactly follow the key/value pattern.
      */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
     private function mergePipelines(array $new): array
     {
         if (!isset($this->nodes['pipelines']) || !count($this->nodes['pipelines'])) {
@@ -121,7 +124,7 @@ class Configuration
             array_keys($new)
         );
 
-        return array_reduce($pipelinesKeys, function($carry, $key) use ($new) {
+        return array_reduce($pipelinesKeys, function ($carry, $key) use ($new) {
             $existing = $this->nodes['pipelines'];
             if (!isset($new[$key])) {
                 $carry[$key] = $existing;
@@ -137,22 +140,24 @@ class Configuration
         }, []);
     }
 
-    private function mergePipeline($existing, $new)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    private function mergePipeline(array $existing, array $new): array
     {
-        array_walk($new, function($value) use (&$existing) {
+        array_walk($new, function ($value) use (&$existing): void {
             $existing = $this->mergeStageIntoPipeline($existing, $value);
         });
 
         return $existing;
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
     private function mergeStageIntoPipeline(array $existing, array $newStage): array
     {
         $matched = false;
 
         $output = array_reduce(
             array_keys($existing),
-            function($carry, $existingKey) use ($existing, $newStage, &$matched) {
+            function ($carry, $existingKey) use ($existing, $newStage, &$matched) {
                 $existingStage = $existing[$existingKey];
                 $currentMatch = isset($newStage['name'])
                     && isset($existingStage['name'])

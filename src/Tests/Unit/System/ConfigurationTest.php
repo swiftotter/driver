@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Driver\Tests\Unit\System;
 
 use Driver\System\Configuration;
+use PHPUnit\Framework\TestCase;
 
-class ConfigurationTest extends \PHPUnit_Framework_TestCase
+class ConfigurationTest extends TestCase
 {
     private Configuration $configuration;
 
@@ -18,7 +19,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testGetAllNodesReturnsInformation(): void
     {
         $result = $this->configuration->getNodes();
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertNotEmpty($result);
     }
 

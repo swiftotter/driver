@@ -5,3 +5,4 @@ composer.lock
 /vagrant/
 .DS_Store
 sample/
+.phpunit.result.cache

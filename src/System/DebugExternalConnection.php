@@ -1,9 +1,6 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 2/8/20
- * @website https://swiftotter.com
- **/
 
 namespace Driver\System;
 
@@ -15,11 +12,9 @@ class DebugExternalConnection implements RemoteConnectionInterface
 {
     use ConnectionTrait;
 
-    /** @var Configuration  */
-    private $configuration;
+    private Configuration $configuration;
 
-    /** @var ConsoleOutput */
-    private $output;
+    private ConsoleOutput $output;
 
     public function __construct(Configuration $configuration, ConsoleOutput $output)
     {
@@ -27,15 +22,13 @@ class DebugExternalConnection implements RemoteConnectionInterface
         $this->output = $output;
     }
 
-    public function test($onFailure): void
+    public function test(callable $onFailure): void
     {
-        return;
     }
 
     public function authorizeIp(): void
     {
     }
-
 
     public function isAvailable(): bool
     {
@@ -44,7 +37,8 @@ class DebugExternalConnection implements RemoteConnectionInterface
 
     public function getDSN(): string
     {
-        return "mysql:host={$this->getHost()};dbname={$this->getDatabase()};port={$this->getPort()};charset={$this->getCharset()}";
+        return "mysql:host={$this->getHost()};dbname={$this->getDatabase()};"
+            . "port={$this->getPort()};charset={$this->getCharset()}";
     }
 
     public function getCharset(): string
@@ -94,7 +88,8 @@ class DebugExternalConnection implements RemoteConnectionInterface
         return $this->getValue('password', true);
     }
 
-    private function getValue($key, $required)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    private function getValue(string $key, bool $required)
     {
         $value = $this->configuration->getNode("connections/mysql_debug/{$key}");
         if (is_array($value) && $required) {
@@ -105,6 +100,7 @@ class DebugExternalConnection implements RemoteConnectionInterface
         return $value;
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
     public function getPreserve(): array
     {
         return $this->getValue('preserve', false) ?: [];

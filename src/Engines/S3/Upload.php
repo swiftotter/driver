@@ -1,24 +1,10 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\S3;
 
+use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -35,14 +21,15 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class Upload extends Command implements CommandInterface
 {
-    protected Configuration $configuration;
-    protected array $properties;
+    private Configuration $configuration;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private LoggerInterface $logger;
     private ConsoleOutput $output;
     private S3FilenameFormatter $s3FilenameFormatter;
-    /** @var \Symfony\Component\EventDispatcher\EventDispatcher */
     private EventDispatcher $eventDispatcher;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         Configuration $configuration,
         LoggerInterface $logger,
@@ -61,9 +48,9 @@ class Upload extends Command implements CommandInterface
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
-        $this->eventDispatcher->addListener(ConsoleEvents::TERMINATE, function (ConsoleCommandEvent $event) {
+        $this->eventDispatcher->addListener(ConsoleEvents::TERMINATE, function (ConsoleCommandEvent $event): void {
             $this->output->writeln('Cancel registered!');
         });
 
@@ -108,12 +95,13 @@ class Upload extends Command implements CommandInterface
         }
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    protected function getObjectUrl(\Aws\Result $data)
+    private function getObjectUrl(Result $data): string
     {
         return $data->get('ObjectURL');
     }
@@ -139,9 +127,9 @@ class Upload extends Command implements CommandInterface
         return $this->configuration->getNodeString('connections/s3/bucket');
     }
 
-    private function getDirectory()
+    private function getDirectory(): string
     {
-        $directory = $this->configuration->getNode('connections/s3/directory');
+        $directory = (string)$this->configuration->getNode('connections/s3/directory');
         if ($directory) {
             $directory .= '/';
         }
@@ -149,14 +137,15 @@ class Upload extends Command implements CommandInterface
         return $directory;
     }
 
-    private function getS3Client()
+    private function getS3Client(): S3Client
     {
         return new S3Client($this->getAwsParameters());
     }
 
-    private function getAwsParameters()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    private function getAwsParameters(): array
     {
-        $parameters = [
+        return [
             'credentials' => [
                 'key' => $this->configuration->getNode("connections/s3/key")
                     ?? $this->configuration->getNode("connections/aws/key"),
@@ -167,6 +156,5 @@ class Upload extends Command implements CommandInterface
                 ?? $this->configuration->getNode("connections/aws/region"),
             'version' => '2006-03-01'
         ];
-        return $parameters;
     }
 }

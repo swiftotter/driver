@@ -1,9 +1,6 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 4/5/22
- * @website https://swiftotter.com
- **/
 
 namespace Driver\System;
 
@@ -18,7 +15,7 @@ class S3FilenameFormatter
         $this->tag = $tag;
     }
 
-    public function execute(EnvironmentInterface $environment, ?string $fileKey)
+    public function execute(EnvironmentInterface $environment, ?string $fileKey): string
     {
         $environment = '-' . $environment->getName();
         if ($this->tag->getTag()) {
@@ -26,8 +23,6 @@ class S3FilenameFormatter
         }
 
         $replace = str_replace('{{environment}}', $environment, $fileKey);
-        $replace = str_replace('{{date}}', date('YmdHis'), $replace);
-
-        return $replace;
+        return str_replace('{{date}}', date('YmdHis'), $replace);
     }
 }

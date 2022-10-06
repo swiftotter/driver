@@ -1,94 +1,46 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/5/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Pipeline\Transport;
 
-use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\System\Logs\LoggerInterface;
 
 interface TransportInterface
 {
-    const STATUS_FAILED = 1;
-    const STATUS_SUCCESS = 2;
-    const STATUS_PENDING = 3;
-
-    public function __construct(
-        $pipeline,
-        $statuses = [],
-        $data = [],
-        EnvironmentInterface $environment,
-        LoggerInterface $log = null
-    );
-
-    /**
-     * @return string
-     */
     public function getPipeline(): string;
 
     /**
-     * @return array
+     * @return Status[]
      */
-    public function getErrors();
+    public function getErrors(): array;
 
     /**
-     * @param $node
-     * @return array
+     * @return Status[]
      */
-    public function getErrorsByNode($node);
+    public function getErrorsByNode(string $node): array;
 
     /**
-     * @return array
+     * @return Status[]
      */
-    public function getStatuses();
+    public function getStatuses(): array;
 
     /**
-     * @param $node
-     * @return array
+     * @return Status[]
      */
-    public function getStatusesByNode($node);
+    public function getStatusesByNode(string $node): array;
 
-    /**
-     * @return array
-     */
-    public function getAllData();
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getAllData(): array;
 
-    /**
-     * @param Status $status
-     * @return self
-     */
-    public function withStatus(Status $status);
+    public function withStatus(Status $status): self;
 
-    /**
-     * @param string $key
-     * @return mixed
-     */
-    public function getData($key);
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getData(string $key);
 
-    /**
-     * @param string $key
-     * @param string $value
-     * @return self
-     */
-    public function withNewData($key, $value);
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint
+    public function withNewData(string $key, $value): self;
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger();
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getLogger(): LoggerInterface;
 }

@@ -1,24 +1,10 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\S3;
 
+use Aws\Result;
 use Aws\S3\S3Client;
 use Driver\Commands\CommandInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
@@ -34,16 +20,18 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Download extends Command implements CommandInterface
 {
-    const DOWNLOAD_PATH_KEY = 'download_path';
+    public const DOWNLOAD_PATH_KEY = 'download_path';
 
     private LocalConnectionLoader $localConnection;
     private Configuration $configuration;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
     private array $properties;
     private LoggerInterface $logger;
     private ConsoleOutput $output;
     private EnvironmentManager $environmentManager;
     private S3FilenameFormatter $s3FilenameFormatter;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         LocalConnectionLoader $localConnection,
         Configuration $configuration,
@@ -64,7 +52,7 @@ class Download extends Command implements CommandInterface
         parent::__construct('s3-download');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         try {
             $filename = $this->s3FilenameFormatter->execute($environment, $this->getFileKey());
@@ -74,7 +62,6 @@ class Download extends Command implements CommandInterface
             );
             $this->output->writeln(
                 sprintf("<comment>Beginning file download from: s3://%s/%s</comment>", $this->getBucket(), $filename)
-
             );
             $date = date('Y-m-d');
             $client = $this->getS3Client();
@@ -93,7 +80,11 @@ class Download extends Command implements CommandInterface
                 sprintf("Downloaded file from: s3://%s/%s", $this->getBucket(), $this->getFileName($environment))
             );
             $this->output->writeln(
-                sprintf("<info>Downloaded file from: s3://%s/%s to project var/ directory</info>", $this->getBucket(), $this->getFileName($environment))
+                sprintf(
+                    "<info>Downloaded file from: s3://%s/%s to project var/ directory</info>",
+                    $this->getBucket(),
+                    $this->getFileName($environment)
+                )
             );
 
             if (strpos($this->getFileName($environment), ".gz") !== false) {
@@ -105,7 +96,7 @@ class Download extends Command implements CommandInterface
                 ->withNewData(self::DOWNLOAD_PATH_KEY, $outputFile);
         } catch (\Exception $ex) {
             $this->output->section();
-            $this->output->writeln('<info>Failed getting object from S3: ' . $ex->getTraceAsString(). '</info>');
+            $this->output->writeln('<info>Failed getting object from S3: ' . $ex->getTraceAsString() . '</info>');
             $this->logger->error('Failed getting object from S3: ' . $ex->getMessage(), [
                 $ex->getMessage(),
                 $ex->getTraceAsString()
@@ -115,22 +106,21 @@ class Download extends Command implements CommandInterface
         }
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    protected function getObjectUrl(\Aws\Result $data)
+    private function getObjectUrl(Result $data): string
     {
-        return $data->get('ObjectURL');
+        return (string)$data->get('ObjectURL');
     }
 
-    private function getFileName(EnvironmentInterface $environment)
+    private function getFileName(EnvironmentInterface $environment): string
     {
         $replace = str_replace('{{environment}}', '-' . $environment->getName(), $this->getFileKey());
-        $replace = str_replace('{{date}}', date('YmdHis'), $replace);
-
-        return $replace;
+        return str_replace('{{date}}', date('YmdHis'), $replace);
     }
 
     private function getFileKey(): string
@@ -142,7 +132,7 @@ class Download extends Command implements CommandInterface
         }
     }
 
-    private function compressOutput()
+    private function compressOutput(): bool
     {
         return (bool)$this->configuration->getNode('configuration/compress-output') === true;
     }
@@ -152,9 +142,9 @@ class Download extends Command implements CommandInterface
         return $this->configuration->getNodeString('connections/s3/bucket');
     }
 
-    private function getDirectory()
+    private function getDirectory(): string
     {
-        $directory = $this->configuration->getNode('connections/s3/directory');
+        $directory = (string)$this->configuration->getNode('connections/s3/directory');
         if ($directory) {
             $directory .= '/';
         }
@@ -162,14 +152,15 @@ class Download extends Command implements CommandInterface
         return $directory;
     }
 
-    private function getS3Client()
+    private function getS3Client(): S3Client
     {
         return new S3Client($this->getAwsParameters());
     }
 
-    private function getAwsParameters()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    private function getAwsParameters(): array
     {
-        $parameters = [
+        return [
             'credentials' => [
                 'key' => $this->configuration->getNode("connections/s3/key")
                     ?? $this->configuration->getNode("connections/aws/key"),
@@ -180,6 +171,5 @@ class Download extends Command implements CommandInterface
                 ?? $this->configuration->getNode("connections/aws/region"),
             'version' => '2006-03-01'
         ];
-        return $parameters;
     }
 }

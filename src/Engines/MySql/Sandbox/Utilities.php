@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/5/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Sandbox;
 
@@ -23,15 +8,16 @@ use Driver\System\LocalConnectionLoader;
 
 class Utilities
 {
-    private $connection;
-    private $cachedTables = false;
+    private LocalConnectionLoader $connection;
+    /** @var string[]|null */
+    private ?array $cachedTables = null;
 
     public function __construct(LocalConnectionLoader $connection)
     {
         $this->connection = $connection;
     }
 
-    public function tableExists($tableName)
+    public function tableExists(string $tableName): bool
     {
         try {
             $result = $this->connection->getConnection()->query("SELECT 1 FROM $tableName LIMIT 1");
@@ -42,28 +28,9 @@ class Utilities
         return $result !== false;
     }
 
-//    public function clearTable($tableName)
-//    {
-//        $connection = $this->connection->getConnection();
-//        try {
-//            $connection->beginTransaction();
-//
-//            if ($this->tableExists($tableName)) {
-//                $connection->query("set foreign_key_checks=0");
-//                $connection->query("TRUNCATE TABLE {$tableName}");
-//            }
-//
-//            $connection->commit();
-//        } catch (\Exception $ex) {
-//            $connection->rollBack();
-//        } finally {
-//            $connection->query("set foreign_key_checks=1");
-//        }
-//    }
-
-    public function tableName($tableName)
+    public function tableName(string $tableName): string
     {
-        $fullTableName = array_reduce($this->getTables(), function ($carry, $sourceTableName) use ($tableName) {
+        return array_reduce($this->getTables(), function ($carry, $sourceTableName) use ($tableName) {
             if (strlen($sourceTableName) < strlen($tableName)) {
                 return $carry;
             }
@@ -72,22 +39,29 @@ class Utilities
                 return $tableName;
             }
 
-            if (substr_compare($sourceTableName, $tableName, strlen($sourceTableName) - strlen($tableName), strlen($tableName)) === 0) {
+            if (
+                substr_compare(
+                    $sourceTableName,
+                    $tableName,
+                    strlen($sourceTableName) - strlen($tableName),
+                    strlen($tableName)
+                ) === 0
+            ) {
                 return $sourceTableName;
             }
 
             return $carry;
         }, '');
-
-        return $fullTableName;
     }
 
-    private function getTables()
+    /**
+     * @return array|string[]
+     */
+    private function getTables(): array
     {
-        if ($this->cachedTables === false) {
+        if ($this->cachedTables === null) {
             $result = $this->connection->getConnection()->query('SHOW TABLES;');
-
-            $this->cachedTables = $result->fetchAll(\PDO::FETCH_COLUMN, 0);
+            $this->cachedTables = $result->fetchAll(\PDO::FETCH_COLUMN, 0) ?: [];
         }
 
         return $this->cachedTables;

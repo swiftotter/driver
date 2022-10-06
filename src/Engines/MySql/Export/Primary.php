@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Export;
 
@@ -26,25 +11,25 @@ use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
-use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
 
 class Primary extends Command implements CommandInterface, CleanupInterface
 {
+    private const DEFAULT_DUMP_PATH = '/tmp';
+
     private LocalConnectionInterface $localConnection;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private LoggerInterface $logger;
     private Random $random;
     private ?string $path = null;
     private Configuration $configuration;
     private ConsoleOutput $output;
 
-    const DEFAULT_DUMP_PATH = '/tmp';
-
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         LocalConnectionInterface $localConnection,
         Configuration $configuration,
@@ -62,7 +47,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         return parent::__construct('mysql-default-export');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $transport->getLogger()->notice("Exporting database from local MySql");
         $this->output->writeln("<comment>Exporting database from local MySql</comment>");
@@ -75,13 +60,11 @@ class Primary extends Command implements CommandInterface, CleanupInterface
             )
         );
         $this->output->writeln("<comment>Local connection string: </comment>" . str_replace(
-                $this->localConnection->getPassword(),
-                '',
-                $this->assembleCommand($environment)
-            )
-        );
+            $this->localConnection->getPassword(),
+            '',
+            $this->assembleCommand($environment)
+        ));
 
-        $results = null;
         $command = implode(';', array_filter([
             $this->assembleCommand($environment),
             $this->assembleEmptyCommand($environment)
@@ -95,24 +78,26 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         } else {
             $this->logger->notice("Database dump has completed.");
             $this->output->writeln("<info>Database dump has completed.</info>");
-            return $transport->withStatus(new Status('sandbox_init', 'success'))->withNewData('dump-file', $this->getDumpFile());
+            return $transport->withStatus(new Status('sandbox_init', 'success'))
+                ->withNewData('dump-file', $this->getDumpFile());
         }
     }
 
-    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment)
+    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         if ($this->getDumpFile() && file_exists($this->getDumpFile())) {
             @unlink($this->getDumpFile());
         }
+        return $transport;
     }
 
-
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function assembleEmptyCommand(EnvironmentInterface $environment)
+    public function assembleEmptyCommand(EnvironmentInterface $environment): string
     {
         $tables = implode(' ', $environment->getEmptyTables());
 
@@ -121,7 +106,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         }
 
         return implode(' ', array_merge(
-            $this->getDumpCommand($environment),
+            $this->getDumpCommand(),
             [
                 "--no-data",
                 $tables,
@@ -132,10 +117,10 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         ));
     }
 
-    public function assembleCommand(EnvironmentInterface $environment)
+    public function assembleCommand(EnvironmentInterface $environment): string
     {
         return implode(' ', array_merge(
-            $this->getDumpCommand($environment),
+            $this->getDumpCommand(),
             [
                 $this->assembleEmptyTables($environment),
                 $this->assembleIgnoredTables($environment),
@@ -146,7 +131,10 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         ));
     }
 
-    private function getDumpCommand(EnvironmentInterface $environment)
+    /**
+     * @return string[]
+     */
+    private function getDumpCommand(): array
     {
         return [
             "mysqldump --user=\"{$this->localConnection->getUser()}\"",
@@ -159,7 +147,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         ];
     }
 
-    private function assembleEmptyTables(EnvironmentInterface $environment)
+    private function assembleEmptyTables(EnvironmentInterface $environment): string
     {
         $tables = $environment->getEmptyTables();
         $output = [];
@@ -171,17 +159,17 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         return implode(' ', $output);
     }
 
-    private function assembleIgnoredTables(EnvironmentInterface $environment)
+    private function assembleIgnoredTables(EnvironmentInterface $environment): string
     {
         $tables = $environment->getIgnoredTables();
-        $output = implode(' | ', array_map(function($table) {
+        $output = implode(' | ', array_map(function ($table) {
             return "awk '!/^INSERT INTO `{$table}` VALUES/'";
         }, $tables));
 
         return $output ? ' | ' . $output : '';
     }
 
-    private function getDumpFile()
+    private function getDumpFile(): string
     {
         if (!$this->path) {
             $path = $this->configuration->getNode('connections/mysql/dump-path');

@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/8/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\System;
 
@@ -23,9 +8,13 @@ use DI\ContainerBuilder;
 
 class Entry
 {
-    static private $arguments;
+    /** @var string[]|null */
+    private static ?array $arguments = null;
 
-    public static function go($arguments)
+    /**
+     * @param string[] $arguments
+     */
+    public static function go(array $arguments): void
     {
         set_time_limit(0);
 
@@ -35,7 +24,7 @@ class Entry
         self::$arguments = $arguments;
         self::configureDebug();
 
-        $containerBuilder = new ContainerBuilder;
+        $containerBuilder = new ContainerBuilder();
         $containerBuilder->addDefinitions((new DependencyConfig(self::isDebug()))->get());
         $container = $containerBuilder->build();
 
@@ -43,7 +32,7 @@ class Entry
         $application->run();
     }
 
-    private static function configureDebug()
+    private static function configureDebug(): void
     {
         if (self::isDebug()) {
             error_reporting(E_ALL);
@@ -51,11 +40,10 @@ class Entry
         }
     }
 
-    private static function isDebug()
+    private static function isDebug(): bool
     {
-        return count(array_filter(self::$arguments, function($argument) {
+        return count(array_filter(self::$arguments, function ($argument) {
             return strpos($argument, '--debug') !== false;
         })) > 0;
     }
 }
-

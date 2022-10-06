@@ -8,6 +8,7 @@ use PDO;
 use PDOException;
 use PDOStatement;
 
+// phpcs:disable Generic.Files.LineLength
 /**
  * @method PDOStatement|false prepare($query, array $options = [])
  * @method bool beginTransaction()
@@ -34,6 +35,7 @@ use PDOStatement;
  * @method array|false pgsqlGetNotify(int $fetchMode = 0, int $timeoutMilliseconds = 0)
  * @method int pgsqlGetPid()
  */
+// phpcs:enable
 class ReconnectingPDO
 {
     private const MYSQL_GENERAL_ERROR_CODE = 'HY000';
@@ -42,6 +44,7 @@ class ReconnectingPDO
     private string $dsn;
     private ?string $username;
     private ?string $password;
+    /** @var array<int, string>|null */
     private ?array $options;
     private PDO $pdo;
 
@@ -60,12 +63,14 @@ class ReconnectingPDO
     /**
      * @throws PDOException
      */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification,SlevomatCodingStandard.TypeHints.ReturnTypeHint
     public function __call(string $name, array $arguments)
     {
         try {
             $this->pdo->query('SELECT 1')->fetchColumn();
         } catch (PDOException $e) {
-            if ($e->errorInfo[0] !== self::MYSQL_GENERAL_ERROR_CODE
+            if (
+                $e->errorInfo[0] !== self::MYSQL_GENERAL_ERROR_CODE
                 || $e->errorInfo[1] !== self::SERVER_HAS_GONE_AWAY_ERROR_CODE
             ) {
                 throw $e;

@@ -1,24 +1,10 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/29/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Pipeline\Span;
 
+use ArrayIterator;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Environment\Factory as EnvironmentFactory;
 use Driver\Pipeline\Environment\Manager as EnvironmentManager;
@@ -27,29 +13,35 @@ use Driver\Pipeline\Stage\StageInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\YamlFormatter;
-use Haystack\HArray;
-use Symfony\Component\Console\Output\OutputInterface;
+
+use function array_filter;
+use function array_walk;
 
 class Primary implements SpanInterface
 {
-    const PIPE_SET_NODE = 'parent';
-    const UNSET_ENVIRONMENT = 'default';
+    private const PIPE_SET_NODE = 'parent';
 
-    private $stages;
-    private $stageFactory;
-    private $environmentManager;
-    private $environmentFactory;
+    /** @var StageInterface[] */
+    private array $stages;
+    private StageFactory $stageFactory;
+    private EnvironmentManager $environmentManager;
+    private EnvironmentFactory $environmentFactory;
 
-    public function __construct(array $list, StageFactory $stageFactory, YamlFormatter $yamlFormatter, EnvironmentManager $environmentManager, EnvironmentFactory $environmentFactory)
-    {
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    public function __construct(
+        array $list,
+        StageFactory $stageFactory,
+        YamlFormatter $yamlFormatter,
+        EnvironmentManager $environmentManager,
+        EnvironmentFactory $environmentFactory
+    ) {
         $this->stageFactory = $stageFactory;
         $this->environmentManager = $environmentManager;
         $this->environmentFactory = $environmentFactory;
-
         $this->stages = $this->generateStageMap($yamlFormatter->extractSpanList($list));
     }
 
-    public function __invoke(TransportInterface $transport, $testMode = false)
+    public function __invoke(TransportInterface $transport, bool $testMode = false): TransportInterface
     {
         $stages = !$testMode ? $this->stages : [];
 
@@ -61,26 +53,29 @@ class Primary implements SpanInterface
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'complete'));
     }
 
-    public function cleanup(TransportInterface $transport, $testMode = false)
+    public function cleanup(TransportInterface $transport, bool $testMode = false): TransportInterface
     {
         $stages = !$testMode ? $this->stages : [];
 
-        (new HArray($stages))
-            ->walk(function(StageInterface $stage) use ($transport){
-                return $stage->cleanup($transport);
-            });
+        array_walk($stages, function (StageInterface $stage) use ($transport) {
+            return $stage->cleanup($transport);
+        });
 
         return $transport->withStatus(new Status(self::PIPE_SET_NODE, 'cleaned'));
     }
 
-    private function generateStageMap($list)
+    /**
+     * @return StageInterface[]
+     */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    private function generateStageMap(array $list): array
     {
         $stages = $this->mapToStageObjects($this->sortStages($this->filterStages($list)));
 
-        $output = new \ArrayIterator();
-        $defaultEnvironment = new \ArrayIterator([ $this->environmentFactory->createDefault() ]);
+        $output = new ArrayIterator();
+        $defaultEnvironment = new ArrayIterator([ $this->environmentFactory->createDefault() ]);
 
-        array_walk($stages, function(StageInterface $stage) use (&$output, $defaultEnvironment) {
+        array_walk($stages, function (StageInterface $stage) use (&$output, $defaultEnvironment): void {
             if ($stage->isRepeatable()) {
                 $output = $this->repeatForEnvironments($stage, $output, $this->environmentManager->getRunFor());
             } else {
@@ -97,9 +92,10 @@ class Primary implements SpanInterface
         return $output->getArrayCopy();
     }
 
-    private function sortStages(array $stages)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification,SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    private function sortStages(array $stages): array
     {
-        uasort($stages, function($a, $b) {
+        uasort($stages, function ($a, $b) {
             if ($a['sort'] == $b['sort']) {
                 return 0;
             }
@@ -109,17 +105,21 @@ class Primary implements SpanInterface
         return $stages;
     }
 
-    private function filterStages(array $stages)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification,SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    private function filterStages(array $stages): array
     {
-        return (new HArray($stages))
-            ->filter(function($actions) {
-                return count($actions) > 0;
-            })->toArray();
+        return array_filter($stages, function ($actions) {
+            return count($actions) > 0;
+        });
     }
 
-    private function mapToStageObjects(array $stages)
+    /**
+     * @return StageInterface[] $stages
+     */
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    private function mapToStageObjects(array $stages): array
     {
-        return array_filter(array_map(function($stage, $name) {
+        return array_filter(array_map(function ($stage, $name) {
             if (isset($stage['actions'])) {
                 return $this->stageFactory->create($stage['actions'], $name);
             } else {
@@ -128,17 +128,24 @@ class Primary implements SpanInterface
         }, array_values($stages), array_keys($stages)));
     }
 
-    private function repeatForEnvironments(StageInterface $stage, \ArrayIterator $output, \ArrayIterator $environments)
-    {
-        return array_reduce($environments->getArrayCopy(), function(\ArrayIterator $input, EnvironmentInterface $environment) use ($stage) {
-            $output = new \ArrayIterator($input->getArrayCopy());
-            $output->append($stage->withEnvironment($environment));
+    private function repeatForEnvironments(
+        StageInterface $stage,
+        ArrayIterator $output,
+        ArrayIterator $environments
+    ): ArrayIterator {
+        return array_reduce(
+            $environments->getArrayCopy(),
+            function (ArrayIterator $input, EnvironmentInterface $environment) use ($stage) {
+                $output = new ArrayIterator($input->getArrayCopy());
+                $output->append($stage->withEnvironment($environment));
 
-            return $output;
-        }, $output);
+                return $output;
+            },
+            $output
+        );
     }
 
-    private function verifyTransport(TransportInterface $transport, $lastCommand)
+    private function verifyTransport(?TransportInterface $transport, string $lastCommand): TransportInterface
     {
         if (!$transport) {
             throw new \Exception('No Transport object was returned from the last command executed: ' . $lastCommand);

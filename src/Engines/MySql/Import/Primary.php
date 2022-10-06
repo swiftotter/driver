@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Import;
 
@@ -34,21 +19,14 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Primary extends Command implements CommandInterface
 {
-    /** @var LocalConnectionLoader */
-    private $localConnection;
+    private LocalConnectionLoader $localConnection;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
+    private LoggerInterface $logger;
+    private Configuration $configuration;
+    private ConsoleOutput $output;
 
-    /** @var array */
-    private $properties;
-
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var Configuration */
-    private $configuration;
-
-    /** @var ConsoleOutput */
-    private $output;
-
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         LocalConnectionLoader $localConnection,
         Configuration $configuration,
@@ -64,7 +42,7 @@ class Primary extends Command implements CommandInterface
         return parent::__construct('import-data-from-system-primary');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $transport->getLogger()->notice("Import database from var/ into local MySQL started");
         $this->output->writeln("<comment>Import database from var/ into local MySQL started</comment>");
@@ -89,8 +67,7 @@ class Primary extends Command implements CommandInterface
         }
 
         $this->output->writeln("<comment>Creating Local Database: </comment>" .
-            $this->getDatabaseCommand($environment)
-        );
+            $this->getDatabaseCommand($environment));
 
         if (!$conn->query($this->getDatabaseCommand($environment))) {
             $this->output->writeln('<error>Database cannot be created: ' . $conn->errorInfo()[2] . '</error>');
@@ -104,11 +81,10 @@ class Primary extends Command implements CommandInterface
             )
         );
         $this->output->writeln("<comment>Local connection string: </comment>" . str_replace(
-                $this->localConnection->getPassword(),
-                '',
-                $this->assembleCommand(Download::DOWNLOAD_PATH_KEY)
-            )
-        );
+            $this->localConnection->getPassword(),
+            '',
+            $this->assembleCommand(Download::DOWNLOAD_PATH_KEY)
+        ));
 
         $preserved = $this->preserve();
 
@@ -127,27 +103,29 @@ class Primary extends Command implements CommandInterface
             );
             return $transport->withStatus(new Status('db_import', 'success'));
         }
-
     }
 
-    public function getDatabaseCommand(EnvironmentInterface $environment)
+    public function getDatabaseCommand(EnvironmentInterface $environment): string
     {
-        return "CREATE DATABASE {$this->localConnection->getDatabase()}";
+        return "CREATE DATABASE IF NOT EXISTS {$this->localConnection->getDatabase()}";
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function assembleCommand(string $filename)
+    public function assembleCommand(string $filename): string
     {
         return implode(' ', $this->getImportCommand($filename));
     }
 
-    private function getImportCommand(string $filename)
+    /**
+     * @return string[]
+     */
+    private function getImportCommand(string $filename): array
     {
-        $date = date('Y-m-d');
         return [
             "mysql -u \"{$this->localConnection->getUser()}\"",
             "-h {$this->localConnection->getHost()}",
@@ -158,6 +136,7 @@ class Primary extends Command implements CommandInterface
         ];
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
     private function preserve(): array
     {
         $connection = $this->getConnection();
@@ -198,7 +177,10 @@ class Primary extends Command implements CommandInterface
         return $output;
     }
 
-    private function getColumns($tableName): array
+    /**
+     * @return string[]
+     */
+    private function getColumns(string $tableName): array
     {
         $connection = $this->getConnection();
         $columns = [];
@@ -209,8 +191,10 @@ class Primary extends Command implements CommandInterface
         }
 
         while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
-            if (isset($row['Extra'])
-                && $row['Extra'] === 'auto_increment') {
+            if (
+                isset($row['Extra'])
+                && $row['Extra'] === 'auto_increment'
+            ) {
                 continue;
             }
 
@@ -220,11 +204,15 @@ class Primary extends Command implements CommandInterface
         return $columns;
     }
 
+    /**
+     * @param string[] $columnNames
+     */
     private function flattenColumns(array $columnNames): string
     {
         return implode(', ', $columnNames);
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint
     private function restore(array $values): void
     {
         foreach ($values as $tableName => $rows) {
@@ -234,12 +222,12 @@ class Primary extends Command implements CommandInterface
                 $tableColumnNames = $this->getColumns($tableName);
                 $columnNames = $this->flattenColumns($tableColumnNames);
                 $columnFillers = implode(', ', array_fill(0, count($row), '?'));
-                $valuesList = implode(', ', array_map(function($key) {
+                $valuesList = implode(', ', array_map(function ($key) {
                     return "`${key}` = VALUES(`${key}`)";
                 }, array_keys($row)));
 
                 $statement = $connection->prepare("INSERT INTO ${tableName} (${columnNames}) VALUES(${columnFillers})"
-                    ." ON DUPLICATE KEY UPDATE ${valuesList}");
+                    . " ON DUPLICATE KEY UPDATE ${valuesList}");
                 $statement->execute(array_values($row));
             }
         }
