@@ -33,12 +33,12 @@ class FolderCollectionFactory
      */
     private function getSearchPaths(): array
     {
-        $directory = realpath($_SERVER['SCRIPT_FILENAME']);
-        if (strpos($directory, self::VENDOR_DIRECTORY) !== false) {
-            list($rootDir) = explode(self::VENDOR_DIRECTORY, $directory);
+        $fullPath = $_SERVER['PWD'] . '/' . $_SERVER['SCRIPT_FILENAME'];
+        if (strpos($fullPath, self::VENDOR_DIRECTORY) !== false) {
+            list($rootDir) = explode(self::VENDOR_DIRECTORY, $fullPath);
             return array_merge([$rootDir], $this->getVendorDirectories($rootDir));
         }
-        return [dirname($directory, 2)];
+        return [dirname($fullPath, 2)];
     }
 
     /**
