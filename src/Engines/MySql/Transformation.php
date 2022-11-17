@@ -70,14 +70,10 @@ class Transformation extends Command implements CommandInterface
             try {
                 $this->logger->info("Attempting: " . $query);
                 $this->output->writeln("<comment> Attempting: " . $query . '</comment>');
-                $connection->beginTransaction();
                 $connection->query($query);
-                $connection->commit();
-
                 $this->logger->info("Successfully executed: " . $query);
                 $this->output->writeln("<info>Successfully executed: " . $query . '</info>');
             } catch (\Exception $ex) {
-                $connection->rollBack();
                 $this->logger->error("Query transformation failed: " . $query, [
                     $ex->getMessage(),
                     $ex->getTraceAsString()
