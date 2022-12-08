@@ -57,6 +57,7 @@ class CommandAssembler
             "mysqldump --user=\"{$connection->getUser()}\"",
             "--password=\"{$connection->getPassword()}\"",
             "--single-transaction",
+            "--no-tablespaces",
             "--host={$connection->getHost()}",
             $connection->getDatabase(),
             implode(' ', $tables)

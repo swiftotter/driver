@@ -104,7 +104,8 @@ class Export extends Command implements CommandInterface, CleanupInterface
             "mysqldump --user={$this->connection->getUser()}",
             "--password={$this->connection->getPassword()}",
             "--host={$this->connection->getHost()}",
-            "--port={$this->connection->getPort()}"
+            "--port={$this->connection->getPort()}",
+            "--no-tablespaces"
         ], $this->getIgnoredTables($ignoredTables)));
 
         $command .= " {$this->connection->getDatabase()} ";
