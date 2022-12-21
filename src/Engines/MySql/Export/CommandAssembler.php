@@ -7,6 +7,7 @@ namespace Driver\Engines\MySql\Export;
 use Driver\Engines\ConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 
+use function array_unshift;
 use function implode;
 use function in_array;
 
@@ -24,7 +25,6 @@ class CommandAssembler
         EnvironmentInterface $environment,
         string $dumpFile
     ): string {
-        $commands = [];
         $ignoredTables = $this->tablesProvider->getIgnoredTables($environment);
         $emptyTables = $this->tablesProvider->getEmptyTables($environment);
         foreach ($this->tablesProvider->getAllTables($connection) as $table) {
@@ -39,6 +39,12 @@ class CommandAssembler
         if (empty($commands)) {
             return '';
         }
+        array_unshift(
+            $commands,
+            "echo '/*!40014 SET @ORG_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;'"
+            . ">> $dumpFile"
+        );
+        $commands[] = "echo '/*!40014 SET FOREIGN_KEY_CHECKS=@ORG_FOREIGN_KEY_CHECKS */;' >> $dumpFile";
         $commands[] = "cat $dumpFile | "
             . "sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > $dumpFile.gz";
         return implode(';', $commands);
