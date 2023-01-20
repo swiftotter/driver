@@ -13,10 +13,10 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
-use Exception;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Throwable;
 
 class Primary extends Command implements CommandInterface, CleanupInterface
 {
@@ -58,32 +58,25 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         $this->output->writeln("<comment>Exporting database from local MySql</comment>");
 
         try {
-            $command = $this->commandAssembler->execute($this->localConnection, $environment, $this->getDumpFile());
-            if (empty($command)) {
+            $commands = $this->commandAssembler->execute($this->localConnection, $environment, $this->getDumpFile());
+            if (empty($commands)) {
                 throw new RuntimeException('Nothing to import');
             }
 
-            $transport->getLogger()->debug(
-                "Local connection string: " . str_replace(
-                    $this->localConnection->getPassword(),
-                    '',
-                    $command
-                )
-            );
-            $this->output->writeln("<comment>Local connection string: </comment>" . str_replace(
-                $this->localConnection->getPassword(),
-                '',
-                $command
-            ));
-
-            $results = system($command);
-
-            if ($results) {
-                throw new RuntimeException($results);
+            foreach ($commands as $command) {
+                $strippedCommand = str_replace($this->localConnection->getPassword(), '', $command);
+                $transport->getLogger()->debug('Command: ' . $strippedCommand);
+                $resultCode = 0;
+                $result = system($command, $resultCode);
+                if ($result === false || $resultCode !== 0) {
+                    $message = sprintf('Error (%s) when executing command: %s', $resultCode, $strippedCommand);
+                    $this->output->writeln("<error>${$message}</error>");
+                    throw new RuntimeException($message);
+                }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->output->writeln('<error>Import to RDS instance failed: ' . $e->getMessage() . '</error>');
-            throw new Exception('Import to RDS instance failed: ' . $e->getMessage());
+            throw new RuntimeException('Import to RDS instance failed: ' . $e->getMessage());
         }
 
         $this->logger->notice("Database dump has completed.");
