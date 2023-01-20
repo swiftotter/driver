@@ -27,14 +27,12 @@ class CommandAssembler
     ): string {
         $ignoredTables = $this->tablesProvider->getIgnoredTables($environment);
         $emptyTables = $this->tablesProvider->getEmptyTables($environment);
+        $commands = [$this->getStructureCommand($connection, $ignoredTables, $dumpFile)];
         foreach ($this->tablesProvider->getAllTables($connection) as $table) {
             if (in_array($table, $ignoredTables) || in_array($table, $emptyTables)) {
                 continue;
             }
-            $commands[] = $this->getSingleCommand($connection, [$table], $dumpFile);
-        }
-        if (!empty($emptyTables)) {
-            $commands[] = $this->getSingleCommand($connection, $emptyTables, $dumpFile, false);
+            $commands[] = $this->getDataCommand($connection, [$table], $dumpFile);
         }
         if (empty($commands)) {
             return '';
@@ -51,26 +49,44 @@ class CommandAssembler
     }
 
     /**
-     * @param string[] $tables
+     * @param string[] $ignoredTables
      */
-    private function getSingleCommand(
+    private function getStructureCommand(
         ConnectionInterface $connection,
-        array $tables,
-        string $dumpFile,
-        bool $withData = true
+        array $ignoredTables,
+        string $dumpFile
     ): string {
         $parts = [
             "mysqldump --user=\"{$connection->getUser()}\"",
             "--password=\"{$connection->getPassword()}\"",
             "--single-transaction",
             "--no-tablespaces",
+            "--no-data",
+            "--host={$connection->getHost()}",
+            $connection->getDatabase()
+        ];
+        foreach ($ignoredTables as $table) {
+            $parts[] = "--ignore-table={$connection->getDatabase()}.{$table}";
+        }
+        $parts[] = ">> $dumpFile";
+        return implode(' ', $parts);
+    }
+
+    /**
+     * @param string[] $tables
+     */
+    private function getDataCommand(ConnectionInterface $connection, array $tables, string $dumpFile): string
+    {
+        $parts = [
+            "mysqldump --user=\"{$connection->getUser()}\"",
+            "--password=\"{$connection->getPassword()}\"",
+            "--single-transaction",
+            "--no-tablespaces",
+            "--no-create-info",
             "--host={$connection->getHost()}",
             $connection->getDatabase(),
             implode(' ', $tables)
         ];
-        if (!$withData) {
-            $parts[] = '--no-data';
-        }
         $parts[] = ">> $dumpFile";
         return implode(' ', $parts);
     }
