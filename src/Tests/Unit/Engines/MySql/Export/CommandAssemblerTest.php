@@ -37,62 +37,78 @@ class CommandAssemblerTest extends TestCase
         $this->commandAssembler = new CommandAssembler($this->tablesProviderMock);
     }
 
-    public function testReturnsEmptyStringIfNoTables(): void
+    public function testReturnsEmptyArrayIfNoTables(): void
     {
         $this->tablesProviderMock->expects($this->any())->method('getAllTables')->willReturn([]);
         $this->assertSame(
-            '',
+            [],
             $this->commandAssembler->execute($this->connectionMock, $this->environmentMock, 'dump.sql')
         );
     }
 
-    public function testReturnsEmptyStringIfAllTablesAreIgnored(): void
+    public function testReturnsEmptyArrayIfAllTablesAreIgnored(): void
     {
         $this->tablesProviderMock->expects($this->any())->method('getAllTables')->willReturn(['a', 'b']);
         $this->tablesProviderMock->expects($this->any())->method('getIgnoredTables')->willReturn(['a', 'b']);
         $this->assertSame(
-            '',
+            [],
             $this->commandAssembler->execute($this->connectionMock, $this->environmentMock, 'dump.sql')
         );
     }
 
-    public function testReturnsCommandForNormalTables(): void
+    public function testReturnsCommandsForNormalTables(): void
     {
         $this->tablesProviderMock->expects($this->any())->method('getAllTables')->willReturn(['a', 'b']);
         $this->tablesProviderMock->expects($this->any())->method('getIgnoredTables')->willReturn([]);
         $this->assertSame(
-            'mysqldump --user="user" --password="password" --single-transaction --host=host db a >> dump.sql;'
-            . 'mysqldump --user="user" --password="password" --single-transaction --host=host db b >> dump.sql;'
-            . "cat dump.sql | sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > dump.sql.gz",
+            [
+                "echo '/*!40014 SET @ORG_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;'>> dump.sql",
+                'mysqldump --user="user" --password="password" --single-transaction --no-tablespaces --host=host '
+                    . 'db a >> dump.sql',
+                'mysqldump --user="user" --password="password" --single-transaction --no-tablespaces --host=host '
+                    . 'db b >> dump.sql',
+                "echo '/*!40014 SET FOREIGN_KEY_CHECKS=@ORG_FOREIGN_KEY_CHECKS */;' >> dump.sql",
+                "cat dump.sql | sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > dump.sql.gz"
+            ],
             $this->commandAssembler->execute($this->connectionMock, $this->environmentMock, 'dump.sql')
         );
     }
 
-    public function testReturnsCommandForEmptyTables(): void
+    public function testReturnsCommandsForEmptyTables(): void
     {
         $this->tablesProviderMock->expects($this->any())->method('getAllTables')->willReturn(['a', 'b']);
         $this->tablesProviderMock->expects($this->any())->method('getIgnoredTables')->willReturn([]);
         $this->tablesProviderMock->expects($this->any())->method('getEmptyTables')->willReturn(['a', 'b']);
         $this->assertSame(
-            'mysqldump --user="user" --password="password" --single-transaction --host=host '
-            . 'db a b --no-data >> dump.sql;'
-            . "cat dump.sql | sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > dump.sql.gz",
+            [
+                "echo '/*!40014 SET @ORG_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;'>> dump.sql",
+                'mysqldump --user="user" --password="password" --single-transaction --no-tablespaces --host=host '
+                    . 'db a b --no-data >> dump.sql',
+                "echo '/*!40014 SET FOREIGN_KEY_CHECKS=@ORG_FOREIGN_KEY_CHECKS */;' >> dump.sql",
+                "cat dump.sql | sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > dump.sql.gz"
+            ],
             $this->commandAssembler->execute($this->connectionMock, $this->environmentMock, 'dump.sql')
         );
     }
 
-    public function testReturnsCommandForMixedTables(): void
+    public function testReturnsCommandsForMixedTables(): void
     {
         $this->tablesProviderMock->expects($this->any())->method('getAllTables')
             ->willReturn(['a', 'b', 'c', 'd', 'e', 'f']);
         $this->tablesProviderMock->expects($this->any())->method('getIgnoredTables')->willReturn(['c', 'f']);
         $this->tablesProviderMock->expects($this->any())->method('getEmptyTables')->willReturn(['b', 'e']);
         $this->assertSame(
-            'mysqldump --user="user" --password="password" --single-transaction --host=host db a >> dump.sql;'
-            . 'mysqldump --user="user" --password="password" --single-transaction --host=host db d >> dump.sql;'
-            . 'mysqldump --user="user" --password="password" --single-transaction --host=host '
-            . 'db b e --no-data >> dump.sql;'
-            . "cat dump.sql | sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > dump.sql.gz",
+            [
+                "echo '/*!40014 SET @ORG_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;'>> dump.sql",
+                'mysqldump --user="user" --password="password" --single-transaction --no-tablespaces --host=host '
+                    . 'db a >> dump.sql',
+                'mysqldump --user="user" --password="password" --single-transaction --no-tablespaces --host=host '
+                    . 'db d >> dump.sql',
+                'mysqldump --user="user" --password="password" --single-transaction --no-tablespaces --host=host '
+                    . 'db b e --no-data >> dump.sql',
+                "echo '/*!40014 SET FOREIGN_KEY_CHECKS=@ORG_FOREIGN_KEY_CHECKS */;' >> dump.sql",
+                "cat dump.sql | sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > dump.sql.gz"
+            ],
             $this->commandAssembler->execute($this->connectionMock, $this->environmentMock, 'dump.sql')
         );
     }
