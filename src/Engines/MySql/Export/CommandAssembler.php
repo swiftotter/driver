@@ -20,11 +20,14 @@ class CommandAssembler
         $this->tablesProvider = $tablesProvider;
     }
 
+    /**
+     * @return string[]
+     */
     public function execute(
         ConnectionInterface $connection,
         EnvironmentInterface $environment,
         string $dumpFile
-    ): string {
+    ): array {
         $ignoredTables = $this->tablesProvider->getIgnoredTables($environment);
         $emptyTables = $this->tablesProvider->getEmptyTables($environment);
         $commands = [$this->getStructureCommand($connection, $ignoredTables, $dumpFile)];
@@ -35,7 +38,7 @@ class CommandAssembler
             $commands[] = $this->getDataCommand($connection, [$table], $dumpFile);
         }
         if (empty($commands)) {
-            return '';
+            return [];
         }
         array_unshift(
             $commands,
@@ -45,7 +48,7 @@ class CommandAssembler
         $commands[] = "echo '/*!40014 SET FOREIGN_KEY_CHECKS=@ORG_FOREIGN_KEY_CHECKS */;' >> $dumpFile";
         $commands[] = "cat $dumpFile | "
             . "sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > $dumpFile.gz";
-        return implode(';', $commands);
+        return $commands;
     }
 
     /**
