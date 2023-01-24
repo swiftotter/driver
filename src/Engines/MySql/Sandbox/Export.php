@@ -15,12 +15,15 @@ use Driver\System\Random;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
+use function array_key_exists;
+
 class Export extends Command implements CommandInterface, CleanupInterface
 {
     private RemoteConnectionInterface $connection;
     private Ssl $ssl;
     private Random $random;
-    private ?string $filename = null;
+    /** @var array<string, string> */
+    private array $filenames = [];
     private Configuration $configuration;
     // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
     private array $properties;
@@ -148,8 +151,8 @@ class Export extends Command implements CommandInterface, CleanupInterface
 
     private function getFilename(string $environmentName): string
     {
-        if ($this->filename) {
-            return $this->filename;
+        if (array_key_exists($environmentName, $this->filenames)) {
+            return $this->filenames[$environmentName];
         }
 
         $path = $this->configuration->getNode('connections/rds/dump-path');
@@ -161,7 +164,7 @@ class Export extends Command implements CommandInterface, CleanupInterface
                 . ($this->compressOutput() ? '.gz' : '.sql');
         } while (file_exists($file));
 
-        $this->filename = $file;
-        return $this->filename;
+        $this->filenames[$environmentName] = $file;
+        return $this->filenames[$environmentName];
     }
 }
