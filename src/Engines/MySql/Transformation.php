@@ -78,10 +78,7 @@ class Transformation extends Command implements CommandInterface
                     $ex->getMessage(),
                     $ex->getTraceAsString()
                 ]);
-                $this->output->writeln("<error>Query transformation failed: " . $query, [
-                    $ex->getMessage(),
-                    $ex->getTraceAsString()
-                ] . '</error>');
+                $this->output->writeln("<error>Query transformation failed: " . $query . '</error>');
             }
         });
     }

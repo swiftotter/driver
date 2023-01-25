@@ -74,14 +74,13 @@ class Import extends Command implements CommandInterface
     public function assembleCommand(string $path): string
     {
         $command = implode(' ', [
+            "gunzip < $path |",
             "mysql --user={$this->remoteConnection->getUser()}",
-                "--password={$this->remoteConnection->getPassword()}",
-                "--host={$this->remoteConnection->getHost()}",
-                "--port={$this->remoteConnection->getPort()}",
-                $this->remoteConnection->useSsl() ? "--ssl-ca={$this->ssl->getPath()}" : "",
-                "{$this->remoteConnection->getDatabase()}",
-            "<",
-            $path
+            "--password={$this->remoteConnection->getPassword()}",
+            "--host={$this->remoteConnection->getHost()}",
+            "--port={$this->remoteConnection->getPort()}",
+            $this->remoteConnection->useSsl() ? "--ssl-ca={$this->ssl->getPath()}" : "",
+            "{$this->remoteConnection->getDatabase()}"
         ]);
 
         if (
