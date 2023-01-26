@@ -71,7 +71,11 @@ class Export extends Command implements CommandInterface, CleanupInterface
         );
 
         $environmentName = $environment->getName();
-        $command = $this->assembleCommand($environmentName, $environment->getIgnoredTables());
+        $command = $this->assembleCommand(
+            $environmentName,
+            $environment->getIgnoredTables(),
+            $transport->getData('triggers-dump-file')
+        );
 
         $this->files[] = $this->getFilename($environmentName);
 
@@ -101,8 +105,9 @@ class Export extends Command implements CommandInterface, CleanupInterface
     /**
      * @param string[] $ignoredTables
      */
-    private function assembleCommand(string $environmentName, array $ignoredTables): string
+    private function assembleCommand(string $environmentName, array $ignoredTables, string $triggersDumpFile): string
     {
+        $filename = $this->getFilename($environmentName);
         $command = implode(' ', array_merge([
             "mysqldump --user={$this->connection->getUser()}",
             "--password={$this->connection->getPassword()}",
@@ -110,21 +115,13 @@ class Export extends Command implements CommandInterface, CleanupInterface
             "--port={$this->connection->getPort()}",
             "--no-tablespaces"
         ], $this->getIgnoredTables($ignoredTables)));
-
         $command .= " {$this->connection->getDatabase()} ";
         $command .= "| sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' ";
-
         if ($this->compressOutput()) {
-            $command .= ' ' . implode(' ', [
-                '|',
-                'gzip --best'
-            ]);
+            $command .= "| gzip --best ";
         }
-
-        $command .= ' ' . implode(' ', [
-            '>',
-            $this->getFilename($environmentName)
-        ]);
+        $command .= "> $filename;";
+        $command .= ($this->compressOutput() ? "cat" : "gunzip < ") . " $triggersDumpFile >> $filename;";
 
         return $command;
     }

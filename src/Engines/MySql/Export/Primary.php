@@ -27,7 +27,8 @@ class Primary extends Command implements CommandInterface, CleanupInterface
     private array $properties;
     private LoggerInterface $logger;
     private Random $random;
-    private ?string $path = null;
+    /** @var array<string, string> */
+    private array $filePaths = [];
     private Configuration $configuration;
     private ConsoleOutput $output;
     private CommandAssembler $commandAssembler;
@@ -58,7 +59,8 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         $this->output->writeln("<comment>Exporting database from local MySql</comment>");
 
         try {
-            $commands = $this->commandAssembler->execute($this->localConnection, $environment, $this->getDumpFile());
+            $commands = $this->commandAssembler
+                ->execute($this->localConnection, $environment, $this->getDumpFile(), $this->getDumpFile('triggers'));
             if (empty($commands)) {
                 throw new RuntimeException('Nothing to import');
             }
@@ -70,7 +72,7 @@ class Primary extends Command implements CommandInterface, CleanupInterface
                 $result = system($command, $resultCode);
                 if ($result === false || $resultCode !== 0) {
                     $message = sprintf('Error (%s) when executing command: %s', $resultCode, $strippedCommand);
-                    $this->output->writeln("<error>${$message}</error>");
+                    $this->output->writeln("<error>$message</error>");
                     throw new RuntimeException($message);
                 }
             }
@@ -82,14 +84,17 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         $this->logger->notice("Database dump has completed.");
         $this->output->writeln("<info>Database dump has completed.</info>");
         return $transport->withStatus(new Status('sandbox_init', 'success'))
-            ->withNewData('dump-file', $this->getDumpFile());
+            ->withNewData('dump-file', $this->getDumpFile())
+            ->withNewData('triggers-dump-file', $this->getDumpFile('triggers'));
     }
 
     public function cleanup(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
-        if ($this->getDumpFile() && file_exists($this->getDumpFile())) {
-            @unlink($this->getDumpFile());
-        }
+        array_walk($this->filePaths, function (string $filePath): void {
+            if ($filePath && file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        });
         return $transport;
     }
 
@@ -99,18 +104,18 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         return $this->properties;
     }
 
-    private function getDumpFile(): string
+    private function getDumpFile(string $code = 'default'): string
     {
-        if (!$this->path) {
+        if (!\array_key_exists($code, $this->filePaths)) {
             $path = $this->configuration->getNode('connections/mysql/dump-path');
             if (!$path) {
                 $path = self::DEFAULT_DUMP_PATH;
             }
-            $filename = 'driver-' . $this->random->getRandomString(6) . '.sql';
+            $filename = 'driver-' . $this->random->getRandomString(6) . '.gz';
 
-            $this->path = $path . '/' . $filename;
+            $this->filePaths[$code] = $path . '/' . $filename;
         }
 
-        return $this->path;
+        return $this->filePaths[$code];
     }
 }

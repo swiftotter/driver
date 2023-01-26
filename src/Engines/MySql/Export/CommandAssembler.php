@@ -7,6 +7,7 @@ namespace Driver\Engines\MySql\Export;
 use Driver\Engines\ConnectionInterface;
 use Driver\Pipeline\Environment\EnvironmentInterface;
 
+use function array_diff;
 use function array_unshift;
 use function implode;
 use function in_array;
@@ -26,54 +27,101 @@ class CommandAssembler
     public function execute(
         ConnectionInterface $connection,
         EnvironmentInterface $environment,
-        string $dumpFile
+        string $dumpFile,
+        string $triggersDumpFile
     ): array {
+        $allTables = $this->tablesProvider->getAllTables($connection);
         $ignoredTables = $this->tablesProvider->getIgnoredTables($environment);
+        if (array_diff($allTables, $ignoredTables) === []) {
+            return [];
+        }
         $emptyTables = $this->tablesProvider->getEmptyTables($environment);
-        foreach ($this->tablesProvider->getAllTables($connection) as $table) {
+        $commands = [$this->getStructureCommand($connection, $ignoredTables, $dumpFile)];
+        foreach ($allTables as $table) {
             if (in_array($table, $ignoredTables) || in_array($table, $emptyTables)) {
                 continue;
             }
-            $commands[] = $this->getSingleCommand($connection, [$table], $dumpFile);
-        }
-        if (!empty($emptyTables)) {
-            $commands[] = $this->getSingleCommand($connection, $emptyTables, $dumpFile, false);
-        }
-        if (empty($commands)) {
-            return [];
+            $commands[] = $this->getDataCommand($connection, [$table], $dumpFile);
         }
         array_unshift(
             $commands,
             "echo '/*!40014 SET @ORG_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;'"
-            . ">> $dumpFile"
+            . " | gzip >> $dumpFile"
         );
-        $commands[] = "echo '/*!40014 SET FOREIGN_KEY_CHECKS=@ORG_FOREIGN_KEY_CHECKS */;' >> $dumpFile";
-        $commands[] = "cat $dumpFile | "
-            . "sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g' | gzip > $dumpFile.gz";
+        $commands[] = "echo '/*!40014 SET FOREIGN_KEY_CHECKS=@ORG_FOREIGN_KEY_CHECKS */;' | gzip >> $dumpFile";
+        $commands[] = $this->getTriggersCommand($connection, $ignoredTables, $triggersDumpFile);
         return $commands;
     }
 
     /**
-     * @param string[] $tables
+     * @param string[] $ignoredTables
      */
-    private function getSingleCommand(
+    private function getStructureCommand(
         ConnectionInterface $connection,
-        array $tables,
-        string $dumpFile,
-        bool $withData = true
+        array $ignoredTables,
+        string $dumpFile
     ): string {
         $parts = [
             "mysqldump --user=\"{$connection->getUser()}\"",
             "--password=\"{$connection->getPassword()}\"",
             "--single-transaction",
             "--no-tablespaces",
+            "--no-data",
+            "--skip-triggers",
+            "--host={$connection->getHost()}",
+            $connection->getDatabase()
+        ];
+        foreach ($ignoredTables as $table) {
+            $parts[] = "--ignore-table={$connection->getDatabase()}.{$table}";
+        }
+        $parts[] = "| sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g'";
+        $parts[] = "| gzip";
+        $parts[] = ">> $dumpFile";
+        return implode(' ', $parts);
+    }
+
+    /**
+     * @param string[] $tables
+     */
+    private function getDataCommand(ConnectionInterface $connection, array $tables, string $dumpFile): string
+    {
+        $parts = [
+            "mysqldump --user=\"{$connection->getUser()}\"",
+            "--password=\"{$connection->getPassword()}\"",
+            "--single-transaction",
+            "--no-tablespaces",
+            "--no-create-info",
+            "--skip-triggers",
             "--host={$connection->getHost()}",
             $connection->getDatabase(),
             implode(' ', $tables)
         ];
-        if (!$withData) {
-            $parts[] = '--no-data';
+        $parts[] = "| gzip";
+        $parts[] = ">> $dumpFile";
+        return implode(' ', $parts);
+    }
+
+    /**
+     * @param string[] $ignoredTables
+     */
+    private function getTriggersCommand(ConnectionInterface $connection, array $ignoredTables, string $dumpFile): string
+    {
+        $parts = [
+            "mysqldump --user=\"{$connection->getUser()}\"",
+            "--password=\"{$connection->getPassword()}\"",
+            "--single-transaction",
+            "--no-tablespaces",
+            "--no-data",
+            "--no-create-info",
+            "--triggers",
+            "--host={$connection->getHost()}",
+            $connection->getDatabase()
+        ];
+        foreach ($ignoredTables as $table) {
+            $parts[] = "--ignore-table={$connection->getDatabase()}.{$table}";
         }
+        $parts[] = "| sed -E 's/DEFINER[ ]*=[ ]*`[^`]+`@`[^`]+`/DEFINER=CURRENT_USER/g'";
+        $parts[] = "| gzip";
         $parts[] = ">> $dumpFile";
         return implode(' ', $parts);
     }

@@ -29,48 +29,7 @@ environments:
         - "UPDATE {{table_name}} SET value = 'store.local' WHERE path LIKE 'web/cookie/cookie_domain' AND scope_id = 0;"
         - "UPDATE {{table_name}} SET value = 'localhost' WHERE path LIKE 'catalog/search/elasticsearch%_server_hostname' AND scope_id = 0;"
     ignored_tables:
-      - setup_module
-      - customer_address_entity
-      - customer_address_entity_datetime
-      - customer_address_entity_decimal
-      - customer_address_entity_int
-      - customer_address_entity_text
-      - customer_address_entity_varchar
-      - customer_entity
-      - customer_entity_datetime
-      - customer_entity_decimal
-      - customer_entity_int
-      - customer_entity_text
-      - customer_entity_varchar
-      - sales_creditmemo
-      - sales_credimemo_comment
-      - sales_creditmemo_grid
-      - sales_creditmemo_item
-      - sales_invoice
-      - sales_invoice_comment
-      - sales_invoice_grid
-      - sales_invoice_item
-      - sales_order
-      - sales_order_address
-      - sales_order_grid
-      - sales_order_item
-      - sales_order_payment
-      - sales_order_status_history
-      - sales_shipment
-      - sales_shipment_comment
-      - sales_shipment_grid
-      - sales_shipment_item
-      - sales_shipment_track
-      - sales_invoiced_aggregated
-      - sales_invoiced_aggregated_order
-      - sales_payment_transaction
-      - sales_order_aggregated_created
-      - sales_order_tax
-      - sales_order_tax_item
-      - sales_quote
-      - sales_quote_address
-      - sales_quote_address_item
-      - sales_quote_item
-      - sales_quote_item_option
-      - sales_quote_payment
-      - sales_quote_shipping_rate
+      - some_non_magento_table
+    empty_tables:
+      - customer_log
+      - customer_visitor
