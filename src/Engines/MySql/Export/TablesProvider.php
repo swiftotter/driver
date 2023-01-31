@@ -19,8 +19,8 @@ class TablesProvider
     {
         $command = "mysql --user=\"{$connection->getUser()}\" --password=\"{$connection->getPassword()}\" "
             . "--host=\"{$connection->getHost()}\" --skip-column-names "
-            . "-e \"SELECT GROUP_CONCAT(table_name SEPARATOR ',') FROM information_schema.tables "
-            . "WHERE table_schema = '{$connection->getDatabase()}';\"";
+            . "-e \"SET SESSION group_concat_max_len = 1000000; SELECT GROUP_CONCAT(table_name SEPARATOR ',') "
+            . " FROM information_schema.tables WHERE table_schema = '{$connection->getDatabase()}';\"";
         $result = exec($command);
         if (!$result) {
             throw new \RuntimeException('Unable to get table names');
