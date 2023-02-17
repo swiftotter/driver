@@ -1,29 +1,20 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 2/8/20
- * @website https://swiftotter.com
- **/
 
 namespace Driver\System;
 
 use DI\Container;
 use Driver\Engines\ConnectionInterface;
 use Driver\Engines\LocalConnectionInterface;
+use Driver\Engines\ReconnectingPDO;
 
 class LocalConnectionLoader implements LocalConnectionInterface
 {
-    /** @var Configuration */
-    private $configuration;
-
-    /** @var DefaultConnection */
-    private $defaultConnection;
-
-    /** @var ConnectionInterface */
-    private $connection;
-
-    /** @var Container */
-    private $container;
+    private Configuration $configuration;
+    private Container $container;
+    private DefaultConnection $defaultConnection;
+    private ?ConnectionInterface $connection = null;
 
     public function __construct(
         Configuration $configuration,
@@ -35,12 +26,12 @@ class LocalConnectionLoader implements LocalConnectionInterface
         $this->container = $container;
     }
 
-    public function getConnection(): \PDO
+    public function getConnection(): ReconnectingPDO
     {
         return $this->get()->getConnection();
     }
 
-    private function get()
+    private function get(): ConnectionInterface
     {
         if ($this->connection) {
             return $this->connection;
@@ -71,7 +62,7 @@ class LocalConnectionLoader implements LocalConnectionInterface
         return $this->connection;
     }
 
-    private function getDefault()
+    private function getDefault(): DefaultConnection
     {
         return $this->defaultConnection;
     }
@@ -116,6 +107,7 @@ class LocalConnectionLoader implements LocalConnectionInterface
         return $this->get()->getPassword();
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
     public function getPreserve(): array
     {
         return $this->get()->getPreserve();

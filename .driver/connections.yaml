@@ -3,5 +3,6 @@ connections:
     instance-type: db.t3.medium
     engine: MySQL
     storage-type: gp2
+    region: us-east-2
 
 # TODO: fix merging so that the other keys overwrite this.

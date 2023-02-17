@@ -1,0 +1,4 @@
+configuration:
+  compress-output: true
+test:
+  value: unknown

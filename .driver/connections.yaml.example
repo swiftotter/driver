@@ -1,0 +1,26 @@
+connections:
+  database: mysql
+  mysql:
+    engine: mysql
+    host: localhost
+    database: some_db
+    user: some_user
+    password: "sdf93mSDF,os,of3Spwer/df"
+  s3:
+    engine: s3
+    key: SDF83K0N3IDSL29ZMEIH
+    secret: "kF9kwnf,mo3fFoaow+3mda/439a,Dlwommw9021m"
+    bucket: some-bucket
+    compressed-file-key: dump{{environment}}.sql.gz
+    uncompressed-file-key: dump{{environment}}.sql
+    region: us-east-2
+  rds:
+    key: SDF83K0N3IDSL29ZMEIH
+    secret: "kF9kwnf,mo3fFoaow+3mda/439a,Dlwommw9021m"
+    region: us-east-2
+    engine: MySQL
+    engine-version: 5.7.38
+  ec2:
+    key: SDF83K0N3IDSL29ZMEIH
+    secret: "kF9kwnf,mo3fFoaow+3mda/439a,Dlwommw9021m"
+    region: us-east-2

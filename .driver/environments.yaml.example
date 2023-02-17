@@ -1,0 +1,35 @@
+environments:
+  staging:
+    sort: 100
+    transformations:
+      mview_state:
+        - "UPDATE {{table_name}} SET mode = 'disabled';"
+      core_config_data:
+        - "UPDATE {{table_name}} SET value = 'https://staging.store.com/' WHERE path LIKE 'web/%secure/base_url' AND scope_id = 0;"
+        - "UPDATE {{table_name}} SET value = 'staging.store.com' WHERE path LIKE 'web/cookie/cookie_domain' AND scope_id = 0;"
+  local:
+    sort: 200
+    transformations:
+      admin_user:
+        - "DELETE FROM {{table_name}};"
+        - "ALTER TABLE {{table_name}} AUTO_INCREMENT = 1;"
+        - "INSERT INTO {{table_name}} (firstname, lastname, email, username, password) VALUES ('SwiftOtter', 'Studios', 'joseph@swiftotter.com', 'admin', CONCAT(SHA2('xxxxxxxxswiftotter123', 256), ':xxxxxxxx:1'));"
+      authorization_role:
+        - "DELETE FROM {{table_name}};"
+        - "ALTER TABLE {{table_name}} AUTO_INCREMENT = 1;"
+        - "INSERT INTO {{table_name}} (role_id, parent_id, tree_level, sort_order, role_type, user_id, user_type, role_name) VALUES (1, '0','1','1','G','0','2','Administrators');"
+        - "INSERT INTO {{table_name}} (role_id, parent_id, tree_level, sort_order, role_type, user_id, user_type, role_name) VALUES (2, '1','2','0','U','1','2','swiftotter');"
+      authorization_rule:
+        - "DELETE FROM {{table_name}};"
+        - "ALTER TABLE {{table_name}} AUTO_INCREMENT = 1;"
+        - "INSERT INTO {{table_name}} (role_id, resource_id, permission) VALUES ('1', 'Magento_Backend::all', 'allow');"
+        - "INSERT INTO {{table_name}} (role_id, resource_id, permission) VALUES ('2', 'Magento_Backend::all', 'allow');"
+      core_config_data:
+        - "UPDATE {{table_name}} SET value = 'https://store.local/' WHERE path LIKE 'web/%secure/base_url' AND scope_id = 0;"
+        - "UPDATE {{table_name}} SET value = 'store.local' WHERE path LIKE 'web/cookie/cookie_domain' AND scope_id = 0;"
+        - "UPDATE {{table_name}} SET value = 'localhost' WHERE path LIKE 'catalog/search/elasticsearch%_server_hostname' AND scope_id = 0;"
+    ignored_tables:
+      - some_non_magento_table
+    empty_tables:
+      - customer_log
+      - customer_visitor

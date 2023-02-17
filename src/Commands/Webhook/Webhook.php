@@ -1,32 +1,18 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/6/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Commands\Webhook;
 
 use Driver\System\Configuration;
 use Driver\System\Logs\LoggerInterface;
+use GuzzleHttp\Client;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Webhook implements WebhookInterface
 {
-    private $configuration;
-    private $logger;
+    private Configuration $configuration;
+    private LoggerInterface $logger;
 
     public function __construct(Configuration $configuration, LoggerInterface $logger)
     {
@@ -34,9 +20,10 @@ class Webhook implements WebhookInterface
         $this->logger = $logger;
     }
 
-    public function call($webhookUrl, $data, $method)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    public function call(string $webhookUrl, array $data, string $method): void
     {
-        $client = new \GuzzleHttp\Client();
+        $client = new Client();
         $options = $this->getAuth([]);
         $options = $this->getData($options, $data, $method);
 
@@ -47,17 +34,20 @@ class Webhook implements WebhookInterface
         }
     }
 
-    public function post($webhookUrl, $data)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    public function post(string $webhookUrl, array $data): void
     {
         $this->call($webhookUrl, $data, 'POST');
     }
 
-    public function get($webhookUrl, $data)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
+    public function get(string $webhookUrl, array $data): void
     {
         $this->call($webhookUrl, $data, 'GET');
     }
 
-    private function getData($options, $data, $method)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification,SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    private function getData(array $options, array $data, string $method): array
     {
         if (!count($data)) {
             return $options;
@@ -70,7 +60,8 @@ class Webhook implements WebhookInterface
         }
     }
 
-    private function getAuth($options)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification,SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    private function getAuth(array $options): array
     {
         $auth = $this->configuration->getNode('connections/webhook/auth');
         $node = [];
@@ -81,5 +72,4 @@ class Webhook implements WebhookInterface
 
         return array_merge($options, $node);
     }
-
 }

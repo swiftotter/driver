@@ -1,0 +1,16 @@
+environments:
+  ENVIRONMENT_NAME: # Change ENVIRONMENT_NAME to some concrete name like "local", you can define multiple environments.
+    sort: # REQUIRED: numeric value, lower runs sooner, higher runs later.
+    transformations: # OPTIONAL
+      TABLE_NAME: # Change TABLE_NAME to real name of database table you would like to transform with SQL query.
+                  # You can define multiple tables.
+        - "UPDATE {{table_name}} SET value = 'example' WHERE path = 'id';" # You can list here multiple UPDATE queries.
+          # The {{table_name}} is substituted for the `TABLE_NAME` reference above.
+          # Driver will look for a table that ends with `TABLE_NAME`.
+          # For example, if your `TABLE_NAME` is `core_config_data`, Driver will search for a table in the database that
+          # ends with `core_config_data`. Thus, `core_config_data` and `sample_core_config_data` would all match.
+    ignored_tables: # OPTIONAL, tables listed here will be ignored in the final dump with:
+                    # mysqldump ... --ignored-tables=TABLE_NAME
+      - TABLE_NAME
+    empty_tables: # OPTIONAL, tables listed here will be dumped without data
+      - TABLE_NAME

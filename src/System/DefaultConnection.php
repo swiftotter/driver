@@ -1,9 +1,6 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 2/8/20
- * @website https://swiftotter.com
- **/
 
 namespace Driver\System;
 
@@ -15,11 +12,8 @@ class DefaultConnection implements ConnectionInterface
 {
     use ConnectionTrait;
 
-    /** @var Configuration  */
-    private $configuration;
-
-    /** @var ConsoleOutput */
-    private $output;
+    private Configuration $configuration;
+    private ConsoleOutput $output;
 
     public function __construct(Configuration $configuration, ConsoleOutput $output)
     {
@@ -34,7 +28,8 @@ class DefaultConnection implements ConnectionInterface
 
     public function getDSN(): string
     {
-        return "mysql:host={$this->getHost()};dbname={$this->getDatabase()};port={$this->getPort()};charset={$this->getCharset()}";
+        return "mysql:host={$this->getHost()};dbname={$this->getDatabase()};"
+            . "port={$this->getPort()};charset={$this->getCharset()}";
     }
 
     public function getCharset(): string
@@ -79,7 +74,8 @@ class DefaultConnection implements ConnectionInterface
         return $this->getValue('password', true);
     }
 
-    private function getValue($key, $required)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    private function getValue(string $key, bool $required)
     {
         $value = $this->configuration->getNode("connections/mysql/{$key}");
         if (is_array($value) && $required) {
@@ -90,6 +86,7 @@ class DefaultConnection implements ConnectionInterface
         return $value;
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
     public function getPreserve(): array
     {
         return $this->getValue('preserve', false) ?: [];

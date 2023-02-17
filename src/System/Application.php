@@ -1,71 +1,31 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/8/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\System;
 
 use DI\Container;
+use Driver\Pipeline\Command;
 use Symfony\Component\Console\Application as ConsoleApplication;
-use Symfony\Component\Console\Event\ConsoleSignalEvent;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * Class Application
- * Main class to run functionality
- *
- * @package Driver\System
- */
 class Application
 {
-    protected $console;
-    protected $configuration;
-    protected $container;
+    private ConsoleApplication $console;
+    private Container $container;
 
-    private EventDispatcher $eventDispatcher;
-
-    const RUN_MODE_NORMAL = 'normal';
-    const RUN_MODE_TEST = 'test';
-
-    public function __construct(
-        ConsoleApplication $console,
-        Configuration $configuration,
-        Container $container,
-        EventDispatcher $eventDispatcher
-    ) {
+    public function __construct(ConsoleApplication $console, Container $container)
+    {
         $this->console = $console;
-        $this->configuration = $configuration;
         $this->container = $container;
-        $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function run($mode = self::RUN_MODE_NORMAL)
+    public function run(): void
     {
-        foreach ($this->configuration->getNode('commands') as $name => $settings) {
-            $this->console->add($this->container->get($settings['class']));
-        }
-
+        $this->console->add($this->container->get(Command::class));
         $this->console->run();
     }
 
-    /**
-     * @return ConsoleApplication
-     */
-    public function getConsole()
+    public function getConsole(): ConsoleApplication
     {
         return $this->console;
     }

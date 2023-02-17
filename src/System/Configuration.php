@@ -1,74 +1,70 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 10/8/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\System;
-use Driver\System\Configuration\YamlLoader;
+
+use Driver\System\Configuration\FileCollector;
+use Driver\System\Configuration\FileLoader;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
+use function array_keys;
+use function array_merge;
+use function array_reduce;
+use function array_walk;
+use function count;
+use function explode;
+use function is_array;
+use function is_int;
+use function is_string;
+
 class Configuration
 {
-    /** @var YamlLoader $loader */
-    protected $loader;
+    private FileCollector $fileCollector;
+    private FileLoader $loader;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint
+    private array $nodes = ['pipelines' => []];
+    /** @var array<string, string> */
+    private array $files = [];
 
-    protected $nodes = [
-        'pipelines' => []
-    ];
-
-    protected $files = [];
-
-    public function __construct(YamlLoader $loader)
+    public function __construct(FileCollector $fileCollector, FileLoader $fileLoader)
     {
-        $this->loader = $loader;
+        $this->fileCollector = $fileCollector;
+        $this->loader = $fileLoader;
     }
 
-    public function getNodes()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getNodes(): array
     {
         if (!count($this->files)) {
-            $this->loadAllConfiguration();
+            foreach ($this->fileCollector->get() as $file) {
+                $this->loadConfigurationFor($file);
+            };
         }
 
         return $this->nodes;
     }
 
-    public function getNode($node)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    public function getNode(string $node)
     {
         $path = explode('/', $node);
         $nodes = $this->getNodes();
 
-        return array_reduce($path, function($nodes, $item) {
-            if (isset($nodes[$item])) {
-                return $nodes[$item];
-            } else {
-                return null;
-            }
+        return array_reduce($path, function ($nodes, $item) {
+            return $nodes[$item] ?? null;
         }, $nodes);
     }
 
-    public function getNodeString($node): string
+    public function getNodeString(string $node): string
     {
         $value = $this->getNode($node);
 
         return is_string($value) ? $value : '';
     }
 
-    protected function loadConfigurationFor($file)
+    private function loadConfigurationFor(string $file): void
     {
         if (!isset($this->files[$file])) {
             try {
@@ -89,18 +85,17 @@ class Configuration
                 throw $e;
             }
         }
-
-        return $this->files[$file];
     }
 
-    private function recursiveMerge(array $array1, array $array2)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    private function recursiveMerge(array $array1, array $array2): array
     {
         $merged = $array1;
 
         foreach ($array2 as $key => $value) {
             if (is_array($value) && isset($merged[$key]) && is_array($merged[$key]) && !is_int($key)) {
                 $merged[$key] = $this->recursiveMerge($merged[$key], $value);
-            } else if (is_int($key)) {
+            } elseif (is_int($key)) {
                 $merged[] = $value;
             } else {
                 $merged[$key] = $value;
@@ -111,10 +106,9 @@ class Configuration
 
     /**
      * Special handling for pipelines as they don't exactly follow the key/value pattern.
-     *
-     * @param $input
      */
-    protected function mergePipelines($new)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    private function mergePipelines(array $new): array
     {
         if (!isset($this->nodes['pipelines']) || !count($this->nodes['pipelines'])) {
             return $new;
@@ -130,7 +124,7 @@ class Configuration
             array_keys($new)
         );
 
-        return array_reduce($pipelinesKeys, function($carry, $key) use ($new) {
+        return array_reduce($pipelinesKeys, function ($carry, $key) use ($new) {
             $existing = $this->nodes['pipelines'];
             if (!isset($new[$key])) {
                 $carry[$key] = $existing;
@@ -146,55 +140,46 @@ class Configuration
         }, []);
     }
 
-    protected function mergePipeline($existing, $new)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    private function mergePipeline(array $existing, array $new): array
     {
-        array_walk($new, function($value) use (&$existing) {
+        array_walk($new, function ($value) use (&$existing): void {
             $existing = $this->mergeStageIntoPipeline($existing, $value);
         });
 
         return $existing;
     }
 
-    protected function mergeStageIntoPipeline($existing, $newStage)
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint,SlevomatCodingStandard.TypeHints.ReturnTypeHint
+    private function mergeStageIntoPipeline(array $existing, array $newStage): array
     {
         $matched = false;
 
-        $output = array_reduce(array_keys($existing), function($carry, $existingKey) use ($existing, $newStage, &$matched) {
-            $existingStage = $existing[$existingKey];
-            $currentMatch = isset($newStage['name']) && isset($existingStage['name']) && $newStage['name'] == $existingStage['name'];
-            $matched = $matched || $currentMatch;
+        $output = array_reduce(
+            array_keys($existing),
+            function ($carry, $existingKey) use ($existing, $newStage, &$matched) {
+                $existingStage = $existing[$existingKey];
+                $currentMatch = isset($newStage['name'])
+                    && isset($existingStage['name'])
+                    && $newStage['name'] == $existingStage['name'];
+                $matched = $matched || $currentMatch;
 
-            if (!$currentMatch) {
+                if (!$currentMatch) {
+                    return $carry;
+                }
+
+                $carry[$existingKey] = array_merge($existingStage, $newStage);
+                $carry[$existingKey]['actions'] = array_merge($existingStage['actions'], $newStage['actions']);
+
                 return $carry;
-            }
-
-            $carry[$existingKey] = array_merge($existingStage, $newStage);
-            $carry[$existingKey]['actions'] = array_merge($existingStage['actions'], $newStage['actions']);
-
-            return $carry;
-        }, $existing);
+            },
+            $existing
+        );
 
         if (!$matched) {
             $output[] = $newStage;
         }
 
         return $output;
-    }
-
-    protected function consolidateStage($existing, $new)
-    {
-
-    }
-
-    protected function stripFileExtension($file)
-    {
-        return pathinfo($file, PATHINFO_FILENAME);
-    }
-
-    protected function loadAllConfiguration()
-    {
-        foreach ($this->loader->get() as $file) {
-            $this->loadConfigurationFor((string)$file);
-        };
     }
 }

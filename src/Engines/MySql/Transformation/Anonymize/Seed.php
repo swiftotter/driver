@@ -1,26 +1,28 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 2/8/20
- * @website https://swiftotter.com
- **/
 
 namespace Driver\Engines\MySql\Transformation\Anonymize;
 
 use Driver\Engines\RemoteConnectionInterface;
 use Driver\System\Configuration;
 
+use function uniqid;
+
 class Seed
 {
-    const FAKE_USER_TABLE = 'fake_users';
+    public const FAKE_USER_TABLE = 'fake_users';
 
     private RemoteConnectionInterface $connection;
     private Configuration $configuration;
+    private string $salt;
+    private int $count = 0;
 
     public function __construct(Configuration $configuration, RemoteConnectionInterface $connection)
     {
         $this->connection = $connection;
         $this->configuration = $configuration;
+        $this->salt = uniqid();
     }
 
     public function initialize(): void
@@ -41,34 +43,44 @@ class Seed
             $params = array_combine($bind, array_values($seed));
 
             $this->connection->getConnection()->prepare($query)->execute($params);
+            $this->count++;
         }
     }
 
-    public function destroy()
+    public function destroy(): void
     {
         $this->clean();
     }
 
-    private function clean()
+    public function getSalt(): string
     {
-        $this->connection->getConnection()->query('DROP TABLE IF EXISTS ' . self::FAKE_USER_TABLE);
+        return $this->salt;
     }
 
-    private function createTable()
+    public function getCount(): int
+    {
+        return $this->count;
+    }
+
+    private function clean(): void
+    {
+        $this->connection->getConnection()->query('DROP TABLE IF EXISTS ' . self::FAKE_USER_TABLE);
+        $this->count = 0;
+    }
+
+    private function createTable(): void
     {
         $table = self::FAKE_USER_TABLE;
 
         $this->connection->getConnection()->query(<<<TABLE
 CREATE TABLE ${table} (
+    id int auto_increment primary key,
     firstname VARCHAR(200),
     lastname VARCHAR(200),
     company VARCHAR(200),
     street VARCHAR(200),
     city VARCHAR(200),
-    region VARCHAR(200),
-    region_id VARCHAR(10),
     postcode VARCHAR(200),
-    country_id VARCHAR(2),
     phone VARCHAR(200),
     ip VARCHAR(200)
 );

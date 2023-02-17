@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Export;
 
@@ -26,31 +11,36 @@ use Driver\Pipeline\Environment\EnvironmentInterface;
 use Driver\Pipeline\Transport\Status;
 use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
-use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
 use Driver\System\Random;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 class Primary extends Command implements CommandInterface, CleanupInterface
 {
+    private const DEFAULT_DUMP_PATH = '/tmp';
+
     private LocalConnectionInterface $localConnection;
-    private array $properties = [];
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
     private LoggerInterface $logger;
     private Random $random;
-    private ?string $path = null;
+    /** @var array<string, string> */
+    private array $filePaths = [];
     private Configuration $configuration;
     private ConsoleOutput $output;
+    private CommandAssembler $commandAssembler;
 
-    const DEFAULT_DUMP_PATH = '/tmp';
-
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         LocalConnectionInterface $localConnection,
         Configuration $configuration,
         LoggerInterface $logger,
         Random $random,
         ConsoleOutput $output,
+        CommandAssembler $commandAssembler,
         array $properties = []
     ) {
         $this->localConnection = $localConnection;
@@ -59,140 +49,73 @@ class Primary extends Command implements CommandInterface, CleanupInterface
         $this->random = $random;
         $this->configuration = $configuration;
         $this->output = $output;
+        $this->commandAssembler = $commandAssembler;
         return parent::__construct('mysql-default-export');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $transport->getLogger()->notice("Exporting database from local MySql");
         $this->output->writeln("<comment>Exporting database from local MySql</comment>");
 
-        $transport->getLogger()->debug(
-            "Local connection string: " . str_replace(
-                $this->localConnection->getPassword(),
-                '',
-                $this->assembleCommand($environment)
-            )
-        );
-        $this->output->writeln("<comment>Local connection string: </comment>" . str_replace(
-                $this->localConnection->getPassword(),
-                '',
-                $this->assembleCommand($environment)
-            )
-        );
+        try {
+            $commands = $this->commandAssembler
+                ->execute($this->localConnection, $environment, $this->getDumpFile(), $this->getDumpFile('triggers'));
+            if (empty($commands)) {
+                throw new RuntimeException('Nothing to import');
+            }
 
-        $results = null;
-        $command = implode(';', array_filter([
-            $this->assembleCommand($environment),
-            $this->assembleEmptyCommand($environment)
-        ]));
-
-        $results = system($command);
-
-        if ($results) {
-            $this->output->writeln('<error>Import to RDS instance failed: ' . $results . '</error>');
-            throw new \Exception('Import to RDS instance failed: ' . $results);
-        } else {
-            $this->logger->notice("Database dump has completed.");
-            $this->output->writeln("<info>Database dump has completed.</info>");
-            return $transport->withStatus(new Status('sandbox_init', 'success'))->withNewData('dump-file', $this->getDumpFile());
+            foreach ($commands as $command) {
+                $strippedCommand = str_replace($this->localConnection->getPassword(), '', $command);
+                $transport->getLogger()->debug('Command: ' . $strippedCommand);
+                $resultCode = 0;
+                $result = system($command, $resultCode);
+                if ($result === false || $resultCode !== 0) {
+                    $message = sprintf('Error (%s) when executing command: %s', $resultCode, $strippedCommand);
+                    $this->output->writeln("<error>$message</error>");
+                    throw new RuntimeException($message);
+                }
+            }
+        } catch (Throwable $e) {
+            $this->output->writeln('<error>Import to RDS instance failed: ' . $e->getMessage() . '</error>');
+            throw new RuntimeException('Import to RDS instance failed: ' . $e->getMessage());
         }
+
+        $this->logger->notice("Database dump has completed.");
+        $this->output->writeln("<info>Database dump has completed.</info>");
+        return $transport->withStatus(new Status('sandbox_init', 'success'))
+            ->withNewData('dump-file', $this->getDumpFile())
+            ->withNewData('triggers-dump-file', $this->getDumpFile('triggers'));
     }
 
-    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment)
+    public function cleanup(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
-        if ($this->getDumpFile() && file_exists($this->getDumpFile())) {
-            @unlink($this->getDumpFile());
-        }
+        array_walk($this->filePaths, function (string $filePath): void {
+            if ($filePath && file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        });
+        return $transport;
     }
 
-
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function assembleEmptyCommand(EnvironmentInterface $environment)
+    private function getDumpFile(string $code = 'default'): string
     {
-        $tables = implode(' ', $environment->getEmptyTables());
-
-        if (!$tables) {
-            return '';
-        }
-
-        return implode(' ', array_merge(
-            $this->getDumpCommand($environment),
-            [
-                "--no-data",
-                $tables,
-                "| sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/'",
-                ">>",
-                $this->getDumpFile()
-            ]
-        ));
-    }
-
-    public function assembleCommand(EnvironmentInterface $environment)
-    {
-        return implode(' ', array_merge(
-            $this->getDumpCommand($environment),
-            [
-                $this->assembleEmptyTables($environment),
-                $this->assembleIgnoredTables($environment),
-                "| sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/'",
-                ">",
-                $this->getDumpFile()
-            ]
-        ));
-    }
-
-    private function getDumpCommand(EnvironmentInterface $environment)
-    {
-        return [
-            "mysqldump --user=\"{$this->localConnection->getUser()}\"",
-            "--password=\"{$this->localConnection->getPassword()}\"",
-            "--single-transaction",
-            "--compress",
-            "--order-by-primary",
-            "--host={$this->localConnection->getHost()}",
-            "{$this->localConnection->getDatabase()}"
-        ];
-    }
-
-    private function assembleEmptyTables(EnvironmentInterface $environment)
-    {
-        $tables = $environment->getEmptyTables();
-        $output = [];
-
-        foreach ($tables as $table) {
-            $output[] = '--ignore-table=' . $this->localConnection->getDatabase() . '.' . $table;
-        }
-
-        return implode(' ', $output);
-    }
-
-    private function assembleIgnoredTables(EnvironmentInterface $environment)
-    {
-        $tables = $environment->getIgnoredTables();
-        $output = implode(' | ', array_map(function($table) {
-            return "awk '!/^INSERT INTO `{$table}` VALUES/'";
-        }, $tables));
-
-        return $output ? ' | ' . $output : '';
-    }
-
-    private function getDumpFile()
-    {
-        if (!$this->path) {
+        if (!\array_key_exists($code, $this->filePaths)) {
             $path = $this->configuration->getNode('connections/mysql/dump-path');
             if (!$path) {
                 $path = self::DEFAULT_DUMP_PATH;
             }
-            $filename = 'driver-' . $this->random->getRandomString(6) . '.sql';
+            $filename = 'driver-' . $this->random->getRandomString(6) . '.gz';
 
-            $this->path = $path . '/' . $filename;
+            $this->filePaths[$code] = $path . '/' . $filename;
         }
 
-        return $this->path;
+        return $this->filePaths[$code];
     }
 }

@@ -1,97 +1,73 @@
 # Driver
-### A database task-runner
 
+Driver is a database task-runner that helps you to turn production database into a staging/development database sandbox.
+
+## Description
 
 Driver is the easy way to turn a production database into a staging or development-friendly database.
 It is built with the aim of complete flexibility. Additionally, with the built-in capability
 of working with RDS, Driver can run transformations on database host that is completely separate from
 your production environment.
 
-Because Driver is a task-runner, there is a good chance that you will need to create some tasks to run.
-There are some additional modules out there to help you with this. You will also need to specify configuration.
+Driver resides on your production machine, with your website's codebase (via Composer).
+You set up a CRON job to run Driver.
 
-## TL;DR
-
-Driver resides on your production machine, preferrably with your website's codebase (via composer). You setup a cron job to run Driver.
-
-* **Driver connects to your production database ONCE via `mysqldump`.**
+* Driver connects to your production database ONCE via `mysqldump`.
 * Driver dumps that to a file on your system.
-* Driver creates a RDS instance and pushes the database dump up to RDS (via **https**).
+* Driver creates an RDS instance and pushes the database dump up to RDS (via https).
 * Driver runs whatever actions you would like (configured globally or per environment).
 * Driver dumps the transformed data, zips it and pushes it up to S3.
+* You can then download transformed dump from S3 to your staging/development machine, also using Driver.
 
-For a 3-5GB database, this process could take an hour or two. This depends on how many environments you are creating and what type of RDS instance you are using. This causes no downtime to the frontend thanks to the `--single-transaction` flag on `mysqldump`. Yes, it does take a while to run, but there is little tono impact on the frontend.
+For a 3-5GB database, this process could take an hour or two.
+This depends on how many environments you are creating and what type of RDS instance you are using.
+This causes no downtime to the frontend thanks to the `--single-transaction` flag on `mysqldump`.
+Yes, it does take a while to run, but there is little-to-no impact on the frontend.
 
-## Quickstart
+## Before We Start
 
-Downloading a Driver-created file is quite simple:
+At Swift Otter we mainly work with Magento 2. We created separate repo for Magento 2 Driver transformations.
+It includes config for anonymization of all database tables of core Magento 2 system. If you are Magento 2 developer,
+we recommend you to install that repo, instead of this one (Driver would be installed anyway, as it is a dependency
+of that Magento 2 repo). If you're not a Magento 2 developer, we still recommend you to look at that repo to get
+a better idea on how things can be configured for your project.
+
+Magento 2 Driver transformations repo can be found [here](https://github.com/swiftotter/Driver-Magento2).
+
+## Getting Started
+
+### Dependencies
+
+- PHP 7.4 or higher
+
+### Prerequisites
+
+You need to create an Amazon AWS account. We will be using RDS to perform the data manipulations.
+It is recommended to create a new IAM user with appropriate permissions to access EC2, RDS and S3
+(exact permissions will be coming). This is explained in details [here](docs/aws-setup.md).
+
+### Installation
+
 ```bash
-./vendor/bin/driver run --environment=local [or whatever environment that's been configured] import-s3 
-```
-
-Installing Driver is easy:
-```
 composer require swiftotter/driver
 ```
 
-Configuring Driver is easy. In the folder that contains your `vendor/` folder, create a folder called `config`.
-First, you need to create an Amazon AWS account. We will be using RDS to perform the data manipulations. It is
-recommended to create a new IAM user with appropriate permissions to access EC2, RDS and S3 (exact permissions
-will be coming).
+### Configuration
 
-Place inside it a file with the following information (replacing all of the brackets and their content):
-```yaml
-# 
-connections:
-  database: mysql
-  mysql:
-    engine: mysql
-    database: [DATABASE_NAME]
-    user: [DATABASE_USER]
-    password: [DATABASE_PASSWORD]
-  s3:
-    engine: s3
-    key: [IAM_KEY]
-    secret: [IAM_KEY]
-    bucket: [YOUR_BUCKET]
-    compressed-file-key: sample.gz
-    uncompressed-file-key: sample.sql
-    region: us-east-1
-  rds:
-    key: [IAM_KEY]
-    secret: [IAM_KEY]
-    region: us-east-1
-  ec2:
-    key: [IAM_KEY]
-    secret: [IAM_KEY]
-    region: us-east-1
-```
+#### Overview of Config Structure 
 
-It should run! Be prepared for it to take some time (on the order of hours).
-```
-./vendor/bin/driver run
-```
+Driver configuration goes into a folder named `.driver`.
+The files that are recognized inside this folder are:
 
-You can run a specific pipeline. If you use the `default` pipeline, then you don't have to specify the pipeline. Included is a `tag` pipeline to generate one database snapshot.
-```bash
-./vendor/bin/driver run tag
-                         /\ environment name
-```
-
-To tag an export with an issue number (or whatever is desired):
-```bash
-./vendor/bin/driver run tag --tag=DEV-1234
-```
-
-## Connection Information
-
-Connection information goes into a folder named `config` or `config.d`. The files that are recognized
-inside these folders are:
-* `pipelines.yaml`
+* `anonymize.yaml`
 * `commands.yaml`
-* `engines.yaml`
-* `connections.yaml`
 * `config.yaml`
+* `connections.yaml`
+* `engines.yaml`
+* `environments.yaml`
+* `pipelines.yaml`
+* `reduce.yaml`
+* `update_values.yaml`
 
 The filenames of these files serve no purpose other than a namespace. The delineation of the configuration
 happens inside each file. For example, in `pipelines.yaml`, there is a `pipelines` node as the root element.
@@ -103,268 +79,137 @@ stored in `/var/www/`. Your vendor directory is `/var/www/vendor/` and, of cours
 `/var/www/vendor/swiftotter/driver`. As such, Driver will look in the following locations for configuration
 files:
 
-* `/var/www/config/`
-* `/var/www/config.d/`
-* `/var/www/vendor/*/*/config/`
-* `/var/www/vendor/*/*/config.d/`
+* `/var/www/.driver/`
+* `/var/www/vendor/*/*/.driver/`
 
-You can symlink any file you want here. Keep in mind that these files do contain sensitive information and
-it is necessary to include a `.htaccess` into that folder:
-`Deny from all`
+You can symlink any file you want here. Keep in mind that these files do contain sensitive information, and
+it is necessary to include a `.htaccess` into that folder: `Deny from all`
 
-## AWS Setup
+#### Connections Configuration
 
-Driver's default implementation is to use AWS for the database transformation (RDS) and the storage of the transformed
-databases (S3).
+You have to configure connections information for your project.
+In the folder that contains your `vendor` folder, create a folder called `.driver`.
+Next, copy the file `vendor/swiftotter/driver/.driver/connections.yaml.dist` to `.driver/connections.yaml`
+and fill it in with your source MySQL information, as well as destination EC2, RDS and S3 data.
 
-You will need to do two things in your AWS control panel:
-1. Create a new policy.
-2. Assign that policy to a new user.
+Exemplary config can be found in `vendor/swiftotter/driver/.driver/connections.yaml.example`.
 
-### Policy Creation
+#### Environments Configuration
 
-Open your control panel and go to IAM. Click on the Policies tab on the sidebar. Choose to Create New Policy.
-Select Create Your Own Policy (if you want to use the one below) and enter the following code.
+Environments allow to make modifications to the database, per-site. You can configure different set of actions for every
+environment. For example, for local environment you may want to clear out all admin users as well as set unique URLs
+for the website and possibly other things.
 
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:AuthorizeSecurityGroupIngress",
-                "ec2:CreateSecurityGroup",
-                "s3:GetObject",
-                "s3:PutObject",
-                "rds:CreateDBInstance",
-                "rds:DeleteDBInstance",
-                "rds:DescribeDBInstances"
-            ],
-            "Resource": [
-                "*"
-            ]
-        }
-    ]
-}
-```
+**Note:** You can execute specific commands per environment. These changes do not revert for each environment,
+but rather they are applied according to their sort order. If one environment uses the data in the `admin_users` table,
+and another environment clears out all data in the `admin_users` table, you set the sort order for the first environment
+lower (ex. `100`) and the sort order for the second environment higher (ex. `200`).
 
-### User Creation
+To configure your environments copy the file `vendor/swiftotter/driver/.driver/environments.yaml.dist`
+to `.driver/environments.yaml` and fill it in with your environments data.
 
-In the IAM control panel, click on the Users tab. Select Add user. Choose a username. This will only be seen by you
-in the control panel. Check the Programmatic access as Driver will be needing a access key ID and a secret access key.
-Select Add existing policies directly and choose your newly-created policy. Review it and then create the user.
+Exemplary config can be found in `vendor/swiftotter/driver/.driver/environments.yaml.example`.
 
-Place the Access key ID and Secret access key in your configuration.
+#### Anonymization Configuration
 
-
-### Connection Reference
-
-```yaml
-configuration:
-  compress-output: true # if set, the output will be compressed and the compressed-file-key will be used.
-
-connections:
-  database: mysql # Currently, this is the only supported engine.
-  webhooks:
-    post-url: https://whatever-your-site-is.com # When the process is complete, Driver will ping this url.
-    transform-url: # During the transformation process, Driver will ping this url with connection information.
-                   # You could write your own scripts to be executed at this url.
-    auth:
-      user: # for HTTP basic authentication
-      password: # for HTTP basic authentication
-  mysql: # Source database connection information
-    database: your_database_name # REQUIRED
-    charset: # defaults to utf8
-    engine: mysql
-    port: # defaults to 3306
-    host: # defaults to 127.0.0.1
-    user: # REQUIRED: database username
-    password: # REQUIRED: database password
-    dump-path: /tmp # Where to put the dumps while they are transitioning between the server and RDS
-  s3:
-    engine: s3
-    key: # REQUIRED: your S3 login key (can be the same as RDS if both access policies are allowed)
-    secret: # REQUIRED: your S3 login secret
-    bucket: # REQUIRED: which bucket would like this dumped into?
-    region: # defaults to us-east-1
-    compressed-file-key: # name in the bucket for a compressed file. 
-    uncompressed-file-key: # name for an uncompressed file.
-    # It is recommended to include {{environment}} in the filename to avoid multiple environments overwriting the file.
-  rds:
-    key: # REQUIRED: your RDS login key
-    secret: # REQUIRED: your RDS login secret
-    region: #defaults to us-east-1
-    ## BEGIN NEW RDS INSTANCE:
-    instance-type: # REQUIRED: choose from left column in https://aws.amazon.com/rds/details/#DB_Instance_Classes
-    engine: MySQL
-    storage-type: gp2
-    ## END NEW RDS INSTANCE
-    ## BEGIN EXISTING RDS INSTANCE:
-    instance-identifier:
-    instance-username:
-    instance-password:
-    instance-db-name:
-    security-group-name:
-    ## END EXISTING RDS INSTANCE
-```
-
-### Terminology
-
-* **Pipeline** (specified in `pipelines.yaml`): a series of stages. Representative of the work to take a production database and transform it. These are found under the `pipelines` node. You can execute a specific pipeline with the `--pipeline` argument in the command line.
-* **Stage**: groups of actions inside of a pipeline. Stages are run sequentially Right now, Driver does work this way, but actions could run in parallel. 
-* **Action**: Specific command to run.
-
-### Modifying a existing pipeline
-
-`default` is the "default" pipeline. This may be all you need. The next section will talk about the syntax for creating a new pipeline.
-
-Here is an example of adding a custom action to the `default` pipeline:
-
-```yaml
-commands:
-  reset-admin-password:
-    class: \YourApplication\Driver\Transformations\ResetAdminPassword
-    # ensure that:
-    #  1) the composer autoloader can find this class
-    #  2) your class implements \Driver\Commands\CommandInterface
-    #  3) it preferably extends \Symfony\Component\Console\Command\Command
-
-pipelines:
-    default:
-      - name: global-commands
-      # you can add stages or use an existing one. global-commands runs
-      # after the data has been pushed into RDS and before any transformations
-      # run. Keep in mind, you can create a new stage prefixed with "repeat-"
-      # and it will run it once per environment.
-        actions:
-          - name: reset-admin-password
-            # notice this name matches the name we added in commands
-            sort: 100
-```
-
-### Creating a new pipeline
-
-The following is taken from `config/pipelines.yaml`. You can put this code in any of the `yaml` files that Driver reads. Just ensure that the
-`pipelines` root node has no space in front of it (exactly as shown below).
-
-```yaml
-pipelines: # root node
-  YOUR_PIPELINE_NAME: # pipeline span name
-    - name: setup # pipeline stage name
-      sort: 100 # sort order
-      actions: # stages / actions to run
-        - name: connect
-          sort: 100
-        - name: check-filesystem
-          sort: 200
-        - name: start-sandbox
-          sort: 300
-
-    - name: import
-      sort: 200
-      actions:
-        - name: export-data-from-system-primary
-          sort: 100
-        - name: import-data-into-sandbox
-          sort: 200
-
-    - name: global-commands
-      sort: 300
-      actions:
-        - name: empty
-          sort: 1
-
-    - name: repeat-commands
-      sort: 400
-      actions:
-        - name: run-transformations
-          sort: 1000
-
-    - name: repeat-export
-      sort: 400
-      actions:
-        - name: export-data-from-sandbox
-          sort: 100
-        - name: upload-data-to-s3
-          sort: 200
-
-    - name: shutdown
-      sort: 500
-      actions:
-        - name: shutdown-sandbox
-          sort: 100
-
-```
-
-
-### Environments
-
-Ok, so Driver sounds really cool to create you a staging database. But, what about a database for the devs? There is a few changes for that: we want to clear out all other admin users (and reset the remaining admin user's password) as well as set unique urls for the website and possibly other things.
-
-There is a solution for that, too. Environments allow you to easily make modifications to the database, per-site.
-
-**Note:** you can execute specific commands per environment. These changes do not revert for each environment, but rather they are applied according to their sort order. If one environment uses the data in the `admin_users` table, and another environment clears out all data in the `admin_users` table, you set the sort order for the first table lower (ex. `100`) and the sort order for the second table higher (ex. `200`).
-
-
-#### Environment Reference:
-
-```yaml
-environments:
-  ENVIRONMENT_NAME:
-    sort: # lower runs sooner, higher runs later
-    transformations:
-      TABLE_NAME:
-        - "UPDATE {{table_name}} SET value = 'test-value' WHERE path = 'id';"
-    ignored_tables:
-        # These are ignored in the final dump: mysqldump ... --ignored-tables=DATABASE.table_1
-        - table_1
-        - table_2
-```
-
-### Anonymizing Data
-
-Tables can be anonyimized by creating `anonymize.yaml` in `config/`. The following type of anonymization entities are available in order to provide realistic data and types:
+Tables can be anonymized by creating `anonymize.yaml` file in `.driver/`. The following type of anonymization entities
+are available in order to provide realistic data and types:
 
 * `email`
 * `company`
 * `firstname`
 * `lastname`
-* `full_name`
-* `general`
 * `phone`
 * `postcode`
 * `street`
-* `address`
 * `city`
-* `region_id`
-* `region`
-* `country_id`
-* `phone`
 * `ip`
+* `general`
 * `empty`
 
 **Example File**
 ```
 anonymize:
-    tables:
-        quote:
-            customer_email:
-                type: email
-            customer_name:
-                type: full_name
-            remote_ip:
-                type: ip
+  tables:
+    quote:
+      customer_email:
+        type: email
+      remote_ip:
+        type: ip
 ```
 
+#### Post-Anonymization Values Updates Configuration
 
-**Notes:**
-* The `{{table_name}}` is substituted for the `TABLE_NAME` reference above. Driver will look for a table that **ends** with `TABLE_NAME`. For example, if your `TABLE_NAME` is `core_config_data`, Driver will search for a table in the database that ends with `core_config_data`. Thus, `mage_core_config_data`, `sample_core_config_data` and `core_config_data` would all match.
+Sometimes in your database you can store in a single field some value that was originally built by concatenating
+fields from different tables, eg. `full_name` or `shipping_address`. Driver allows to run some specific values updates
+after anonymization of simple fields is finished. Thanks to this feature you can anonymize such complex fields too.
 
-###
-#### Download and Import S3 uploaded database on STAGING/Local environment:
+To create post-anonymization values updates, create `update_values.yaml` file in `.driver/`.
 
-The below command run the export/import pipeline which download the database into your project var/ directory, create new database in mysql, and import the downloaded database in it for your environment. 
+**Example File**
 ```
-./vendor/bin/driver run import-s3
+update-values:
+  tables:
+    customer_grid_flat:
+      joins:
+        - table: customer_entity
+          alias: c
+          on: c.entity_id = customer_grid_flat.entity_id
+        - table: customer_address_entity
+          alias: ba
+          on: ba.entity_id = c.default_billing
+        - table: customer_address_entity
+          alias: sa
+          on: sa.entity_id = c.default_shipping
+      values:
+        - field: name
+          value: CONCAT_WS(' ', c.firstname, c.lastname)
+        - field: shipping_full
+          value: CONCAT(sa.street, ', ', sa.city, ', ', IFNULL(sa.region, '-'), ' ', sa.postcode, ', ', sa.country_id)
+        - field: billing_full
+          value: CONCAT(ba.street, ', ', ba.city, ', ', IFNULL(ba.region, '-'), ' ', ba.postcode, ', ', ba.country_id)
 ```
+
+## Usage 
+
+### Building Database Sandboxes For All Environments
+
+Be prepared for it to take some time (on the order of hours).
+
+```
+./vendor/bin/driver run
+```
+
+### Building Database Sandbox For Single Environment
+
+```bash
+./vendor/bin/driver run build --environment=envname
+```
+
+where `envname` is one of the environments defined in `environments.yaml` config file.
+
+### Tagging Database Sandbox
+
+Sandboxes built with a tag will include the tag in the file name.
+
+```bash
+./vendor/bin/driver run build --tag=tagname
+```
+
+where `tagname` is an issue number (or whatever is desired).
+
+### Download and Import Sandbox Database from S3 to staging/local environment
+
+The below command run the export/import pipeline which download the database into your project `var/` directory,
+create new database in MySQL, and import the downloaded database in it for your environment.
+
+```
+./vendor/bin/driver run import-s3 --environment=envname --tag=tagname
+```
+
+`tag` is optional.
+
+## Contribution
+
+We welcome you to contribute in Driver development. You can find some handy information for developers
+[here](docs/development.md).

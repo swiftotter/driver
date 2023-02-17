@@ -1,9 +1,6 @@
 <?php
+
 declare(strict_types=1);
-/**
- * @by SwiftOtter, Inc. 2/8/20
- * @website https://swiftotter.com
- **/
 
 namespace Driver\Engines\MySql\Transformation;
 
@@ -24,9 +21,11 @@ class Reduce extends Command implements CommandInterface
     private Configuration $configuration;
     private RemoteConnectionInterface $connection;
     private LoggerInterface $logger;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
     private array $properties;
     private ConsoleOutput $output;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         Configuration $configuration,
         RemoteConnectionInterface $connection,
@@ -43,7 +42,7 @@ class Reduce extends Command implements CommandInterface
         parent::__construct('mysql-transformation-reduce');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         /** @var OutputInterface $output */
         $config = $this->configuration->getNode('reduce/tables');
@@ -67,7 +66,9 @@ class Reduce extends Command implements CommandInterface
             } catch (\Exception $ex) {
                 $this->logger->error('An error occurred when running this query: ' . $query);
                 $this->logger->error($ex->getMessage());
-                $this->output->writeln('<error>An error occurred when running this query: ' . $query. $ex->getMessage() . '</error>');
+                $this->output->writeln(
+                    '<error>An error occurred when running this query: ' . $query . $ex->getMessage() . '</error>'
+                );
             }
         }
 
@@ -77,9 +78,9 @@ class Reduce extends Command implements CommandInterface
         return $transport->withStatus(new Status('mysql-transformation-reduce', 'success'));
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
-
 }

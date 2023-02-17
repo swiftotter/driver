@@ -1,21 +1,6 @@
 <?php
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 12/3/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Import;
 
@@ -27,64 +12,50 @@ use Driver\Pipeline\Transport\TransportInterface;
 use Driver\System\Configuration;
 use Driver\System\LocalConnectionLoader;
 use Driver\System\Logs\LoggerInterface;
-use Driver\System\Random;
+use PDO;
+use PDOException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class Primary extends Command implements CommandInterface
 {
-    /** @var LocalConnectionLoader */
-    private $localConnection;
+    private LocalConnectionLoader $localConnection;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
+    private array $properties;
+    private LoggerInterface $logger;
+    private Configuration $configuration;
+    private ConsoleOutput $output;
 
-    /** @var array */
-    private $properties;
-
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var Random */
-    private $random;
-
-    /** @var ?string */
-    private $path;
-
-    /** @var Configuration */
-    private $configuration;
-
-    /** @var ConsoleOutput */
-    private $output;
-
-    private $preserved;
-
-    const DEFAULT_DUMP_PATH = '/tmp';
-
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         LocalConnectionLoader $localConnection,
         Configuration $configuration,
         LoggerInterface $logger,
-        Random $random,
         ConsoleOutput $output,
         array $properties = []
     ) {
         $this->localConnection = $localConnection;
         $this->properties = $properties;
         $this->logger = $logger;
-        $this->random = $random;
         $this->configuration = $configuration;
         $this->output = $output;
         return parent::__construct('import-data-from-system-primary');
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         $transport->getLogger()->notice("Import database from var/ into local MySQL started");
         $this->output->writeln("<comment>Import database from var/ into local MySQL started</comment>");
         $this->output->writeln("<comment>Preparing MySQL Connection using Magento (app/etc/env.php)</comment>");
 
-        $conn = mysqli_connect($this->localConnection->getHost(), $this->localConnection->getUser(), $this->localConnection->getPassword());
-
-        if (!$conn) {
-            $this->output->writeln('<error>Could not connect: ' . mysqli_connect_error() . '</error>');
+        try {
+            $conn = new PDO(
+                "mysql:host={$this->localConnection->getHost()}",
+                $this->localConnection->getUser(),
+                $this->localConnection->getPassword()
+            );
+        } catch (PDOException $e) {
+            $this->output->writeln('<error>Could not connect: ' . $e->getMessage() . '</error>');
             $this->output->write([
                 '<info> Connected with:',
                 'Host:' . $this->localConnection->getHost(),
@@ -92,19 +63,15 @@ class Primary extends Command implements CommandInterface
                 'Password:' . preg_replace('/.*/i', '*', $this->localConnection->getPassword()),
                 '</info>'
             ]);
-            throw new \Exception('Could not connect: ' . mysqli_connect_error());
+            throw new \Exception('Could not connect: ' . $e->getMessage());
         }
 
         $this->output->writeln("<comment>Creating Local Database: </comment>" .
-            $this->getDatabaseCommand($environment)
-        );
+            $this->getDatabaseCommand($environment));
 
-        mysqli_query($conn, $this->getDatabaseCommand($environment));
-        if ($conn->error !== "" && (strpos($conn->error, "database exists") === false)) {
-            $this->output->writeln('<error>Database cannot be created: ' . $conn->error . '</error>');
+        if (!$conn->query($this->getDatabaseCommand($environment))) {
+            $this->output->writeln('<error>Database cannot be created: ' . $conn->errorInfo()[2] . '</error>');
         }
-
-        mysqli_close($conn);
 
         $transport->getLogger()->debug(
             "Local connection string: " . str_replace(
@@ -114,11 +81,10 @@ class Primary extends Command implements CommandInterface
             )
         );
         $this->output->writeln("<comment>Local connection string: </comment>" . str_replace(
-                $this->localConnection->getPassword(),
-                '',
-                $this->assembleCommand(Download::DOWNLOAD_PATH_KEY)
-            )
-        );
+            $this->localConnection->getPassword(),
+            '',
+            $this->assembleCommand(Download::DOWNLOAD_PATH_KEY)
+        ));
 
         $preserved = $this->preserve();
 
@@ -132,30 +98,34 @@ class Primary extends Command implements CommandInterface
             $this->output->writeln('<info>Import to local MYSQL completed.</info>');
 
             $this->restore($preserved);
-            $this->output->writeln('<info>Rows were inserted/updated back into ' . implode(', ', array_keys($preserved)) . '.');
+            $this->output->writeln(
+                '<info>Rows were inserted/updated back into ' . implode(', ', array_keys($preserved)) . '.'
+            );
             return $transport->withStatus(new Status('db_import', 'success'));
         }
-
     }
 
-    public function getDatabaseCommand(EnvironmentInterface $environment)
+    public function getDatabaseCommand(EnvironmentInterface $environment): string
     {
-        return "CREATE DATABASE {$this->localConnection->getDatabase()}";
+        return "CREATE DATABASE IF NOT EXISTS {$this->localConnection->getDatabase()}";
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function assembleCommand(string $filename)
+    public function assembleCommand(string $filename): string
     {
         return implode(' ', $this->getImportCommand($filename));
     }
 
-    private function getImportCommand(string $filename)
+    /**
+     * @return string[]
+     */
+    private function getImportCommand(string $filename): array
     {
-        $date = date('Y-m-d');
         return [
             "mysql -u \"{$this->localConnection->getUser()}\"",
             "-h {$this->localConnection->getHost()}",
@@ -166,112 +136,109 @@ class Primary extends Command implements CommandInterface
         ];
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
     private function preserve(): array
     {
         $connection = $this->getConnection();
 
         $output = [];
 
-        try {
-            $preserve = $this->localConnection->getPreserve();
+        $preserve = $this->localConnection->getPreserve();
 
-            // I hate this cyclomatic complexity, but it's the most reasonable solution for this depth of configuration.
-            foreach ($preserve as $tableName => $columns) {
-                foreach ($columns as $columnName => $selectData) {
-                    foreach ($selectData as $like) {
-                        $preparedTableName = mysqli_real_escape_string($connection, $tableName);
-                        $preparedColumnName = mysqli_real_escape_string($connection, $columnName);
-                        $tableColumnNames = $this->getColumns($tableName);
-                        $columnNames = $this->flattenColumns($tableColumnNames);
+        // I hate this cyclomatic complexity, but it's the most reasonable solution for this depth of configuration.
+        foreach ($preserve as $tableName => $columns) {
+            foreach ($columns as $columnName => $selectData) {
+                foreach ($selectData as $like) {
+                    $tableColumnNames = $this->getColumns($tableName);
+                    $columnNames = $this->flattenColumns($tableColumnNames);
 
-                        if (!count($tableColumnNames)) {
+                    if (!count($tableColumnNames)) {
+                        continue;
+                    }
+
+                    try {
+                        $statement = $connection->prepare("SELECT ${columnNames} FROM ${tableName} "
+                            . "WHERE ${columnName} LIKE :like");
+                        if ($statement === false) {
                             continue;
                         }
 
-                        try {
-                            $stmt = $connection->prepare("SELECT ${columnNames} FROM ${preparedTableName} WHERE ${preparedColumnName} LIKE ?");
-                            if ($stmt === false) {
-                                continue;
-                            }
-
-                            $stmt->bind_param("s", $like);
-                            $stmt->execute();
-                            $result = $stmt->get_result();
-                            while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-                                $output[$tableName][] = $row;
-                            }
-                        } catch (\Exception $ex) {
-                            continue;
+                        $statement->execute(['like' => $like]);
+                        while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                            $output[$tableName][] = $row;
                         }
+                    } catch (\Exception $ex) {
+                        continue;
                     }
                 }
             }
-        } finally {
-            $connection->close();
         }
 
         return $output;
     }
 
-    private function getColumns($tableName): array
+    /**
+     * @return string[]
+     */
+    private function getColumns(string $tableName): array
     {
         $connection = $this->getConnection();
         $columns = [];
 
-        try {
-            $result = $connection->query("SHOW COLUMNS FROM ${tableName};");
-            if (!$result) {
-                return [];
+        $statement = $connection->prepare("SHOW COLUMNS FROM ${tableName}");
+        if (!$statement->execute()) {
+            return [];
+        }
+
+        while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+            if (
+                isset($row['Extra'])
+                && $row['Extra'] === 'auto_increment'
+            ) {
+                continue;
             }
 
-            while ($row = $result->fetch_assoc()) {
-                if (isset($row['Extra'])
-                    && $row['Extra'] === 'auto_increment') {
-                    continue;
-                }
-
-                $columns[] = $row['Field'];
-            }
-        } finally {
-            $connection->close();
+            $columns[] = $row['Field'];
         }
 
         return $columns;
     }
 
+    /**
+     * @param string[] $columnNames
+     */
     private function flattenColumns(array $columnNames): string
     {
         return implode(', ', $columnNames);
     }
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint
     private function restore(array $values): void
     {
         foreach ($values as $tableName => $rows) {
             foreach ($rows as $row) {
                 $connection = $this->getConnection();
 
-                $preparedTableName = mysqli_real_escape_string($connection, $tableName);
                 $tableColumnNames = $this->getColumns($tableName);
                 $columnNames = $this->flattenColumns($tableColumnNames);
                 $columnFillers = implode(', ', array_fill(0, count($row), '?'));
-                $valuesList = implode(', ', array_map(function($key) {
+                $valuesList = implode(', ', array_map(function ($key) {
                     return "`${key}` = VALUES(`${key}`)";
                 }, array_keys($row)));
 
-                $stmt = $connection->prepare("INSERT INTO ${preparedTableName} (${columnNames}) VALUES(${columnFillers}) ON DUPLICATE KEY UPDATE ${valuesList}");
-                $stmt->bind_param(implode('', array_fill(0, count($row), 's')), ...array_values($row));
-                $stmt->execute();
+                $statement = $connection->prepare("INSERT INTO ${tableName} (${columnNames}) VALUES(${columnFillers})"
+                    . " ON DUPLICATE KEY UPDATE ${valuesList}");
+                $statement->execute(array_values($row));
             }
         }
     }
 
-    private function getConnection()
+    private function getConnection(): PDO
     {
-        return mysqli_connect(
-            $this->localConnection->getHost(),
+        return new PDO(
+            "mysql:host={$this->localConnection->getHost()};dbname={$this->localConnection->getDatabase()}",
             $this->localConnection->getUser(),
-            $this->localConnection->getPassword(),
-            $this->localConnection->getDatabase()
+            $this->localConnection->getPassword()
         );
     }
 }

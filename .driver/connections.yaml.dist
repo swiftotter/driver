@@ -1,0 +1,44 @@
+connections:
+  database: mysql # Currently, this is the only supported engine.
+  webhooks: # OPTIONAL
+    post-url: # When the process is complete, Driver will ping this URL.
+    transform-url: # During the transformation process, Driver will ping this URL with connection information.
+                   # You could write your own scripts to be executed at this URL.
+    auth:
+      user: # For HTTP basic authentication
+      password: # For HTTP basic authentication
+  mysql: # Source database connection information
+    database: # REQUIRED: database name
+    charset: # defaults to utf8
+    engine: mysql
+    port: # defaults to 3306
+    host: # defaults to 127.0.0.1
+    user: # REQUIRED: database username
+    password: # REQUIRED: database password
+    dump-path: # Where to put the dumps while they are transitioning between the server and RDS, defaults to /tmp
+  s3:
+    engine: s3
+    key: # REQUIRED: your S3 login key (can be the same as RDS if both access policies are allowed)
+    secret: # REQUIRED: your S3 login secret
+    bucket: # REQUIRED: which bucket would like this dumped into?
+    region: # defaults to us-east-1
+    compressed-file-key: # name in the bucket for a compressed file, e.g. dump{{environment}}.sql.gz
+    uncompressed-file-key: # name for an uncompressed file, e.g. dump{{environment}}.sql
+    # It is recommended to include {{environment}} in the filename to avoid multiple environments overwriting the file.
+  rds:
+    key: # REQUIRED: your RDS login key
+    secret: # REQUIRED: your RDS login secret
+    region: #defaults to us-east-1
+    ## BEGIN NEW RDS INSTANCE:
+    instance-type: # defaults to db.t3.medium, other options can be found at https://aws.amazon.com/rds/instance-types/
+    engine: # defaults to MySQL
+    engine-version: # defaults to AWS RDS default engine version, possible versions can be found by using console command `aws rds describe-db-engine-versions`
+    storage-type: # defaults to gp2
+    ## END NEW RDS INSTANCE
+    ## BEGIN EXISTING RDS INSTANCE:
+    instance-identifier:
+    instance-username:
+    instance-password:
+    instance-db-name:
+    security-group-name:
+    ## END EXISTING RDS INSTANCE

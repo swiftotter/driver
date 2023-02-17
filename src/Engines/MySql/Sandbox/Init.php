@@ -1,22 +1,6 @@
 <?php
-declare(ticks = 1);
-/**
- * SwiftOtter_Base is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * SwiftOtter_Base is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with SwiftOtter_Base. If not, see <http://www.gnu.org/licenses/>.
- *
- * @author Joseph Maxwell
- * @copyright SwiftOtter Studios, 11/19/16
- * @package default
- **/
+
+declare(strict_types=1);
 
 namespace Driver\Engines\MySql\Sandbox;
 
@@ -34,16 +18,18 @@ class Init extends Command implements CommandInterface
 {
     private Configuration $configuration;
     private Sandbox $sandbox;
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification
     private array $properties = [];
     private ConsoleOutput $output;
     private DebugMode $debugMode;
 
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification
     public function __construct(
         Configuration $configuration,
         Sandbox $sandbox,
         ConsoleOutput $output,
         DebugMode $debugMode,
-        $properties = []
+        array $properties = []
     ) {
         $this->configuration = $configuration;
         $this->sandbox = $sandbox;
@@ -54,12 +40,13 @@ class Init extends Command implements CommandInterface
         return parent::__construct('mysql-sandbox-init');
     }
 
-    public function getProperties()
+    // phpcs:ignore SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification
+    public function getProperties(): array
     {
         return $this->properties;
     }
 
-    public function go(TransportInterface $transport, EnvironmentInterface $environment)
+    public function go(TransportInterface $transport, EnvironmentInterface $environment): TransportInterface
     {
         if ($this->debugMode->get()) {
             $transport->getLogger()->notice('No sandbox initialization due to debug mode enabled.');
@@ -85,7 +72,7 @@ class Init extends Command implements CommandInterface
         $progressBar = new ProgressBar($this->output, $maxTries);
         $progressBar->setFormat('minimal');
 
-        while(!($active = $this->sandbox->getInstanceActive()) && $tries < $maxTries) {
+        while (!($active = $this->sandbox->getInstanceActive()) && $tries < $maxTries) {
             $transport->getLogger()->notice('Checking if sandbox is active.');
             $tries++;
             sleep(10);
@@ -107,7 +94,7 @@ class Init extends Command implements CommandInterface
         return $transport->withStatus(new Status('sandbox_init', 'success'));
     }
 
-    public function signalHandler($signal)
+    public function signalHandler(int $signal): void
     {
         if ($signal !== SIGINT && $signal !== SIGKILL) {
             return;
@@ -121,5 +108,4 @@ class Init extends Command implements CommandInterface
             $this->output->write('Failed to shut down RDS instance. Please login to AWS and kill the instance.');
         }
     }
-
 }
